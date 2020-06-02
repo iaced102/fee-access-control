@@ -25,7 +25,7 @@ class Model{
             || $type == 'numeric' 
             || $type == 'smallint' 
             || $type == 'real'){
-
+            $value = pg_escape_string($value);
             return  "'$value'";
         }
         else{
