@@ -100,6 +100,9 @@ class Controller{
     }
     private function returnOutput(){
         header('Content-Type: application/json');
+        if((!isset($this->output['message']))|| $this->output['message']==''){
+            $this->output['message'] = Message::getStatusResponse($this->output['status']);
+        }
         print json_encode($this->output);
     }
 }
