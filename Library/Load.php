@@ -15,7 +15,7 @@ class Load{
         foreach ($ListFile as $fileName) {
             if($fileName != '..' && $fileName != '.'){
                 $path = DIR.$dirname.'/' . $fileName;
-                if (is_file($path)) {
+                if (is_file($path)&&stripos($path,'.php')!==false) {
                     require_once $path;
                 }
                 else if(is_dir($path)){
