@@ -19,12 +19,12 @@ class Model{
     }
     public static function getValueForSqlCommand($columnData,$value){
         $type = strtolower($columnData['type']);
-        if($type != 'number' 
+        if(!($type == 'number' 
             || $type == 'integer' 
             || $type == 'double precision' 
             || $type == 'numeric' 
             || $type == 'smallint' 
-            || $type == 'real'){
+            || $type == 'real')){
             $value = pg_escape_string($value);
             return  "'$value'";
         }
