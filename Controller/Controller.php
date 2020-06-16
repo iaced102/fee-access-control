@@ -51,7 +51,7 @@ class Controller{
     public function checkLoggedInAsSupporter(){
         $dataLogin = Auth::getDataToken();
         if(!empty($dataLogin)){
-            if(isset($dataLogin['supporter_email'])){
+            if(isset($dataLogin['id']) &&isset($dataLogin['type'])&&$dataLogin['type']=='ba' ){
                 return true;
             }
         }
@@ -74,10 +74,10 @@ class Controller{
     public function getCurrentSupporter(){
         $dataLogin = Auth::getDataToken();
         if(!empty($dataLogin)){
-            if(isset($dataLogin['supporter_email']) &&isset($dataLogin['supporter_id']) ){
+            if(isset($dataLogin['id']) &&isset($dataLogin['type'])&&$dataLogin['type']=='ba' ){
                 return [
-                    'email' => $dataLogin['supporter_email'],
-                    'id' => $dataLogin['supporter_id']
+                    'email' => $dataLogin['email'],
+                    'id' => $dataLogin['id']
                 ];
             }
         }
