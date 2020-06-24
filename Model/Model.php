@@ -173,8 +173,10 @@ class Model{
         }
         $keysCommand = implode(",",$values);
         $filterTenantQuery  = static::getFilterTenantQuery();
-        $primaryKey         = static::getPrimaryKey();
-        $where              = self::mergeConditionQuery([static::getColumnNameInDataBase($primaryKey). " = ".$this->$primaryKey,$filterTenantQuery]);
+        $primaryKey = static::getPrimaryKey();
+        $primaryColumnData = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryValue = self::getValueForSqlCommand($primaryColumnData,$primaryKey);
+        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "UPDATE ".$tableName." SET $keysCommand WHERE $where";
         return connection::exeQuery($command);
     }
