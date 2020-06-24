@@ -175,7 +175,7 @@ class Model{
         $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData = static::getColumnNameInDataBase($primaryKey,true);
-        $primaryValue = self::getValueForSqlCommand($primaryColumnData,$primaryKey);
+        $primaryValue = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
         $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "UPDATE ".$tableName." SET $keysCommand WHERE $where";
         return connection::exeQuery($command);
