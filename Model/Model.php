@@ -17,6 +17,13 @@ class Model{
     public static function getFilterTenantQuery(){
         return '';
     }
+    /*  Dev create: Dinh
+    *   CreateTime: 24/06/2020
+    *   description: lấy primary column name, nếu class child không định nghĩa thì mặc định trả về id
+    */
+    public static function getPrimaryKey(){
+        return 'id';
+    }
     public static function getValueForSqlCommand($columnData,$value){
         $type = strtolower($columnData['type']);
         if(!($type == 'number' 
@@ -166,7 +173,8 @@ class Model{
         }
         $keysCommand = implode(",",$values);
         $filterTenantQuery  = static::getFilterTenantQuery();
-        $where              = self::mergeConditionQuery(["id = ".$this->id,$filterTenantQuery]);
+        $primaryKey         = static::getPrimaryKey();
+        $where              = self::mergeConditionQuery([static::getColumnNameInDataBase($primaryKey). " = ".$this->$primaryKey,$filterTenantQuery]);
         $command            = "UPDATE ".$tableName." SET $keysCommand WHERE $where";
         return connection::exeQuery($command);
     }
