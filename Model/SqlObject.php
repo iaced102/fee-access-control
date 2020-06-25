@@ -4,7 +4,7 @@ use Model\Model;
 use Library\Auth;
 class SqlObject extends Model{
     public $listForeignKey;
-
+    public static $mappingFromDatabase=[];
     public function __construct($data = []){
         $this->listForeignKey=[];
         $keys=get_object_vars($this);
@@ -52,5 +52,27 @@ class SqlObject extends Model{
         }    
         return '';
     }
-    
+    /*  Dev create: Dinh
+    *   CreateTime: 24/06/2020
+    *   description: lấy primary column name, nếu không tìm thấy thì mặc định trả về id
+    */
+    public static function getPrimaryKey(){
+        foreach(static::$mappingFromDatabase as $fieldName=> $ColumnData){
+            if(isset($ColumnData['primary']) && $ColumnData['primary']==true && isset($ColumnData['name'])){
+                return $fieldName;
+            }
+        }
+        return 'id';
+    }
+    public static function getColumnNameInDataBase($fieldName, $returnArray = false){
+        if(isset(static::$mappingFromDatabase[$fieldName]['name'])){
+            if($returnArray){
+                return static::$mappingFromDatabase[$fieldName];
+            }
+            else{
+                return static::$mappingFromDatabase[$fieldName]['name'];
+            }
+        }
+        return false;
+    }
 }
