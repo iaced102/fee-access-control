@@ -17,10 +17,6 @@ class Model{
     public static function getFilterTenantQuery(){
         return '';
     }
-    /*  Dev create: Dinh
-    *   CreateTime: 24/06/2020
-    *   description: lấy primary column name, nếu class child không định nghĩa thì mặc định trả về id
-    */
     public static function getPrimaryKey(){
         return 'id';
     }
@@ -36,7 +32,7 @@ class Model{
             return  "'$value'";
         }
         else{
-            return $value;
+            return $value===null||$value===''?'null':$value;
         }
     }
     /*  Dev create: Dinh
@@ -44,7 +40,7 @@ class Model{
     *   description: dinh update function get thành private, không được phép sử dụng hàm get trực tiếp từ bên ngoài,
     *   bắt buộc filter theo tanentid trước khi query.
     */
-    private static function get($command,$returnObject=true){
+    private static function get($command,$returnObject=true,$returnArrayKeyAsField=false){
         $className = get_called_class();
         $resultData  = Connection::getDataQuerySelect($command);
         if($returnObject){
@@ -52,7 +48,18 @@ class Model{
             if(!empty($resultData)){
                 foreach($resultData as $row){
                     $newObj = new $className($row);
-                    array_push($arrayResult,$newObj);
+                    
+                    if($returnArrayKeyAsField===true){
+                        $primaryKey = static::getPrimaryKey();
+                        $arrayResult[$newObj->$primaryKey] = $newObj;
+                    }
+                    else if(is_string($returnArrayKeyAsField)){
+                        $arrayResult[$newObj->$returnArrayKeyAsField] = $newObj;
+                    }
+                    else{
+                        array_push($arrayResult,$newObj);
+                    }
+                    
                 }
             }
             return $arrayResult;
@@ -73,14 +80,14 @@ class Model{
         return false;
     }
 
-    public static function getByAll(){
+    public static function getByAll($returnArrayKeyAsField=false){
         $tableName          = static::getTableName();
         $filterTenantQuery  = static::getFilterTenantQuery();
         $command            = "SELECT * FROM $tableName ";
         $command            .= $filterTenantQuery!=''?' WHERE '.$filterTenantQuery:'';
-        return self::get($command);
+        return self::get($command,true,$returnArrayKeyAsField);
     }
-    public static function getByTop($top='',$where='',$order='',$fields=false,$otherTable=false,$hasDistinct=false){
+    public static function getByTop($top='',$where='',$order='',$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
         $filterTenantQuery  = static::getFilterTenantQuery();
         $where              = self::mergeConditionQuery([$where,$filterTenantQuery]);
         $tableName          = static::getTableName();
@@ -92,12 +99,12 @@ class Model{
         $command            .= $where!=''?' WHERE '.$where:'';
         $command            .= $order!=''?" ORDER BY ".$order:'';
         $command            .= $top!=''?' LIMIT '.$top:'';
-        return self::get($command);
+        return self::get($command,true,$returnArrayKeyAsField);
     }
 
-    public static function getByPaging($currentPage, $pageSize,$order,$where,$fields=false,$otherTable=false,$hasDistinct=false){
+    public static function getByPaging($currentPage, $pageSize,$order,$where,$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
         $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
-        return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct);
+        return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
     }
 
     public static function deleteMulti($where){
@@ -121,10 +128,11 @@ class Model{
         if(isset($resultData[0]['count'])){
             $result = $resultData[0]['count'];
         }
-        return $result;
+        return intval($result);
     }
     public function insert(){
         $listVar = get_object_vars($this);
+        
         $tableName = static::getTableName();
         $columns = [];
         $values = [];
@@ -174,13 +182,18 @@ class Model{
         $keysCommand = implode(",",$values);
         $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
-        $primaryColumnData = static::getColumnNameInDataBase($primaryKey,true);
-        $primaryValue = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
         $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "UPDATE ".$tableName." SET $keysCommand WHERE $where";
         return connection::exeQuery($command);
     }
 
+    public static function updateMulti($set,$condition){
+        $tableName = static::getTableName();
+        $command            = "UPDATE ".$tableName." SET $set WHERE $condition";
+        return connection::exeQuery($command);
+    }
     public function delete()
     {
         $tableName          = static::getTableName();
