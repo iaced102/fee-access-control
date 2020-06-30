@@ -167,6 +167,37 @@ class Model{
             }
         }
     }
+    public static function insertBulk($listObject){
+        if(is_array($listObject) && count($listObject)>0){
+            $listObject = array_values($listObject);
+            $tableName = static::getTableName();
+            $columns = [];
+            $values = [];
+            for($i=0;$i<count($listObject);$i++){ 
+                $listVar = get_object_vars($listObject[$i]);
+                $values[$i]=[];
+                foreach($listVar as $key => $value){
+                    $columnData = static::getColumnNameInDataBase($key,true);
+                    if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false)){
+                        if($i===0){
+                            $columns[] = $columnData['name'];
+                        }
+                        $values[$i][]  = self::getValueForSqlCommand($columnData,$value);
+                    }   
+                }
+                $values[$i] = "(".implode(",",$values[$i]).")";
+                
+            }
+            $keysCommand    = implode(",",$columns);
+            $valuesCommand  = implode(",\n",$values);
+            $command        = "INSERT INTO $tableName ($keysCommand) VALUES $valuesCommand";
+            $result         = Connection::exeQuery($command);
+            return $result;
+        }
+        return false;
+        
+        
+    }
     public function update(){
         $listVar = get_object_vars($this);
         $tableName = static::getTableName();
