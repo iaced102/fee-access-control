@@ -15,6 +15,9 @@ class Route{
         }
         else{
             $method = self::getMethod();
+            if($method=='options'){
+                exit;
+            }
             if(isset(self::$routersData[$method][$uri])){
                 self::$routersData[$method][$uri]->run();
             }
