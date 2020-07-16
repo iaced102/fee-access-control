@@ -72,7 +72,7 @@ class MessageBus{
             } elseif ($msg->err) {
                 break;
             } else {
-                var_dump($msg);
+               
                 $payload = json_decode($msg->payload,true);
                 if(is_callable($callback)){
                     $callback($msg->topic_name,$payload);
