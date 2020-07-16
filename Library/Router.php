@@ -37,22 +37,23 @@ class Router{
         Redirect::redirect($this->controller);
     }
     public function getExtendParameters(){
-        switch($this->method){
-            case 'post':
-                return $_POST;
-            case 'get':
-                return $_GET;            
-            default:
-                return $this->getPhpInputParameters();                         
+        $parameters = $this->getPhpInputParameters();
+        if($this->method=='get' && count($_GET)>0){
+            $parameters = array_merge($parameters,$_GET);
         }
-    }
-    private  function getPhpInputParameters(){
-        $parameters = [];
-        parse_str(file_get_contents("php://input"),$parameters);
         return $parameters;
     }
-    
-    
-   
-
+    private  function getPhpInputParameters(){
+        $inputContent = file_get_contents("php://input");
+        $parameters = json_decode($inputContent,true);
+        if(!is_array($parameters)){
+            parse_str($inputContent,$parameters);   
+        }
+        if(is_array($parameters)){
+            return $parameters;
+        }
+        else{
+            return [];
+        } 
+    }
 }
