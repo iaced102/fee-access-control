@@ -20,6 +20,7 @@ class Model{
     public static function getPrimaryKey(){
         return 'id';
     }
+
     public static function getValueForSqlCommand($columnData,$value){
         $type = strtolower($columnData['type']);
         if(!($type == 'number' 
@@ -71,7 +72,10 @@ class Model{
     public static function getById($id){
         $tableName          = static::getTableName();
         $filterTenantQuery  = static::getFilterTenantQuery();
-        $where              = self::mergeConditionQuery(["id = $id",$filterTenantQuery]);
+        $primaryKey = static::getPrimaryKey();
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$id);
+        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "SELECT * FROM $tableName WHERE $where";
         $listObject         = self::get($command);
         if(isset($listObject[0])){
@@ -118,7 +122,8 @@ class Model{
         $filterTenantQuery  = static::getFilterTenantQuery();
         $where              = self::mergeConditionQuery([$where,$filterTenantQuery]);
         $tableName          = static::getTableName();
-        $command            = "SELECT COUNT( DISTINCT $tableName.id) AS count FROM $tableName";
+        $primaryKey = static::getPrimaryKey();
+        $command            = "SELECT COUNT( DISTINCT $tableName.$primaryKey) AS count FROM $tableName";
         $command            .= ($where!='')?' WHERE '.$where:'';
         return self::countByQuery($command);
     }
@@ -157,6 +162,17 @@ class Model{
         $result         = Connection::exeQuery($command);
         $this->setAutoIncrementValueAfterInsert($result,$returnQuery,$returnColumn);
         return $result;
+    }
+    public function save(){
+        $primaryKey = static::getPrimaryKey();
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
+        if($this->$primaryKey=='' || static::count("$primaryKey=$primaryValue")==0){
+            $this->insert();
+        }
+        else{
+            $this->update();
+        }
     }
     private function setAutoIncrementValueAfterInsert($result,$returnQuery,$returnColumn){
         if($returnQuery != ''){
@@ -229,7 +245,10 @@ class Model{
     {
         $tableName          = static::getTableName();
         $filterTenantQuery  = static::getFilterTenantQuery();
-        $where              = self::mergeConditionQuery(["id = ".$this->id,$filterTenantQuery]);
+        $primaryKey = static::getPrimaryKey();
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
+        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "DELETE FROM $tableName WHERE $where";
         return connection::exeQuery($command);
     }
