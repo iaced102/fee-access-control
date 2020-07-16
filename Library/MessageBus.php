@@ -47,7 +47,7 @@ class MessageBus{
      * @param $consumerId : consumerId: String | false -nếu là không xác định và sẽ lấy từ đầu đến hiện tại (không thể resume), ngược lại, nếu set consumerid thì có thể resume khi bắt đầu lại
      * @return void
      */
-    public static function subscribe($topic,$consumerId,$callback){
+    public static function subscribe($topic,$consumerId,$callback,$offset=false){
         $conf = self::getKafkaConfig();
         $offsetType = RD_KAFKA_OFFSET_BEGINNING;
         $topicConf = new RdKafka\TopicConf();
@@ -61,9 +61,10 @@ class MessageBus{
         }
 
         $rk = new RdKafka\Consumer($conf);
+        //
         $topicObject = $rk->newTopic($topic,$topicConf);
-        
-        $topicObject->consumeStart(0, $offsetType);
+        $offset = is_numeric($offset)?$offset:$offsetType;
+        $topicObject->consumeStart(0, $offset);
         while (true) {
             $msg = $topicObject->consume(0,120000);
             if (null === $msg || $msg->err === RD_KAFKA_RESP_ERR__PARTITION_EOF) {
@@ -71,12 +72,13 @@ class MessageBus{
             } elseif ($msg->err) {
                 break;
             } else {
+                var_dump($msg);
                 $payload = json_decode($msg->payload,true);
                 if(is_callable($callback)){
                     $callback($msg->topic_name,$payload);
                 }
             }
-            exit;
+            
         }
     }
     /**
