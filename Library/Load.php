@@ -3,7 +3,9 @@ namespace Library;
 class Load{
     public static $fileMap = [];
     public static function autoLoad(){
-        require_once DIR . '/vendor/autoload.php';
+        if (file_exists(DIR . '/vendor/autoload.php')){
+            require_once DIR . '/vendor/autoload.php';
+        }
         self::requireDir('/Controller');
         self::requireDir('/Model');
         self::requireDir('/Library');
