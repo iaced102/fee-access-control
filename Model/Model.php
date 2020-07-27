@@ -2,8 +2,10 @@
 namespace Model;
 use Model\Connection;
 use Library\Auth;
+use ModelFilterHelper;
 
 class Model{
+    public static $mappingFromDatabase = [];
     public static function getTableName(){
         die(get_called_class()." not overriding getTableName");
     }
@@ -255,5 +257,68 @@ class Model{
     private static function mergeConditionQuery($listQuery){
         $listQuery = array_filter($listQuery);
         return implode(' AND ',$listQuery);
+    }
+
+    
+    public static function getByFilter($filter, $filterableColumns = false, $selectableColumns = false, $table = '')
+    {
+        $calledClass = get_called_class();
+        $returnObject = false;
+        $filter = self::standardlizeFilterData($filter);
+        $filterableColumns = is_array($filterableColumns) ? $filterableColumns :  self::getFilterableColumns();
+        $selectableColumns = is_array($selectableColumns) ? $selectableColumns :  self::getFilterableColumns();
+        
+        if($calledClass != 'Model\Model' ){
+            if($table == ''){
+                $returnObject = true;
+                $table = static::getTableName();
+            }else if($table == static::getTableName()){
+                $returnObject = true;
+            }
+        }
+
+        $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
+
+        $data = [];
+        $data['list'] = self::get($sql['full'], $returnObject);
+        $data['list'] = $data['list'] == false ? [] : $data['list'];
+        $data['total'] = self::get($sql['count'], false)[0]['count_items'];
+        $data['sql'] = $sql;
+        return $data;
+    }
+
+    public static function getFilterableColumns()
+    {
+        $columns = static::$mappingFromDatabase;
+        $result = [];
+        foreach ($columns as $prop => $column) {
+            if(!array_key_exists('notFilter', $column) || $column['notFilter'] == false){
+                $result[] = $column;
+            }
+        }
+        return $result;
+    }
+
+    public static function standardlizeFilterData($filter)
+    {
+        $mappingFromDatabase = static::$mappingFromDatabase;
+        $columns = [];
+        if(array_key_exists('columns', $filter)){
+            foreach ($filter['columns'] as $columnName) {
+                if(array_key_exists($columnName, $mappingFromDatabase)){
+                    $columns[] = $mappingFromDatabase[$columnName]['name'];
+                }
+            }
+        }
+        $filter['columns'] = $columns;
+        if(array_key_exists('filter', $filter)){
+            foreach ($filter['filter'] as $index  => &$item) {
+                $columnName = $item['column'];
+                if(array_key_exists($columnName, $mappingFromDatabase)){
+                    $item['column'] = $mappingFromDatabase[$columnName]['name'];
+                }
+            }
+        }
+        return $filter;
     }
 }
