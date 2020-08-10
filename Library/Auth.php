@@ -146,4 +146,16 @@ class Auth{
         }
         return '';
     }
+    public static function getCurrentRole(){
+        $dataLogin = self::getDataToken();
+        if(!empty($dataLogin)){
+            if(isset($dataLogin['type'])&&$dataLogin['type']=='ba' && isset($dataLogin['userDelegate']['role'])){
+                return $dataLogin['userDelegate']['role'];
+            }
+            else if(isset($dataLogin['role'])){
+                return $dataLogin['role'];
+            }
+        }
+        return false;
+    }
 }

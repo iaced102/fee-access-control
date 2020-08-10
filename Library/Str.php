@@ -33,4 +33,15 @@ class Str{
         }
         return $array;
     }
+    public static function bindDataToString($String,$variables){
+        if(is_array($variables)&& count($variables)>0 && stripos($String,"{")!==false){
+            foreach($variables as $key=>$value){
+                $String = str_ireplace("{$key}",$value,$String);
+                if(stripos($String,"{")===false){
+                    break;
+                }
+            }
+        }
+        return $String;
+    }
 }
