@@ -6,25 +6,67 @@ use Model\Model;
 use Model\RoleAction;
 
 class AccessControl{ 
-    public static function checkPermission($objectIdentifier,$action){
-        if(CacheService::getMemoryCache("permission:$objectIdentifier$action")==false){
-            $currentRole = Auth::getCurrentRole();
-            if($currentRole!=false){
-                $roleAction = RoleAction::getByTop(1,"role_identifier='$currentRole' AND object_identifier='$objectIdentifier' AND action='$action'");
-                if(count($roleAction)>0){
-                    if($roleAction[0]->status==1){
-                        CacheService::setMemoryCache("permission:$objectIdentifier$action",true);
-                        return true;
-                    }
+    public static $variables = [];
+    public static function checkPermission($objectIdentifier,$action,$variables=[]){
+        $variables = array_merge(self::$variables,$variables);
+        $objectIdentifier = Str::bindDataToString($objectIdentifier,$variables); 
+        $currentRole = Auth::getCurrentRole();
+        //
+        return self::getRoleActionLocal($currentRole,$objectIdentifier,$action);
+    }
+    public static function getRoleActionLocal($roleIdentifier,$objectIdentifier,$action){
+        $key = json_encode(['role'=>$roleIdentifier,'object'=>$objectIdentifier,'action'=>$action]);
+        if(CacheService::getMemoryCache($key)==false){
+            $roleAction = RoleAction::getByTop(1,"role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier' AND action='$action'");
+            if(count($roleAction)>0){
+                if($roleAction[0]->status==1){
+                    CacheService::setMemoryCache($key,true);
+                    return true;
                 }
             }
-            CacheService::setMemoryCache("permission:$objectIdentifier$action",false);
+            CacheService::setMemoryCache($key,false);
             return false;
         }
         else{
-            return CacheService::getMemoryCache("permission:$objectIdentifier$action");
+            return CacheService::getMemoryCache($key);
         }
+        
+        
     }
+    /*
+    * Lấy check flag trong memcache, nếu chưa có thì get về memcache, rồi get memcache trả về.
+    */
+    public static function checkRoleActionRemote($roleIdentifier,$objectIdentifier,$action){
+        $key = json_encode(['role'=>$roleIdentifier,'object'=>$objectIdentifier,'action'=>$action]);
+        if(!self::checkMemcache($roleIdentifier,$objectIdentifier)){
+            self::getRoleActionRemote($roleIdentifier,$objectIdentifier);    
+        }
+        return CacheService::get($key);
+        
+    }
+    /*
+    * Lấy quyền về memcache, và set flag là đã lấy bất kể là có quyền hoặc không.
+    */
+    public static function getRoleActionRemote($roleIdentifier,$objectIdentifier){
+        $dataResponse = Request::request(Request::API_ACCESS_CONTROL."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
+        if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
+            if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
+                foreach($dataResponse['data'] as $accessControl){
+                    $keyAccessControl = json_encode(['role'=>$accessControl['role_identifier'],'object'=>$accessControl['object_identifier'],'action'=>$accessControl['action']]);
+                    CacheService::set($keyAccessControl,$accessControl['status']);
+                }
+            }
+        }
+        
+        CacheService::set(json_encode(['role'=>$roleIdentifier,'object'=>$objectIdentifier,'flag'=>true]),true);
+    }
+    /*
+    *check xem đã được sync về chưa. Khác với đã lấy về nhưng không có quyền
+    */
+    public static function checkMemcache($roleIdentifier,$objectIdentifier){
+        return CacheService::get(json_encode(['role'=>$roleIdentifier,'object'=>$objectIdentifier,'flag'=>true]));
+    }
+    
     public static function filterByPermission($objectIdentifier,$action){
         if(self::checkPermission($objectIdentifier,$action)){
             return true;
