@@ -123,7 +123,9 @@ class Model{
         $where              = self::mergeConditionQuery([$where,$filterTenantQuery]);
         $tableName          = static::getTableName();
         $primaryKey = static::getPrimaryKey();
-        $command            = "SELECT COUNT( DISTINCT $tableName.$primaryKey) AS count FROM $tableName";
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnName  = $primaryColumnData['name'];
+        $command            = "SELECT COUNT( DISTINCT $tableName.$primaryColumnName) AS count FROM $tableName";
         $command            .= ($where!='')?' WHERE '.$where:'';
         return self::countByQuery($command);
     }
@@ -166,8 +168,9 @@ class Model{
     public function save(){
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnName  = $primaryColumnData['name'];
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        if($this->$primaryKey=='' || static::count("$primaryKey=$primaryValue")==0){
+        if($this->$primaryKey=='' || static::count("$primaryColumnName=$primaryValue")==0){
             $this->insert();
         }
         else{
@@ -230,8 +233,9 @@ class Model{
         $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnName  = $primaryColumnData['name'];
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "UPDATE ".$tableName." SET $keysCommand WHERE $where";
         return connection::exeQuery($command);
     }
@@ -247,8 +251,9 @@ class Model{
         $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnName  = $primaryColumnData['name'];
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "DELETE FROM $tableName WHERE $where";
         return connection::exeQuery($command);
     }
