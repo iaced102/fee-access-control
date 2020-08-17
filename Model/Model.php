@@ -264,8 +264,16 @@ class Model{
         return implode(' AND ',$listQuery);
     }
 
-    
-    public static function getByFilter($filter, $filterableColumns = false, $selectableColumns = false, $table = '')
+    /**
+     * Lấy danh sách bản ghi theo filter
+     *
+     * @param array $filter Cấu hình cho việc filter, cấu trúc của filter được quy định trong document về framework
+     * @param array $filterableColumns danh sách các cột được phép áp dụng filter
+     * @param array $selectableColumns danh sách các cột được phép select dữ liệu
+     * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
+     * @return array
+     */
+    public static function getByFilter($filter, $filterableColumns = [], $selectableColumns = [], $table = '')
     {
         $calledClass = get_called_class();
         $returnObject = false;
@@ -292,6 +300,13 @@ class Model{
         return $data;
     }
 
+    /**
+     * Lấy danh sách các cột được phép áp dụng filter của model,
+     * Mặc định tất cả các cột được định nghĩa trong Model đều có thể filter
+     * Nếu muốn cột nào đó không được phép filter (và select ) thì thêm option "notFilter" vào định nghĩa cột trong model
+     *
+     * @return array
+     */
     public static function getFilterableColumns()
     {
         $columns = static::$mappingFromDatabase;
@@ -304,6 +319,12 @@ class Model{
         return $result;
     }
 
+    /**
+     * Chuẩn hóa cấu trúc filter 
+     *
+     * @param array $filter filter nhận được từ client
+     * @return void
+     */
     public static function standardlizeFilterData($filter)
     {
         $mappingFromDatabase = static::$mappingFromDatabase;

@@ -49,7 +49,7 @@ class ModelFilterHelper{
         ];
     }   
 
-    public static function getSort($filter)
+    private static function getSort($filter)
     {
         $sort = '';
         if(array_key_exists('sort', $filter)){
@@ -64,7 +64,7 @@ class ModelFilterHelper{
         return $sort;
     }
 
-    public static function getFrom($table)
+    private static function getFrom($table)
     {
         if(stripos($table, "select ") !== false){
             $table = "( $table ) as symper_tmp_table ";
@@ -79,7 +79,7 @@ class ModelFilterHelper{
      * @param array $selectableColumns danh sách các cột có thể đưa vào mệnh đề select do dev quy định khi tạo Model hoặc truyền vào
      * @return array
      */
-    public static function getColumnArrForSelect($filter, $selectableColumns)
+    private static function getColumnArrForSelect($filter, $selectableColumns)
     {
         $columns = [];
         if(array_key_exists('columns', $filter) && count($filter['columns']) > 0){
@@ -96,7 +96,7 @@ class ModelFilterHelper{
         return $columns;
     }
 
-    public static function getWhereCondition($filter, $filterableColumns, $columns)
+    private static function getWhereCondition($filter, $filterableColumns, $columns)
     {
         $whereItems = [];
         foreach ($filter['filter'] as $filterItem) {
@@ -214,7 +214,7 @@ class ModelFilterHelper{
         return $str;
     }
 
-    public static function standardlizeFilterData($filter)
+    private static function standardlizeFilterData($filter)
     {
         $result = $filter;
         if(!array_key_exists('page', $filter)){
