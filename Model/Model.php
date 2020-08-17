@@ -321,9 +321,9 @@ class Model{
 
 
     /**
-     * Lấy danh sách các cột được phép áp dụng filter của model,
-     * Mặc định tất cả các cột được định nghĩa trong Model đều có thể filter
-     * Nếu muốn cột nào đó không được phép filter (và select ) thì thêm option "notFilter" vào định nghĩa cột trong model
+     * Lấy danh sách các cột được phép select trong câu lệnh SQL 
+     * Mặc định tất cả các cột được định nghĩa trong Model đều có thể đưa vào select
+     * Nếu muốn cột nào đó không được phép select thì thêm option "notSelect" vào định nghĩa cột trong model
      *
      * @return array
      */
