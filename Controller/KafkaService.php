@@ -3,6 +3,7 @@ namespace Controller;
 
 use Library\MessageBus;
 use Library\Auth;
+use Library\CacheService;
 use Library\Message;
 use Library\Str;
 use Model\ActionPack;
@@ -26,8 +27,10 @@ class KafkaService extends Controller
         MessageBus::subscribeMultiTopic(
             ['users','user_group','user','role_action'],
             'accesscontrol.symper.vn',
-            function($item){
-                
+            function($topic,$item){
+                if($topic=='role_action'){
+                    $this->processRoleAction($item);
+                }
             },
             '/KafkaService/subscribe',
             '/KafkaService/stopSubscribe'
@@ -39,5 +42,8 @@ class KafkaService extends Controller
             $result = posix_kill($processId,9);
             $this->output['status'] = $result?STATUS_OK: STATUS_SERVER_ERROR;
         }
+    }
+    function processRoleAction($item){
+        CacheService::clear();
     }
 }
