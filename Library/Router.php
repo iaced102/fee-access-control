@@ -6,12 +6,16 @@ class Router{
     public $controller = '';
     public $action = '';
     public $parameters = [];
-    public function __construct($method,$uri,$controller,$action='',$parameters=[]){
-        $this->method = $method;
-        $this->uri = $uri;
-        $this->controller = $controller;
-        $this->action = $action;
-        $this->parameters = $parameters;
+    public $permissionObjectIdentifier=false;
+    public $permissionAction=false;
+    public function __construct($method,$uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
+        $this->method                       = $method;
+        $this->uri                          = $uri;
+        $this->controller                   = $controller;
+        $this->action                       = $action;
+        $this->parameters                   = $parameters;
+        $this->permissionObjectIdentifier   = $permissionObjectIdentifier;
+        $this->permissionAction             = $permissionAction;
     }
     public function run(){
         if($this->method=='redirect'){
@@ -24,8 +28,17 @@ class Router{
                 $controllerObject->currentAction = $this->action;
                 $extendParameters = $this->getExtendParameters();
                 $parameters = array_merge($this->parameters,$extendParameters);
+                
+                if($this->permissionObjectIdentifier!=false&&$this->permissionAction!=false){
+                    $this->permissionObjectIdentifier = Str::bindDataToString($this->permissionObjectIdentifier,$parameters);
+                    AccessControl::filterByPermission($this->permissionObjectIdentifier,$this->permissionAction);
+
+                }
+
                 $controllerObject->parameters = $parameters;
                 $controllerObject->run();
+            
+                
             }
             else{
                 Redirect::redirect404();
@@ -33,6 +46,7 @@ class Router{
         }
         
     }
+    
     public  function redirect(){
         Redirect::redirect($this->controller);
     }
@@ -56,4 +70,8 @@ class Router{
             return [];
         } 
     }
+    
+    
+   
+
 }
