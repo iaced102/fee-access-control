@@ -111,7 +111,7 @@ class ModelFilterHelper{
         if(trim($searchKey) != ''){
             $searchConditions = [];
             foreach ($columns as $colName) {
-                $searchConditions[] = " \"$colName\" ILIKE '%$searchKey%' ";
+                $searchConditions[] = " CAST(\"$colName\" AS VARCHAR) ILIKE '%$searchKey%' ";
             }
 
             if(count($searchConditions) > 0){
