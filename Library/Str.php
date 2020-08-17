@@ -23,6 +23,10 @@ class Str{
         }
         return $randomString;
     }
+    public static function isJson($dataString){
+        $data = json_decode($dataString);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
     public static function getArrayFromUnclearData($data){
         $array = [];
         if(is_array($data)){
@@ -30,6 +34,9 @@ class Str{
         }
         else if(is_string($data)){
             $array = json_decode($data,true);
+            if(!is_array($array)){
+                $array = explode(',',$data);
+            }
         }
         return $array;
     }
