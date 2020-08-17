@@ -2,8 +2,10 @@
 namespace Model;
 use Model\Connection;
 use Library\Auth;
+use ModelFilterHelper;
 
 class Model{
+    public static $mappingFromDatabase = [];
     public static function getTableName(){
         die(get_called_class()." not overriding getTableName");
     }
@@ -260,5 +262,89 @@ class Model{
     private static function mergeConditionQuery($listQuery){
         $listQuery = array_filter($listQuery);
         return implode(' AND ',$listQuery);
+    }
+
+    /**
+     * Lấy danh sách bản ghi theo filter
+     *
+     * @param array $filter Cấu hình cho việc filter, cấu trúc của filter được quy định trong document về framework
+     * @param array $filterableColumns danh sách các cột được phép áp dụng filter
+     * @param array $selectableColumns danh sách các cột được phép select dữ liệu
+     * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
+     * @return array
+     */
+    public static function getByFilter($filter, $filterableColumns = [], $selectableColumns = [], $table = '')
+    {
+        $calledClass = get_called_class();
+        $returnObject = false;
+        $filter = self::standardlizeFilterData($filter);
+        $filterableColumns = is_array($filterableColumns) ? $filterableColumns :  self::getFilterableColumns();
+        $selectableColumns = is_array($selectableColumns) ? $selectableColumns :  self::getFilterableColumns();
+        
+        if($calledClass != 'Model\Model' ){
+            if($table == ''){
+                $returnObject = true;
+                $table = static::getTableName();
+            }else if($table == static::getTableName()){
+                $returnObject = true;
+            }
+        }
+
+        $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
+
+        $data = [];
+        $data['list'] = self::get($sql['full'], $returnObject);
+        $data['list'] = $data['list'] == false ? [] : $data['list'];
+        $data['total'] = self::get($sql['count'], false)[0]['count_items'];
+        $data['sql'] = $sql;
+        return $data;
+    }
+
+    /**
+     * Lấy danh sách các cột được phép áp dụng filter của model,
+     * Mặc định tất cả các cột được định nghĩa trong Model đều có thể filter
+     * Nếu muốn cột nào đó không được phép filter (và select ) thì thêm option "notFilter" vào định nghĩa cột trong model
+     *
+     * @return array
+     */
+    public static function getFilterableColumns()
+    {
+        $columns = static::$mappingFromDatabase;
+        $result = [];
+        foreach ($columns as $prop => $column) {
+            if(!array_key_exists('notFilter', $column) || $column['notFilter'] == false){
+                $result[] = $column;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Chuẩn hóa cấu trúc filter 
+     *
+     * @param array $filter filter nhận được từ client
+     * @return void
+     */
+    public static function standardlizeFilterData($filter)
+    {
+        $mappingFromDatabase = static::$mappingFromDatabase;
+        $columns = [];
+        if(array_key_exists('columns', $filter)){
+            foreach ($filter['columns'] as $columnName) {
+                if(array_key_exists($columnName, $mappingFromDatabase)){
+                    $columns[] = $mappingFromDatabase[$columnName]['name'];
+                }
+            }
+        }
+        $filter['columns'] = $columns;
+        if(array_key_exists('filter', $filter)){
+            foreach ($filter['filter'] as $index  => &$item) {
+                $columnName = $item['column'];
+                if(array_key_exists($columnName, $mappingFromDatabase)){
+                    $item['column'] = $mappingFromDatabase[$columnName]['name'];
+                }
+            }
+        }
+        return $filter;
     }
 }
