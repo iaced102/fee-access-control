@@ -279,8 +279,8 @@ class Model{
         $calledClass = get_called_class();
         $returnObject = false;
         $filter = self::standardlizeFilterData($filter);
-        $filterableColumns = is_array($filterableColumns) ? $filterableColumns :  self::getFilterableColumns();
-        $selectableColumns = is_array($selectableColumns) ? $selectableColumns :  self::getFilterableColumns();
+        $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
+        $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
         
         if($calledClass != 'Model\Model' ){
             if($table == ''){
@@ -314,6 +314,26 @@ class Model{
         $result = [];
         foreach ($columns as $prop => $column) {
             if(!array_key_exists('notFilter', $column) || $column['notFilter'] == false){
+                $result[] = $column;
+            }
+        }
+        return $result;
+    }
+
+
+    /**
+     * Lấy danh sách các cột được phép select trong câu lệnh SQL 
+     * Mặc định tất cả các cột được định nghĩa trong Model đều có thể đưa vào select
+     * Nếu muốn cột nào đó không được phép select thì thêm option "notSelect" vào định nghĩa cột trong model
+     *
+     * @return array
+     */
+    public static function getSelectableColumns()
+    {
+        $columns = static::$mappingFromDatabase;
+        $result = [];
+        foreach ($columns as $prop => $column) {
+            if(!array_key_exists('notSelect', $column) || $column['notSelect'] == false){
                 $result[] = $column;
             }
         }
