@@ -2,7 +2,7 @@
 namespace Library;
 class CacheService{
     private static function connect(){
-        $cache=new Memcached();
+        $cache=new \Memcached();
         $cache->addServer('127.0.0.1',11211);
         return $cache;
     }
