@@ -158,4 +158,13 @@ class Auth{
         }
         return false;
     }
+    public static function isBa(){
+        $dataLogin = self::getDataToken();
+        if(!empty($dataLogin)){
+            if(isset($dataLogin['type'])&&$dataLogin['type']=='ba'){
+                return true;
+            }
+        }
+        return false;
+    }
 }

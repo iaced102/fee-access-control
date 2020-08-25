@@ -33,6 +33,16 @@ class AccessControl{
         
         
     }
+    public static function checkActionWithCurrentRole($objectIdentifier,$action){
+        if(Auth::isBa()){
+            return true;    
+        }
+        else{
+            $roleIdentifier = Auth::getCurrentRole();
+            return self::checkRoleActionRemote($roleIdentifier,$objectIdentifier,$action);
+        }
+        
+    }
     /*
     * Lấy check flag trong memcache, nếu chưa có thì get về memcache, rồi get memcache trả về.
     */
