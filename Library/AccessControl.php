@@ -63,7 +63,7 @@ class AccessControl{
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
-                    $keyAccessControl = json_encode(['role'=>$accessControl['role_identifier'],'object'=>$accessControl['object_identifier'],'action'=>$accessControl['action']]);
+                    $keyAccessControl = json_encode(['role'=>$accessControl['roleIdentifier'],'object'=>$accessControl['objectIdentifier'],'action'=>$accessControl['action']]);
                     CacheService::set($keyAccessControl,$accessControl['status']);
                     $listAction[]=$accessControl['action'];
                 }
@@ -80,12 +80,12 @@ class AccessControl{
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
-                    $keyAccessControl = json_encode(['role'=>$accessControl['role_identifier'],'object'=>$accessControl['object_identifier'],'action'=>$accessControl['action']]);
+                    $keyAccessControl = json_encode(['role'=>$accessControl['roleIdentifier'],'object'=>$accessControl['objectIdentifier'],'action'=>$accessControl['action']]);
                     CacheService::set($keyAccessControl,$accessControl['status']);
-                    if(!isset($listAction[$accessControl['object_identifier']])){
-                        $listAction[$accessControl['object_identifier']]=[];
+                    if(!isset($listAction[$accessControl['objectIdentifier']])){
+                        $listAction[$accessControl['objectIdentifier']]=[];
                     }
-                    $listAction[$accessControl['object_identifier']][]=$accessControl['action'];
+                    $listAction[$accessControl['objectIdentifier']][]=$accessControl['action'];
                 }
             }
         }
