@@ -19,7 +19,7 @@ class CacheService{
         $mycache=self::connect();
         $mycache->flush();
     }
-    public static function set($key,$value,$expired=5){
+    public static function set($key,$value,$expired=0){
         if((!USE_MEMCACHE)||(isset($GLOBALS['IsNoCache'])&&$GLOBALS['IsNoCache']===true))
         {
             return;
