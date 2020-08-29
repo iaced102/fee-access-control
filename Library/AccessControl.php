@@ -48,7 +48,7 @@ class AccessControl{
     */
     public static function checkRoleActionRemote($roleIdentifier,$objectIdentifier,$action){
         $key = json_encode(['role'=>$roleIdentifier,'object'=>$objectIdentifier,'action'=>$action]);
-        if(self::checkMemcache($roleIdentifier,$objectIdentifier)!==false){
+        if(self::checkMemcache($roleIdentifier,$objectIdentifier)===false){
             self::getRoleActionRemote($roleIdentifier,$objectIdentifier);    
         }
         return CacheService::get($key);
