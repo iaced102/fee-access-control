@@ -76,8 +76,9 @@ class Model{
         $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnName  = $primaryColumnData['name']; 
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$id);
-        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "SELECT * FROM $tableName WHERE $where";
         $listObject         = self::get($command);
         if(isset($listObject[0])){

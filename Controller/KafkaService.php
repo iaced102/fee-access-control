@@ -26,7 +26,7 @@ class KafkaService extends Controller
         
         MessageBus::subscribeMultiTopic(
             ['users','user_group','user','role_action'],
-            'accesscontrol.symper.vn',
+            '',
             function($topic,$item){
                 if($topic=='role_action'){
                     $this->processRoleAction($item);
