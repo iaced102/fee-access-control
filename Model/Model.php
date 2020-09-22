@@ -375,6 +375,13 @@ class Model{
             }
             $filter['filter']  = array_merge($filter['filter'], $moreConditions);
         }
+
+        if(array_key_exists('sort', $filter)){
+            foreach ($filter['sort'] as $index => $sortItem) {
+                $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
+            }
+        }
+
         return $filter;
     }
 }
