@@ -33,7 +33,7 @@ class ModelFilterHelper{
         $where = self::getWhereCondition($filter, $filterableColumns, $columns);
         $table = self::getFrom($table);
         $limit = $filter['pageSize']." OFFSET ".(($filter['page']-1)*$filter['pageSize']);
-        $sort = self::getSort($filter);
+        $sort = self::getSort($filter, $columns);
 
         $columns = implode("\" , \"", $columns);
         $columns = "\"$columns\"";
@@ -49,16 +49,23 @@ class ModelFilterHelper{
         ];
     }   
 
-    private static function getSort($filter)
+    private static function getSort($filter, $columns)
     {
         $sort = '';
         if(array_key_exists('sort', $filter)){
             $sort = [];
             foreach ($filter['sort'] as $item) {
-                $sort[] = '"'.$item['column'].'" '.$item['type'];
+                if(array_search($item['column'],$columns)){
+                    $sort[] = '"'.$item['column'].'" '.$item['type'];
+                }
             }
-            $sort = implode(' , ', $sort);
-            $sort = " ORDER BY $sort";
+
+            if(count($sort) > 0){
+                $sort = implode(' , ', $sort);
+                $sort = " ORDER BY $sort";
+            }else{
+                $sort = '';
+            }
         }
 
         return $sort;
@@ -155,7 +162,9 @@ class ModelFilterHelper{
                     $cond[] = self::bindValueToWhereItem($item['name'], $colName, $value, $mapColumns);
                 }
             }
-            $conds[] = implode(" ".$conditionItem['operation']." ", $cond);
+
+            $conjunction = array_key_exists('operation', $conditionItem) ? $conditionItem['operation'] : ' AND';
+            $conds[] = implode(" ".$conjunction." ", $cond);
         }
 
         if(array_key_exists('valueFilter', $conditionItem)){
@@ -177,26 +186,40 @@ class ModelFilterHelper{
     public static function bindValueToWhereItem( $op ,$colName, $value, $mapColumns)
     {
         
-        $COLUMN = 'SYMPER_COLUMN_PLACE_FOLDER';
-        $VALUE = 'SYMPER_VALUE_PLACE_FOLDER';
+        $COLUMN = 'SYMPER_COLUMN_PLACE_HOLDER';
+        $VALUE = 'SYMPER_VALUE_PLACE_HOLDER';
 
+        if(array_key_exists($colName, $mapColumns)){
+            $colDef = $mapColumns[$colName];
+            if($op == 'in' || $op == 'notIn'){
+                $colType = $colDef['type'];
+                if($colType == 'number'){
+                    $value = implode(' , ', $value);
+                    $value = "($value)";
+                }else{
+                    $value = implode("' , '", $value);
+                    $value = "('$value')";
+                }
+            }
+        }
+        
         $mapOpertationToSQL = [
-            'empty'         => "($COLUMN IS NULL OR $COLUMN = '' ) ",
-            'not_empty'     => "($COLUMN IS NOT NULL AND $COLUMN != '' ) ",
-            'equal'         => "$COLUMN = $VALUE",
-            'not_equal'     => "$COLUMN != $VALUE",
-            'gt'            => "$COLUMN > $VALUE",
-            'gte'           => "$COLUMN >= $VALUE",
-            'lt'            => "$COLUMN < $VALUE",
-            'lte'           => "$COLUMN <= $VALUE",
-    
-            'begins_with'   => "$COLUMN ILIKE '$VALUE%'",
-            'ends_with'     => "$COLUMN ILIKE '%$VALUE'",
-            'contains'      => "$COLUMN ILIKE '%$VALUE%'",
-            'not_contain'   => "$COLUMN NOT ILIKE '%$VALUE%'",
+            'empty'                 => "($COLUMN IS NULL OR $COLUMN = '' ) ",
+            'not_empty'             => "($COLUMN IS NOT NULL AND $COLUMN != '' ) ",
+            'equal'                 => "$COLUMN = $VALUE",
+            'not_equal'             => "$COLUMN != $VALUE",
+            'greater_than'          => "$COLUMN > $VALUE",
+            'greater_than_or_equal' => "$COLUMN >= $VALUE",
+            'less_than'             => "$COLUMN < $VALUE",
+            'less_than_or_equal'    => "$COLUMN <= $VALUE",
+            'begins_with'           => "$COLUMN ILIKE '$VALUE%'",
+            'ends_with'             => "$COLUMN ILIKE '%$VALUE'",
+            'contains'              => "$COLUMN ILIKE '%$VALUE%'",
+            'not_contain'           => "$COLUMN NOT ILIKE '%$VALUE%'",
+            'in'                    => "$COLUMN IN $value",
+            'not_in'                => "$COLUMN NOT IN $value",
         ];
 
-        
         $str = $mapOpertationToSQL[$op];
         if(array_key_exists($colName, $mapColumns)){
             $colDef = $mapColumns[$colName];
@@ -209,6 +232,7 @@ class ModelFilterHelper{
                 $colName = "CAST(\"$colName\" AS VARCHAR)";
             }
         }
+
         $str = str_replace($COLUMN, $colName, $str);
         $str = str_replace($VALUE, $value, $str);
         return $str;

@@ -269,16 +269,17 @@ class Model{
      * Lấy danh sách bản ghi theo filter
      *
      * @param array $filter Cấu hình cho việc filter, cấu trúc của filter được quy định trong document về framework
+     * @param array $moreConditions Thêm các điều kiện lọc vào trong filter 
      * @param array $filterableColumns danh sách các cột được phép áp dụng filter
      * @param array $selectableColumns danh sách các cột được phép select dữ liệu
      * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
      * @return array
      */
-    public static function getByFilter($filter, $filterableColumns = [], $selectableColumns = [], $table = '')
+    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '')
     {
         $calledClass = get_called_class();
         $returnObject = false;
-        $filter = self::standardlizeFilterData($filter);
+        $filter = self::standardlizeFilterData($filter, $moreConditions);
         $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
         $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
         
@@ -344,9 +345,10 @@ class Model{
      * Chuẩn hóa cấu trúc filter 
      *
      * @param array $filter filter nhận được từ client
+     * @param array $moreConditions Các điều kiện khác cần truyền vào
      * @return void
      */
-    public static function standardlizeFilterData($filter)
+    public static function standardlizeFilterData($filter, $moreConditions = [])
     {
         $mappingFromDatabase = static::$mappingFromDatabase;
         $columns = [];
@@ -366,6 +368,20 @@ class Model{
                 }
             }
         }
+
+        if(count($moreConditions) > 0 ){
+            if(!array_key_exists('filter', $filter)){
+                $filter['filter'] = [];
+            }
+            $filter['filter']  = array_merge($filter['filter'], $moreConditions);
+        }
+
+        if(array_key_exists('sort', $filter)){
+            foreach ($filter['sort'] as $index => $sortItem) {
+                $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
+            }
+        }
+
         return $filter;
     }
 }
