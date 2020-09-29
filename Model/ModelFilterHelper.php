@@ -55,7 +55,7 @@ class ModelFilterHelper{
         if(array_key_exists('sort', $filter)){
             $sort = [];
             foreach ($filter['sort'] as $item) {
-                if(array_search($item['column'],$columns)){
+                if(array_search($item['column'],$columns) !== false){
                     $sort[] = '"'.$item['column'].'" '.$item['type'];
                 }
             }
