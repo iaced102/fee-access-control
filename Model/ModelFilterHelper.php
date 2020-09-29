@@ -191,7 +191,7 @@ class ModelFilterHelper{
 
         if(array_key_exists($colName, $mapColumns)){
             $colDef = $mapColumns[$colName];
-            if($op == 'in' || $op == 'notIn'){
+            if($op == 'in' || $op == 'not_in'){
                 $colType = $colDef['type'];
                 if($colType == 'number'){
                     $value = implode(' , ', $value);
