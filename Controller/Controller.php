@@ -11,6 +11,7 @@ use Library\Auth;
 use Library\CacheService;
 use Library\Library;
 use Library\Redirect;
+use Library\Message;
 
 class Controller{
     public $defaultAction;
@@ -57,7 +58,7 @@ class Controller{
         }
         $this->output = [
             'status' => STATUS_PERMISSION_DENIED,
-            'message'=> \Library\Message::getStatusResponse(STATUS_PERMISSION_DENIED)
+            'message'=> Message::getStatusResponse(STATUS_PERMISSION_DENIED)
         ];
         return false;
     }
@@ -90,7 +91,7 @@ class Controller{
                 if(!isset($this->parameters[$parameter])){
                     $this->output = [
                         'status' => STATUS_BAD_REQUEST,
-                        'message'=> \Library\Message::getStatusResponse(STATUS_BAD_REQUEST)
+                        'message'=> Message::getStatusResponse(STATUS_BAD_REQUEST)
                     ];
                     return false;
                 }
@@ -100,7 +101,10 @@ class Controller{
     }
     private function returnOutput(){
         header('Content-Type: application/json');
-        if((!isset($this->output['message']))|| $this->output['message']==''){
+        if(!isset($this->output['status'])){
+            $this->output['status'] = STATUS_OK;
+        }
+        if((!isset($this->output['message'])) || $this->output['message']==''){
             $this->output['message'] = Message::getStatusResponse($this->output['status']);
         }
         print json_encode($this->output);
