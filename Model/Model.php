@@ -151,7 +151,7 @@ class Model{
         foreach($listVar as $key => $value){
             $columnData = static::getColumnNameInDataBase($key,true);
             if(is_string($value) || is_numeric($value)){
-                if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false|| ($columnData['auto_increment']==true && $value!=''))){
+                if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false ||$value!='')){
                     $columns[] = $columnData['name'];
                     $values[]  = self::getValueForSqlCommand($columnData,$value);
                 }   
@@ -200,7 +200,7 @@ class Model{
                 $values[$i]=[];
                 foreach($listVar as $key => $value){
                     $columnData = static::getColumnNameInDataBase($key,true);
-                    if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false|| ($columnData['auto_increment']==true && $value!=''))){
+                    if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false|| $value!='')){
                         if($i===0){
                             $columns[] = $columnData['name'];
                         }
