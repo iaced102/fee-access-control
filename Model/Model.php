@@ -275,11 +275,12 @@ class Model{
      * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
      * @return array
      */
-    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '')
+    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '', $sqlOnly = false)
     {
         $calledClass = get_called_class();
         $returnObject = false;
-        $filter = self::standardlizeFilterData($filter, $moreConditions);
+        $callFromModel = $calledClass == 'Model\Model';
+        $filter = self::standardlizeFilterData($filter, $moreConditions, $callFromModel);
         $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
         $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
         
@@ -295,8 +296,10 @@ class Model{
         $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
 
         $data = [];
-        $data['list'] = self::get($sql['full'], $returnObject);
-        $data['list'] = $data['list'] == false ? [] : $data['list'];
+        if(!$sqlOnly){
+            $data['list'] = self::get($sql['full'], $returnObject);
+            $data['list'] = $data['list'] == false ? [] : $data['list'];
+        }
         $data['total'] = self::get($sql['count'], false)[0]['count_items'];
         $data['sql'] = $sql;
         return $data;
@@ -348,7 +351,7 @@ class Model{
      * @param array $moreConditions Các điều kiện khác cần truyền vào
      * @return void
      */
-    public static function standardlizeFilterData($filter, $moreConditions = [])
+    public static function standardlizeFilterData($filter, $moreConditions = [], $callFromModel = true)
     {
         $mappingFromDatabase = static::$mappingFromDatabase;
         $columns = [];
@@ -380,6 +383,24 @@ class Model{
             foreach ($filter['sort'] as $index => $sortItem) {
                 $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
             }
+        }
+
+        
+        if(array_key_exists('sort', $filter)){
+            foreach ($filter['sort'] as $index => $sortItem) {
+                $originColumn = $sortItem['column'];
+                if($callFromModel){
+                    $filter['sort'][$index]['column'] = $originColumn;
+                }else{
+                    if(array_key_exists($originColumn, $mappingFromDatabase)){
+                        $filter['sort'][$index]['column'] = $mappingFromDatabase[$originColumn]['name'];
+                    }
+                }
+            }
+        }
+
+        if(!array_key_exists('stringCondition', $filter)){
+            $filter['stringCondition'] = '';
         }
 
         return $filter;
