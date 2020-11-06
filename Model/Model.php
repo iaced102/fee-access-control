@@ -279,7 +279,8 @@ class Model{
     {
         $calledClass = get_called_class();
         $returnObject = false;
-        $filter = self::standardlizeFilterData($filter, $moreConditions);
+        $callFromModel = $calledClass == 'Model\Model';
+        $filter = self::standardlizeFilterData($filter, $moreConditions, $callFromModel);
         $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
         $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
         
@@ -350,7 +351,7 @@ class Model{
      * @param array $moreConditions Các điều kiện khác cần truyền vào
      * @return void
      */
-    public static function standardlizeFilterData($filter, $moreConditions = [])
+    public static function standardlizeFilterData($filter, $moreConditions = [], $callFromModel = true)
     {
         $mappingFromDatabase = static::$mappingFromDatabase;
         $columns = [];
@@ -382,6 +383,24 @@ class Model{
             foreach ($filter['sort'] as $index => $sortItem) {
                 $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
             }
+        }
+
+        
+        if(array_key_exists('sort', $filter)){
+            foreach ($filter['sort'] as $index => $sortItem) {
+                $originColumn = $sortItem['column'];
+                if($callFromModel){
+                    $filter['sort'][$index]['column'] = $originColumn;
+                }else{
+                    if(array_key_exists($originColumn, $mappingFromDatabase)){
+                        $filter['sort'][$index]['column'] = $mappingFromDatabase[$originColumn]['name'];
+                    }
+                }
+            }
+        }
+
+        if(!array_key_exists('stringCondition', $filter)){
+            $filter['stringCondition'] = '';
         }
 
         return $filter;

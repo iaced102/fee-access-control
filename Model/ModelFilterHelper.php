@@ -129,8 +129,11 @@ class ModelFilterHelper{
 
         $where = '';
         if(trim($whereItems) != ''){
-            $where = " WHERE $whereItems ";
+            $where = " WHERE $whereItems ".$filter['stringCondition'];
+        }else if($filter['stringCondition'] != ''){
+            $where = " WHERE ".$filter['stringCondition'];
         }
+
 
         return $where;
     }
