@@ -14,11 +14,6 @@ ob_start();
 header("Connection: close");
 header('Content-Encoding: none');
 define("SITE_NAME", "https://".$_SERVER['SERVER_NAME']);
-
-define('SERVER','localhost');
-define('DB_NAME','databasename');
-define('DB_USERNAME','username');
-define('DB_PASSWORD','password');
 define('PRIVATE_KEY','EGRRH^&%&&%6584');
 
 define('USE_MEMCACHE',false);

@@ -16,10 +16,11 @@ class MessageBus{
      * @param $resources : List các resource
      * @return void
      */
-    public static function publishBulk($topic,$event,$resources){
+    public static function publishBulk($topicName,$event,$resources){
         $conf = self::getKafkaConfig();
+        $topicName = Environment::getPrefixEnvironment()."$topicName";
         $producer = new RdKafka\Producer($conf);
-        $topic = $producer->newTopic($topic);
+        $topic = $producer->newTopic($topicName);
         foreach($resources as $resource){
             $payload = [
                 'event' => $event,
@@ -56,6 +57,7 @@ class MessageBus{
         $offsetType = RD_KAFKA_OFFSET_BEGINNING;
         $topicConf = new RdKafka\TopicConf();
         if($consumerId!=false){
+            $consumerId = Environment::getPrefixEnvironment().$consumerId;
             $conf->set('group.id', $consumerId);
             $offsetType = RD_KAFKA_OFFSET_STORED;
             
@@ -65,7 +67,7 @@ class MessageBus{
         }
 
         $rk = new RdKafka\Consumer($conf);
-        $topicObject = $rk->newTopic($topic,$topicConf);
+        $topicObject = $rk->newTopic(Environment::getPrefixEnvironment().$topic,$topicConf);
         
         $topicObject->consumeStart(0, $offsetType);
         while (true) {
@@ -97,6 +99,7 @@ class MessageBus{
         $offsetType = RD_KAFKA_OFFSET_BEGINNING;
         $topicConf = new RdKafka\TopicConf();
         if($consumerId!=false){
+            $consumerId = Environment::getPrefixEnvironment().$consumerId;
             $conf->set('group.id', $consumerId);
             $offsetType = RD_KAFKA_OFFSET_STORED;
             
@@ -109,6 +112,7 @@ class MessageBus{
         //
         $queue = $rk->newQueue();
         foreach($topics as $topic){
+            $topic = Environment::getPrefixEnvironment().$topic;
             $topicObject = $rk->newTopic($topic,$topicConf);
             $topicObject->consumeQueueStart(0, $offsetType,$queue);
         }
@@ -174,4 +178,5 @@ class MessageBus{
         }
         return false;
     }
+    
 }

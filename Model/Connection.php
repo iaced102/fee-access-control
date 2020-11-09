@@ -10,10 +10,10 @@ class Connection{
     }
     
     public static function connectSql($server = false, $database = false, $userName = false, $password = false){
-        $server = $server == false ? SERVER: $server;
-        $database = $database == false ? DB_NAME : $database;
-        $userName = $userName == false ? DB_USERNAME : $userName;
-        $password = $password == false ? DB_PASSWORD : $password;
+        $server = $server == false ? $GLOBALS['env']['database']['dbhost']: $server;
+        $database = $database == false ? $GLOBALS['env']['database']['dbname'] : $database;
+        $userName = $userName == false ? $GLOBALS['env']['database']['username'] : $userName;
+        $password = $password == false ? $GLOBALS['env']['database']['password'] : $password;
         $connection = CacheService::getMemoryCache("Connection".$server.$database);
         if($connection == false){
             $connection = self::_connectPostgreSQL($server, $userName, $password, $database);

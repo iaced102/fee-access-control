@@ -9,12 +9,19 @@
 use Library\Route;
 header("Access-Control-Allow-Origin: *");
 header('Access-Control-Allow-Credentials: true');
-header ("Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS");
-header ("Access-Control-Allow-Headers: *");
-header ("Access-Control-Max-Age: 86400");
+header("Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: *");
+header("Access-Control-Max-Age: 86400");
 define("DIR", dirname(__FILE__));
-require 'Config/Init.php';
-$uri=isset($_GET['uri'])?$_GET['uri']:'';
-if($uri!='404.html'){
-    Route::performRequest($uri);
+if(file_exists('env.json')){
+    $GLOBALS['env'] = json_decode(file_get_contents('env.json'),true);
+    var_dump($GLOBALS['env']);
+    require 'Config/Init.php';
+    $uri=isset($_GET['uri'])?$_GET['uri']:'';
+    if($uri!='404.html'){
+        Route::performRequest($uri);
+    }
+}
+else{
+    print 'missing env.json';
 }
