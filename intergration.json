@@ -12,5 +12,9 @@
     },
     "initialization":{
         "postgresql":"data/init.sql"
+    },
+    "worker":{
+        "start":"/KafkaService/subscribe",
+        "stop":"/KafkaService/stopAllSubscribe"
     }
 }
