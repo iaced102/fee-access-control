@@ -299,8 +299,8 @@ class Model{
         if(!$sqlOnly){
             $data['list'] = self::get($sql['full'], $returnObject);
             $data['list'] = $data['list'] == false ? [] : $data['list'];
+            $data['total'] = self::get($sql['count'], false)[0]['count_items'];
         }
-        $data['total'] = self::get($sql['count'], false)[0]['count_items'];
         $data['sql'] = $sql;
         return $data;
     }
