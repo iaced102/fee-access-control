@@ -46,5 +46,13 @@ class Connection{
         CacheService::set($command,$resultData);
         return $resultData;
     }
-    
+    public static function getLastError(){
+        $lastError = pg_last_error(self::connectSql());
+        if($lastError !== false){
+            return $lastError;
+        }
+        else{
+            return '';
+        }
+    }
 }
