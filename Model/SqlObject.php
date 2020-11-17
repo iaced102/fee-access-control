@@ -75,4 +75,14 @@ class SqlObject extends Model{
         }
         return false;
     }
+    public static function createUUID(){
+        return sprintf('%08x-%04x-%04x-%04x-%04x%08x',
+            time(),
+            getmypid(),
+            mt_rand( 0, 0xffff ),
+            mt_rand( 0, 0xffff ),
+            mt_rand( 0, 0xffff ),
+            ip2long(\Library\Auth::getCurrentIP())
+        );
+    }
 }
