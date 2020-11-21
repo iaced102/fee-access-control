@@ -79,7 +79,11 @@ class MessageBus{
             } else {
                 $payload = json_decode($msg->payload,true);
                 if(is_callable($callback)){
-                    $callback($msg->topic_name,$payload);
+                    $topic = $msg->topic_name;
+                    if(strpos($topic,Environment::getPrefixEnvironment())===0){
+                        $topic = substr($topic,strlen(Environment::getPrefixEnvironment()));
+                    }
+                    $callback($topic,$payload);
                 }
             }
             exit;

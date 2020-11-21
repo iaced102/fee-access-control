@@ -15,7 +15,6 @@ header("Access-Control-Max-Age: 86400");
 define("DIR", dirname(__FILE__));
 if(file_exists('env.json')){
     $GLOBALS['env'] = json_decode(file_get_contents('env.json'),true);
-    var_dump($GLOBALS['env']);
     require 'Config/Init.php';
     $uri=isset($_GET['uri'])?$_GET['uri']:'';
     if($uri!='404.html'){

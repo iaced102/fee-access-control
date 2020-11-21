@@ -8,7 +8,8 @@ class Router{
     public $parameters = [];
     public $permissionObjectIdentifier=false;
     public $permissionAction=false;
-    public function __construct($method,$uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
+    public $onlyBA=false;
+    public function __construct($method,$uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
         $this->method                       = $method;
         $this->uri                          = $uri;
         $this->controller                   = $controller;
@@ -16,6 +17,7 @@ class Router{
         $this->parameters                   = $parameters;
         $this->permissionObjectIdentifier   = $permissionObjectIdentifier;
         $this->permissionAction             = $permissionAction;
+        $this->onlyBA                       = $onlyBA;
     }
     public function run(){
         if($this->method=='redirect'){
@@ -28,7 +30,9 @@ class Router{
                 $controllerObject->currentAction = $this->action;
                 $extendParameters = $this->getExtendParameters();
                 $parameters = array_merge($this->parameters,$extendParameters);
-                
+                if($this->onlyBA && Auth::isBa()==false){
+                    Redirect::redirect403();
+                }
                 if($this->permissionObjectIdentifier!=false&&$this->permissionAction!=false){
                     $this->permissionObjectIdentifier = Str::bindDataToString($this->permissionObjectIdentifier,$parameters);
                     AccessControl::filterByPermission($this->permissionObjectIdentifier,$this->permissionAction);

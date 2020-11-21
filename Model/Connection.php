@@ -10,10 +10,10 @@ class Connection{
     }
     
     public static function connectSql($server = false, $database = false, $userName = false, $password = false){
-        $server = $server == false ? $GLOBALS['env']['database']['dbhost']: $server;
-        $database = $database == false ? $GLOBALS['env']['database']['dbname'] : $database;
-        $userName = $userName == false ? $GLOBALS['env']['database']['username'] : $userName;
-        $password = $password == false ? $GLOBALS['env']['database']['password'] : $password;
+        $server = $server == false ? $GLOBALS['env']['db']['postgresql']['host']: $server;
+        $database = $database == false ? $GLOBALS['env']['db']['postgresql']['dbname'] : $database;
+        $userName = $userName == false ? $GLOBALS['env']['db']['postgresql']['username'] : $userName;
+        $password = $password == false ? $GLOBALS['env']['db']['postgresql']['password'] : $password;
         $connection = CacheService::getMemoryCache("Connection".$server.$database);
         if($connection == false){
             $connection = self::_connectPostgreSQL($server, $userName, $password, $database);
@@ -46,5 +46,13 @@ class Connection{
         CacheService::set($command,$resultData);
         return $resultData;
     }
-    
+    public static function getLastError(){
+        $lastError = pg_last_error(self::connectSql());
+        if($lastError !== false){
+            return $lastError;
+        }
+        else{
+            return '';
+        }
+    }
 }
