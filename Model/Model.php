@@ -275,7 +275,7 @@ class Model{
      * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
      * @return array
      */
-    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '', $sqlOnly = false)
+    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '', $sqlOnly = false, $returnSQL = false)
     {
         $calledClass = get_called_class();
         $returnObject = false;
@@ -299,9 +299,13 @@ class Model{
         if(!$sqlOnly){
             $data['list'] = self::get($sql['full'], $returnObject);
             $data['list'] = $data['list'] == false ? [] : $data['list'];
+            $data['total'] = self::get($sql['count'], false)[0]['count_items'];
         }
-        $data['total'] = self::get($sql['count'], false)[0]['count_items'];
-        $data['sql'] = $sql;
+
+        $data['sql'] = '';
+        if($returnSQL && !$sqlOnly){
+            $data['sql'] = $sql;
+        }
         return $data;
     }
 
