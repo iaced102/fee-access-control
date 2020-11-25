@@ -12,5 +12,5 @@ define('STORE_STATUS', 'statusMessage');
     STATUS_NOT_FOUND            => 'Not found',
     STATUS_PERMISSION_DENIED    => 'Permission denied',
     STATUS_BAD_REQUEST          => 'Bad request',
-    STATUS_BAD_REQUEST          => 'Server error',
+    STATUS_SERVER_ERROR          => 'Server error',
 ];

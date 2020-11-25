@@ -129,6 +129,21 @@ class RoleService extends Controller
             ];
         }
     }   
+    public function getAccessControlByRoles(){
+        if($this->checkParameter(['role_identifiers'])){
+            $listAccessControl=[];
+            $roleIdentifiers = Str::getArrayFromUnclearData($this->parameters['role_identifiers']);
+            if(is_array($roleIdentifiers) && count($roleIdentifiers)>0){
+                $roleIdentifiersStr = implode("','",$roleIdentifiers);
+                $listAccessControl = RoleAction::getByTop("","role_identifier IN ('$roleIdentifiersStr')");
+            }
+           
+            $this->output = [
+                'status'=>STATUS_OK,
+                'data' =>$listAccessControl
+            ];
+        }
+    }   
     public function getAccessControlMultiObject(){
         if($this->checkParameter(['role_identifier','object_identifiers'])){
             $roleIdentifier = trim($this->parameters['role_identifier']);
