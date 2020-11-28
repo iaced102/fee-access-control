@@ -53,7 +53,7 @@ class ActionPackService extends Controller
                     $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
                     $obj->saveOperation($listOperations);
                 }
-                
+                $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
             }
         }

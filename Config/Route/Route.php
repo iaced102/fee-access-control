@@ -40,11 +40,11 @@ Route::get('operations/{type}/actions','OperationService','getActionByObjectType
 
 Route::get('env/object-types','Env','listObjectType',[],false,false,true);
 
-Route::get('env/action_packs','ActionPackService','list',[],false,false,true);
+Route::get('env/action_packs','Env','listActionPack',[],false,false,true);
 Route::post('env/action_packs/ids','Env','getActionPackByIds',[],false,false,true);
 Route::post('env/action_packs/save','Env','saveActionPackByIds',[],false,false,true);
 
 
-Route::get('env/permission_packs','PermissionService','list',[],false,false,true);
+Route::get('env/permission_packs','Env','listPermission',[],false,false,true);
 Route::post('env/permission_packs/ids','Env','getPermissionByIds',[],false,false,true);
 Route::post('env/permission_packs/save','Env','savePermissionByIds',[],false,false,true);

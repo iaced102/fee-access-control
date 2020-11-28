@@ -27,7 +27,52 @@ class Env extends Controller{
             'data'=>['action_pack','permission_pack',]
         ];
     }
-    
+    public function listActionPack(){
+        $condition=[];
+        $data = ActionPack::getByFilter($this->parameters,$condition);
+        $this->output = [
+            'status'    => STATUS_OK,
+            'message'   => 'OK',
+            'data'      => [
+                'listObject' => $data['list'],
+                'columns'    => [
+                    ['name'=>'id',                  'title'=>'id','type'=>'numeric'],
+                    ['name'=>'name',                'title'=>'name','type'=>'string'],
+                    ['name'=>'description',         'title'=>'description','type'=>'string'],
+                    ['name'=>'status',               'title'=>'status','type'=>'numeric'],
+                    ['name'=>'createAt',            'title'=>'createAt','type'=>'datetime'],
+                    ['name'=>'updateAt',            'title'=>'updateAt','type'=>'datetime'],
+                    ['name'=>'userUpdate',          'title'=>'userUpdate','type'=>'string'],
+                    ['name'=>'userCreate',          'title'=>'userCreate','type'=>'string']
+                ],
+                'total'      => $data['total']
+            ]
+        ];
+    }
+    public function listPermission(){
+        $condition=[];
+        $data = PermissionPack::getByFilter($this->parameters,$condition);
+        $this->output = [
+            'status'    => STATUS_OK,
+            'message'   => 'OK',
+            'data'      => [
+                'listObject' => $data['list'],
+                'columns'    => [
+                    ['name'=>'id',                  'title'=>'id','type'=>'numeric'],
+                    ['name'=>'name',                'title'=>'name','type'=>'string'],
+                    ['name'=>'description',         'title'=>'description','type'=>'string'],
+                    ['name'=>'type',                'title'=>'type','type'=>'string'],
+                    ['name'=>'status',              'title'=>'status','type'=>'numeric'],
+                    ['name'=>'createAt',            'title'=>'createAt','type'=>'datetime'],
+                    ['name'=>'updateAt',            'title'=>'updateAt','type'=>'datetime'],
+                    ['name'=>'userUpdate',          'title'=>'userUpdate','type'=>'string'],
+                    ['name'=>'userCreate',          'title'=>'userCreate','type'=>'string']
+                ],
+                'total'      => $data['total'],
+                // 'sql'=>$data['sql']
+            ]
+        ];
+    }
     public function getActionPackByIds(){
         if($this->checkParameter(['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);

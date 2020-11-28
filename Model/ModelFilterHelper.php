@@ -28,7 +28,6 @@ class ModelFilterHelper{
     public static function getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns)
     {
         $filter = self::standardlizeFilterData($filter);
-        
         $columns = self::getColumnArrForSelect($filter, $selectableColumns);
         $where = self::getWhereCondition($filter, $filterableColumns, $columns);
         $table = self::getFrom($table);
@@ -106,13 +105,13 @@ class ModelFilterHelper{
     private static function getWhereCondition($filter, $filterableColumns, $columns)
     {
         $whereItems = [];
+       
         foreach ($filter['filter'] as $filterItem) {
             $str = self::convertConditionToWhereItem($filterItem, $filterableColumns);
             if($str != ''){
                 $whereItems[] = $str;
             }
         }
-
         // get search query
         $searchKey = $filter['search'];
         if(trim($searchKey) != ''){
@@ -191,7 +190,7 @@ class ModelFilterHelper{
 
         if(array_key_exists($colName, $mapColumns)){
             $colDef = $mapColumns[$colName];
-            if($op == 'in' || $op == 'notIn'){
+            if($op == 'in' || $op == 'notIn'|| $op == 'not_in'){
                 $colType = $colDef['type'];
                 if($colType == 'number'){
                     $value = implode(' , ', $value);

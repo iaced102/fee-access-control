@@ -34,11 +34,9 @@ class Model{
             $value = pg_escape_string($value);
             return  "'$value'";
         }
-        if($type=='timestamp'||$type=='date'){
-            return $value===null||$value===''?'null':"'$value'";
+        else{
+            return $value===null||$value===''?'null':$value;
         }
-        return $value===null||$value===''?'null':$value;
-        
     }
     /*  Dev create: Dinh
     *   CreateTime: 31/03/2020
@@ -78,8 +76,9 @@ class Model{
         $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnName  = $primaryColumnData['name']; 
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$id);
-        $where              = self::mergeConditionQuery([$primaryKey. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
         $command            = "SELECT * FROM $tableName WHERE $where";
         $listObject         = self::get($command);
         if(isset($listObject[0])){
@@ -183,10 +182,15 @@ class Model{
     }
     private function setAutoIncrementValueAfterInsert($result,$returnQuery,$returnColumn){
         if($returnQuery != ''){
-            $result = pg_fetch_all($result);
-            if(isset($result[0][$returnColumn])){
-                $result                 = $result[0][$returnColumn];
+            if(is_numeric($result)){
                 $this->$returnColumn    = $result;
+            }
+            else{
+                $result = pg_fetch_all($result);
+                if(isset($result[0][$returnColumn])){
+                    $result                 = $result[0][$returnColumn];
+                    $this->$returnColumn    = $result;
+                }
             }
         }
     }
@@ -270,18 +274,19 @@ class Model{
      * Lấy danh sách bản ghi theo filter
      *
      * @param array $filter Cấu hình cho việc filter, cấu trúc của filter được quy định trong document về framework
+     * @param array $moreConditions Thêm các điều kiện lọc vào trong filter 
      * @param array $filterableColumns danh sách các cột được phép áp dụng filter
      * @param array $selectableColumns danh sách các cột được phép select dữ liệu
      * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
      * @return array
      */
-    public static function getByFilter($filter, $filterableColumns = [], $selectableColumns = [], $table = '')
+    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '')
     {
         $calledClass = get_called_class();
         $returnObject = false;
-        $filter = self::standardlizeFilterData($filter);
-        $filterableColumns = is_array($filterableColumns) ? $filterableColumns :  self::getFilterableColumns();
-        $selectableColumns = is_array($selectableColumns) ? $selectableColumns :  self::getFilterableColumns();
+        $filter = self::standardlizeFilterData($filter, $moreConditions);
+        $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
+        $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
         
         if($calledClass != 'Model\Model' ){
             if($table == ''){
@@ -321,13 +326,34 @@ class Model{
         return $result;
     }
 
+
+    /**
+     * Lấy danh sách các cột được phép select trong câu lệnh SQL 
+     * Mặc định tất cả các cột được định nghĩa trong Model đều có thể đưa vào select
+     * Nếu muốn cột nào đó không được phép select thì thêm option "notSelect" vào định nghĩa cột trong model
+     *
+     * @return array
+     */
+    public static function getSelectableColumns()
+    {
+        $columns = static::$mappingFromDatabase;
+        $result = [];
+        foreach ($columns as $prop => $column) {
+            if(!array_key_exists('notSelect', $column) || $column['notSelect'] == false){
+                $result[] = $column;
+            }
+        }
+        return $result;
+    }
+
     /**
      * Chuẩn hóa cấu trúc filter 
      *
      * @param array $filter filter nhận được từ client
+     * @param array $moreConditions Các điều kiện khác cần truyền vào
      * @return void
      */
-    public static function standardlizeFilterData($filter)
+    public static function standardlizeFilterData($filter, $moreConditions = [])
     {
         $mappingFromDatabase = static::$mappingFromDatabase;
         $columns = [];
@@ -347,6 +373,20 @@ class Model{
                 }
             }
         }
+
+        if(count($moreConditions) > 0 ){
+            if(!array_key_exists('filter', $filter)){
+                $filter['filter'] = [];
+            }
+            $filter['filter']  = array_merge($filter['filter'], $moreConditions);
+        }
+
+        if(array_key_exists('sort', $filter)){
+            foreach ($filter['sort'] as $index => $sortItem) {
+                $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
+            }
+        }
+
         return $filter;
     }
 }
