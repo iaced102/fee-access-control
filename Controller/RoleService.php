@@ -101,7 +101,14 @@ class RoleService extends Controller
     function listPermission(){
         if($this->checkParameter(['role_identifier'])){
             $roleIdentifier = trim($this->parameters['role_identifier']);
-            $listPermission = PermissionRole::getByTop('',"role_identifier='$roleIdentifier'");
+            $listPermission = [];
+            if(isset($this->parameters['detail'])&&intval($this->parameters['detail'])==1){
+                $listPermission = PermissionPack::getByTop('',"permission_role.permission_pack_id=permission_pack.id AND permission_role.role_identifier='$roleIdentifier'",'',false,'permission_role');
+            }
+            else{
+                 $listPermission = PermissionRole::getByTop('',"role_identifier='$roleIdentifier'");
+            }
+           
             $this->output = [
                 'status'=>STATUS_OK,
                 'data' =>$listPermission

@@ -127,8 +127,15 @@ class PermissionService extends Controller
     function listActionPack(){
         if($this->checkParameter(['id'])){
             $obj = PermissionPack::getById(intval($this->parameters['id']));
+            $listObj = [];
             if($obj!=false){
-                $listObj = ActionInPermissionPack::getByTop('',"permission_pack_id=".$obj->id);
+                if(isset($this->parameters['detail'])&&intval($this->parameters['detail'])==1){
+                    $listObj = ActionPack::getByTop('',"action_in_permission_pack.action_pack_id=action_pack.id AND action_in_permission_pack.permission_pack_id=".$obj->id,'',false,'action_in_permission_pack');
+                }
+                else{
+                    $listObj = ActionInPermissionPack::getByTop('',"permission_pack_id=".$obj->id);
+                }
+                
                 $this->output['data']   = $listObj;
                 $this->output['status'] = STATUS_OK;
             }
