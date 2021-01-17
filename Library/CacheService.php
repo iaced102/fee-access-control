@@ -1,9 +1,21 @@
 <?php
 namespace Library;
 class CacheService{
+    private static $cacheInstance = null;
     private static function connect(){
-        $cache=new \Memcached();
-        $cache->addServer('127.0.0.1',11211);
+        $cache = null;
+        if(is_null(self::$cacheInstance)){
+            if(CACHE_ENGINE == 'memcache'){
+                $cache=new \Memcached();
+                $cache->addServer('127.0.0.1',11211);
+            }else {
+                $cache=new \Redis();
+                $cache->connect('127.0.0.1', 6379);
+            }
+            self::$cacheInstance = $cache;
+        }else{
+            $cache = self::$cacheInstance;
+        }
         return $cache;
     }
     /*
@@ -32,7 +44,11 @@ class CacheService{
     }
     public static function clear(){
         $mycache=self::connect();
-        $mycache->flush();
+        if(CACHE_ENGINE == 'memcache'){
+            $mycache->flush();
+        }else{
+            $mycache->flushDB();
+        }
     }
     /*
     * thứ tự ưu tiên của các biến cấu hình cache( ưu tiên từ cao xuống thấp)
@@ -54,7 +70,15 @@ class CacheService{
             return;
         }
         $mycache=self::connect();
-        $mycache->set(md5($key),$value,$expired);
+        if(CACHE_ENGINE == 'memcache'){
+            $mycache->set(md5($key),$value,$expired);
+        }else{
+            if($expired > 0){
+                $mycache->setex(md5($key),$expired, $value);
+            }else{
+                $mycache->set(md5($key), $value);
+            }
+        }
     }
 
     public static function getMemoryCache($Key){
