@@ -12,6 +12,13 @@ Route::delete('permission_packs/{id}','PermissionService','delete');
 Route::get('permission_packs/{id}','PermissionService','detail');
 Route::post('permission_packs/delete-many','PermissionService','deleteMany');
 
+Route::post('server_keys','ServerKeyService','create');
+Route::get('server_keys','ServerKeyService','list');
+Route::put('server_keys/{id}','ServerKeyService','update');
+Route::delete('server_keys/{id}','ServerKeyService','delete');
+Route::get('server_keys/{id}','ServerKeyService','detail');
+
+
 Route::post('roles/{role_identifier}/permissions','RoleService','setPermission');
 Route::get('roles/{role_identifier}/permissions','RoleService','listPermission');
 Route::post('roles/set-permissions','RoleService','setPermissionBatch');

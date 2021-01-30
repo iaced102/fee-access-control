@@ -180,4 +180,59 @@ class Auth{
         }
         return false;
     }
+    public static function getCurrentSupporterId(){
+        $token = Auth::getBearerToken();
+        if(!empty($token)){
+            $dataLogin = Auth::getJwtData($token);
+            if(!empty($dataLogin)){
+                if(isset($dataLogin['id']) &&isset($dataLogin['type'])&&$dataLogin['type']=='ba' ){
+                    return $dataLogin['id'];
+                }
+            }
+        }
+        return false;
+    }
+    public static function getCurrentIP() {
+        $ipaddress = '';
+        if (isset($_SERVER['HTTP_CLIENT_IP']))
+            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+        else if(isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        else if(isset($_SERVER['HTTP_X_FORWARDED']))
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+        else if(isset($_SERVER['HTTP_FORWARDED_FOR']))
+            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        else if(isset($_SERVER['HTTP_FORWARDED']))
+            $ipaddress = $_SERVER['HTTP_FORWARDED'];
+        else if(isset($_SERVER['REMOTE_ADDR']))
+            $ipaddress = $_SERVER['REMOTE_ADDR'];
+        else
+            $ipaddress = 'UNKNOWN';
+        return $ipaddress;
+    }
+    public static function getCurrentUserAgent(){
+        return $_SERVER['HTTP_USER_AGENT'];
+    }
+    private static function getTokenInfo($key){
+        $dataLogin = self::getDataToken();
+        if(!empty($dataLogin)){
+            if(isset($dataLogin['type'])&&$dataLogin['type']=='ba'&&isset($dataLogin['userDelegate'])&&isset($dataLogin['userDelegate'][$key])){
+                
+                return $dataLogin['userDelegate'][$key];
+            }
+            else if(isset($dataLogin[$key])){
+                return $dataLogin[$key];
+            }
+        }
+        return '';
+    }
+    public static function getTokenIp(){
+        return self::getTokenInfo('ip');
+    }
+    public static function getTokenUserAgent(){
+        return self::getTokenInfo('userAgent');
+    }
+    public static function getTokenLocation(){
+        return self::getTokenInfo('location');
+    }
 }
