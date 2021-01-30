@@ -14,6 +14,7 @@ class Connection{
         $database = $database == false ? $GLOBALS['env']['db']['postgresql']['dbname'] : $database;
         $userName = $userName == false ? $GLOBALS['env']['db']['postgresql']['username'] : $userName;
         $password = $password == false ? $GLOBALS['env']['db']['postgresql']['password'] : $password;
+        
         $connection = CacheService::getMemoryCache("Connection".$server.$database);
         if($connection == false){
             $connection = self::_connectPostgreSQL($server, $userName, $password, $database);

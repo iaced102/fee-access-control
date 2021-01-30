@@ -61,6 +61,7 @@ class KafkaService extends Controller
             if(isset($item['data']['new']['title'])){
                 $object->name = $item['data']['new']['title'];
             }
+            
             $object->save();
         }
         else if(isset($item['event'])&&$item['event']=="delete"&& isset($item['data']) && isset($item['data']['id'])){
