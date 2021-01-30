@@ -17,6 +17,7 @@ define("SITE_NAME", "https://".$_SERVER['SERVER_NAME']);
 define('PRIVATE_KEY','EGRRH^&%&&%6584');
 
 define('USE_MEMCACHE',false);
+define('CACHE_ENGINE', 'memcache');
 define('DATETIME_FORMAT',"Y-m-d H:i:s");
 
 
