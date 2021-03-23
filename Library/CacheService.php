@@ -39,7 +39,12 @@ class CacheService{
         }
         $mycache=self::connect();
         $CacheResult=$mycache->get(md5($key));
-     
+        if(is_string($CacheResult)){
+            $arr = json_decode($CacheResult, true);
+            if(!is_null($arr)){
+                $CacheResult = $arr;
+            }
+        }
         return $CacheResult;
     }
     public static function clear(){
@@ -73,6 +78,9 @@ class CacheService{
         if(CACHE_ENGINE == 'memcache'){
             $mycache->set(md5($key),$value,$expired);
         }else{
+            if(!is_string($value)){
+                $value = json_encode($value);
+            }
             if($expired > 0){
                 $mycache->setex(md5($key),$expired, $value);
             }else{
