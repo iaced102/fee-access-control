@@ -46,7 +46,7 @@ class ModelFilterHelper{
 
         return [
             'full'  => " SELECT $distnct $columns FROM $table $where $groupBy $sort LIMIT $limit ",
-            'count' => " SELECT COUNT(*) as count_items FROM $table $where ",
+            'count' => " SELECT COUNT(*) as count_items FROM $table $where $groupBy",
         ];
     }   
 
