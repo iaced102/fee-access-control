@@ -18,6 +18,7 @@ class MessageBus{
      */
     public static function publishBulk($topicName,$event,$resources){
         $conf = self::getKafkaConfig();
+        $conf->set('topic.metadata.refresh.interval.ms', 1);
         $topicName = Environment::getPrefixEnvironment()."$topicName";
         $producer = new RdKafka\Producer($conf);
         $topic = $producer->newTopic($topicName);
