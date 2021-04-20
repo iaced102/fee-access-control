@@ -51,4 +51,14 @@ class Str{
         }
         return $String;
     }
+    public static function createUUID(){
+        return sprintf('%08x-%04x-%04x-%04x-%04x%08x',
+            microtime(true),
+            getmypid(),
+            mt_rand( 0, 0xffff ),
+            mt_rand( 0, 0xffff ),
+            mt_rand( 0, 0xffff ),
+            Auth::getCurrentIP()
+        );
+    }
 }

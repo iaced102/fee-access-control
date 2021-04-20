@@ -37,6 +37,7 @@ class ModelFilterHelper{
 
         $columns = implode("\" , \"", $columns);
         $columns = "\"$columns\"";
+        $groupBy = self::getGroupBy($filter);
 
         $distnct = '';
         if(array_key_exists('distinct', $filter) && ($filter['distinct'] === true || $filter['distinct'] === 'true')){
@@ -44,10 +45,21 @@ class ModelFilterHelper{
         }
 
         return [
-            'full'  => " SELECT $distnct $columns FROM $table $where $sort LIMIT $limit ",
-            'count' => " SELECT COUNT(*) as count_items FROM $table $where ",
+            'full'  => " SELECT $distnct $columns FROM $table $where $groupBy $sort LIMIT $limit ",
+            'count' => " SELECT COUNT(*) as count_items FROM (SELECT $distnct $columns FROM $table $where $groupBy) tmp_table",
         ];
     }   
+
+    private static function getGroupBy($filter)
+    {
+        $groupBy = "";
+        if(array_key_exists('groupBy', $filter) && count($filter['groupBy']) > 0 ){
+            $groupByColumns = implode("\" , \"", $filter['groupBy']);
+            $groupByColumns = "\"$groupByColumns\"";
+            $groupBy = "GROUP BY ".$groupByColumns;
+        }
+        return $groupBy;
+    }
 
     private static function getSort($filter, $columns)
     {

@@ -357,22 +357,25 @@ class Model{
      */
     public static function standardlizeFilterData($filter, $moreConditions = [], $callFromModel = true)
     {
-        $mappingFromDatabase = static::$mappingFromDatabase;
         $columns = [];
         if(array_key_exists('columns', $filter)){
             foreach ($filter['columns'] as $columnName) {
-                if(array_key_exists($columnName, $mappingFromDatabase)){
-                    $columns[] = $mappingFromDatabase[$columnName]['name'];
-                }
+                $columns[] = self::getProperColumnName($columnName, $callFromModel);
             }
         }
         $filter['columns'] = $columns;
+
+        if(array_key_exists('groupBy', $filter)){
+            $groupByColumns = [];
+            foreach ($filter['groupBy'] as $columnName) {
+                $groupByColumns[] = self::getProperColumnName($columnName, $callFromModel);
+            }
+            $filter['groupBy'] = $groupByColumns;
+        }
+        
         if(array_key_exists('filter', $filter)){
             foreach ($filter['filter'] as $index  => &$item) {
-                $columnName = $item['column'];
-                if(array_key_exists($columnName, $mappingFromDatabase)){
-                    $item['column'] = $mappingFromDatabase[$columnName]['name'];
-                }
+                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
             }
         }
 
@@ -385,21 +388,14 @@ class Model{
 
         if(array_key_exists('sort', $filter)){
             foreach ($filter['sort'] as $index => $sortItem) {
-                $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
+                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
             }
         }
 
         
         if(array_key_exists('sort', $filter)){
             foreach ($filter['sort'] as $index => $sortItem) {
-                $originColumn = $sortItem['column'];
-                if($callFromModel){
-                    $filter['sort'][$index]['column'] = $originColumn;
-                }else{
-                    if(array_key_exists($originColumn, $mappingFromDatabase)){
-                        $filter['sort'][$index]['column'] = $mappingFromDatabase[$originColumn]['name'];
-                    }
-                }
+                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
             }
         }
 
@@ -408,5 +404,25 @@ class Model{
         }
 
         return $filter;
+    }
+
+
+    /**
+     * Trả về tên phù hợp với các cột của kết quả trả về
+     * @param originColumn tên cột có trong cấu hình
+     * @param callFromModel Biến chỉ định xem hàm filter có được gọi từ class Model hay gọi từ các class kết thừa Model
+     */
+    public static function getProperColumnName($originColumn, $callFromModel)
+    {
+        $mappingFromDatabase = static::$mappingFromDatabase;
+        if($callFromModel){
+            return $originColumn;
+        }else{
+            if(array_key_exists($originColumn, $mappingFromDatabase)){
+                return $mappingFromDatabase[$originColumn]['name'];
+            }else {
+                return '';
+            }
+        }
     }
 }
