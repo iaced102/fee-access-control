@@ -99,6 +99,10 @@ class Request {
 
 
     public static function request($url, $dataPost = false, $method = 'GET',$token = false){
+        $resultTest = Test::callFunction(Test::FUNC_REQUEST,$url);
+        if($resultTest!==Test::FUNC_NO_AVAILABLE){
+            return $resultTest;
+        }
         $request = new Request($url);
         if($dataPost != false){
             $request->setPost($dataPost);

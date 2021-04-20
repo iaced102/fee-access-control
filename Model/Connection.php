@@ -2,7 +2,7 @@
 namespace Model;
 
 use library\CacheService;
-
+use Library\Test;
 class Connection{
     private static function _connectPostgreSQL($server, $userName, $password, $database){
         $connection = pg_connect("host=$server port=5432 dbname=$database user=$userName password=$password");
@@ -24,12 +24,20 @@ class Connection{
         return $connection;
     }
     public static  function exeQuery($command, $server = false, $userName = false, $password = false, $database = false){
+        $resultTest = Test::callFunction(Test::FUNC_EXE_QUERY_DB,$command);
+        if($resultTest!==Test::FUNC_NO_AVAILABLE){
+            return $resultTest;
+        }
         $command = trim($command);
         $connection = self::connectSql($server, $database, $userName, $password);
         $result = pg_query($connection, $command);
         return $result;
     }
     private static function exeQueryAndFetchData($command){
+        $resultTest = Test::callFunction(Test::FUNC_QUERY_DB,$command);
+        if($resultTest!==Test::FUNC_NO_AVAILABLE){
+            return $resultTest;
+        }
         $arrayResult    = [];
         $result         = pg_query(self::connectSql(),$command);
         if($result!=false){

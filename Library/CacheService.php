@@ -25,6 +25,10 @@ class CacheService{
     *  $GLOBALS['IsNoCache']: nếu USE_MEMCACHE=true, và $GLOBALS['IsNoCache']=true, vì bỏ qua cache. $GLOBALS['IsNoCache'] mang tính cục bộ bỏ qua cache khi project có set cache
     */
     public static function get($key,$force=false){
+        $resultTest = Test::callFunction(Test::FUNC_GET_CACHE,$key);
+        if($resultTest!==Test::FUNC_NO_AVAILABLE){
+            return $resultTest;
+        }
         if(
             $force==false 
             && (
@@ -57,6 +61,10 @@ class CacheService{
     *  $GLOBALS['IsNoCache']: nếu USE_MEMCACHE=true, và $GLOBALS['IsNoCache']=true, vì bỏ qua cache. $GLOBALS['IsNoCache'] mang tính cục bộ bỏ qua cache khi project có set cache
     */
     public static function set($key,$value,$expired=0,$force=false){
+        $resultTest = Test::callFunction(Test::FUNC_SET_CACHE,$key);
+        if($resultTest!==Test::FUNC_NO_AVAILABLE){
+            return $resultTest;
+        }
         if(
             $force==false 
             && (
