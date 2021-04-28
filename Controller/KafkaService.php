@@ -7,10 +7,13 @@ use Library\CacheService;
 use Library\Message;
 use Library\Str;
 use Model\ActionPack;
+use Model\LogTime;
+use Model\ObjectIdentifier;
 use Model\Operation;
 use Model\OperationInActionPack;
 use Model\PermissionRole;
 use Model\RoleAction;
+use Model\Task;
 use Model\Users;
 class KafkaService extends Controller
 {
@@ -23,14 +26,12 @@ class KafkaService extends Controller
         $this->requireLogin = false;
     }
     function subscribe(){
-        
+        $listTopic = ['account'];
         MessageBus::subscribeMultiTopic(
-            ['users','user_group','user','role_action'],
-            '',
+            $listTopic,
+            'sdocument.symper.vn',
             function($topic,$item){
-                if($topic=='role_action'){
-                    $this->processRoleAction($item);
-                }
+                $this->processObject($topic,$item);
             },
             '/KafkaService/subscribe',
             '/KafkaService/stopSubscribe'
@@ -43,7 +44,29 @@ class KafkaService extends Controller
             $this->output['status'] = $result?STATUS_OK: STATUS_SERVER_ERROR;
         }
     }
-    function processRoleAction($item){
-        CacheService::clear();
+    function processObject($type,$item){
+        if($type=='account'){
+            $this->processAccount($item);
+        }
+        else//cac truong hop khac
+        {
+
+        }
+    } 
+    function processAccount($item){
+        $obj =  new Users($item['data']);
+        if(isset($item['event'])){
+            if($item['event']=="create"){
+                $obj->save();
+            }
+            else if($item['event']=='update'){
+                $obj =  new Users($item['data']['new']);
+                $obj->save();
+                
+            }
+            else  if($item['event']=="delete"){
+                $obj->delete();
+            }
+        }
     }
 }
