@@ -26,7 +26,7 @@ class KafkaService extends Controller
         $this->requireLogin = false;
     }
     function subscribe(){
-        $listTopic = ['account'];
+        $listTopic = ['account','role'];
         MessageBus::subscribeMultiTopic(
             $listTopic,
             'sdocument.symper.vn',
@@ -48,6 +48,9 @@ class KafkaService extends Controller
         if($type=='account'){
             $this->processAccount($item);
         }
+        else if($type=='role'){
+            $this->processRole($item);
+        }
         else//cac truong hop khac
         {
 
@@ -61,6 +64,22 @@ class KafkaService extends Controller
             }
             else if($item['event']=='update'){
                 $obj =  new Users($item['data']['new']);
+                $obj->save();
+                
+            }
+            else  if($item['event']=="delete"){
+                $obj->delete();
+            }
+        }
+    }
+    function processRole($item){
+        $obj =  new Role($item['data']);
+        if(isset($item['event'])){
+            if($item['event']=="create"){
+                $obj->save();
+            }
+            else if($item['event']=='update'){
+                $obj =  new Role($item['data']['new']);
                 $obj->save();
                 
             }
