@@ -22,7 +22,6 @@ class Model{
     public static function getPrimaryKey(){
         return 'id';
     }
-
     public static function getValueForSqlCommand($columnData,$value){
         $type = strtolower($columnData['type']);
         if(!($type == 'number' 
@@ -273,6 +272,8 @@ class Model{
      * @param array $filterableColumns danh sách các cột được phép áp dụng filter
      * @param array $selectableColumns danh sách các cột được phép select dữ liệu
      * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
+     * @param string $sqlOnly Chỉ trả về SQL
+     * @param string $returnSQL data trả về của hàm có chứa câu lệnh SQL hay không
      * @return array
      */
     public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '', $sqlOnly = false, $returnSQL = false)
@@ -294,7 +295,6 @@ class Model{
         }
 
         $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
-
         $data = [];
         if(!$sqlOnly){
             $data['list'] = self::get($sql['full'], $returnObject);
@@ -401,6 +401,10 @@ class Model{
 
         if(!array_key_exists('stringCondition', $filter)){
             $filter['stringCondition'] = '';
+        }
+
+        if(!array_key_exists('joinInfo', $filter)){
+            $filter['joinInfo'] = [];
         }
 
         return $filter;
