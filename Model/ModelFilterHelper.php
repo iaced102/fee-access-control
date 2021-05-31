@@ -1,15 +1,86 @@
 <?php
+
 /**
  * Class phục vụ cho việc tạo ra câu lệnh SQL cho việ filter các bản ghi
  */
-class ModelFilterHelper{
-    
+class ModelFilterHelper
+{
+
     public static $notCheckType = [
         'begins_with'   => true,
         'ends_with'     => true,
         'contains'      => true,
         'not_contain'   => true,
     ];
+
+
+    public static function getAllRelatedColumns($filter)
+    {
+        $rsl = [];
+
+        return $rsl;
+    }
+
+    public static function getMultilJoinTable($info)
+    {
+        // LEFT JOIN users AS tb2 ON tb1.user_last_update = tb2.email
+        $rsl = [];
+        foreach ($info as $item) {
+            $joinTable = $item['table'];
+            $ttb = $item['table2TmpName'];
+            $col1 = $item['column1'];
+            $col2 = $item['column2'];
+            $rsl[] = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
+        }
+        return implode(' ', $rsl);
+    }
+
+    public static function getJoinedSQL($table, $filter, $relatedColumns)
+    {
+        $joinInfo = $filter['linkTable'];
+        $items = self::getMaskedItems($joinInfo, $relatedColumns);
+        $moreJoin = self::getMultilJoinTable($joinInfo);
+        $items = array_values($items);
+        $items = implode(" , ", $items);
+        $sql = "SELECT $items FROM $table AS tb1 $moreJoin";
+        return "($sql) tb_temp ";
+    }
+    
+
+    public static function getMaskedItems($joinInfo, $relatedColumns)
+    {
+        $items = [];
+        foreach ($relatedColumns as $colName => $flag) {
+            $items[$colName] = "tb1.$colName";
+        }
+
+        $map = [];
+        foreach ($joinInfo as $item) {
+            $map[$item['column1']] = $item;
+        }
+        $columns = array_keys($relatedColumns);
+        foreach ($columns as $col) {
+            if (is_array($col)) {
+                $name = $col['name'];
+                if (array_key_exists($name, $map)) {
+                    $mask = $map[$name]['mask'];
+                    $tempTb = $map[$name]['table2TmpName'];            
+                    $items[$col['name']] = "$tempTb." . $mask . " AS $name";
+                } else {
+                    $items[$col['name']] = "tb1." . $name;
+                }
+            } else {
+                if (array_key_exists($col, $map)) {
+                    $mask = $map[$col]['mask'];
+                    $tempTb = $map[$col]['table2TmpName'];            
+                    $items[$col] = "$tempTb." . $mask . " AS $col";
+                } else {
+                    $items[$col] = "tb1." . $col;
+                }
+            }
+        }
+        return $items;
+    }
 
 
     /**
@@ -27,55 +98,61 @@ class ModelFilterHelper{
      */
     public static function getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns)
     {
-        $filter = self::standardlizeFilterData($filter);
-        
-        $columns = self::getColumnArrForSelect($filter, $selectableColumns);
-        $where = self::getWhereCondition($filter, $filterableColumns, $columns);
+        $relatedColumns = [];
+        $filter = self::standardlizeFilterData($filter, $filterableColumns, $selectableColumns);
+        $columns = self::getColumnArrForSelect($filter, $selectableColumns, $relatedColumns);
+        $where = self::getWhereCondition($filter, $filterableColumns, $columns, $relatedColumns);
         $table = self::getFrom($table);
-        $limit = $filter['pageSize']." OFFSET ".(($filter['page']-1)*$filter['pageSize']);
-        $sort = self::getSort($filter, $columns);
+        $limit = $filter['pageSize'] . " OFFSET " . (($filter['page'] - 1) * $filter['pageSize']);
+        $sort = self::getSort($filter, $columns, $relatedColumns);
 
-        $columns = implode("\" , \"", $columns);
-        $columns = "\"$columns\"";
-        $groupBy = self::getGroupBy($filter);
-
+        $groupBy = self::getGroupBy($filter, $relatedColumns);
         $distnct = '';
-        if(array_key_exists('distinct', $filter) && ($filter['distinct'] === true || $filter['distinct'] === 'true')){
+        if (array_key_exists('distinct', $filter) && ($filter['distinct'] === true || $filter['distinct'] === 'true')) {
             $distnct = 'DISTINCT';
         }
 
+        if (count($filter['linkTable']) > 0) {
+            $table = self::getJoinedSQL($table, $filter, $relatedColumns);
+        }
+        $columns = implode("\" , \"", $columns);
+        $columns = "\"$columns\"";
         return [
             'full'  => " SELECT $distnct $columns FROM $table $where $groupBy $sort LIMIT $limit ",
             'count' => " SELECT COUNT(*) as count_items FROM (SELECT $distnct $columns FROM $table $where $groupBy) tmp_table",
         ];
-    }   
+    }
 
-    private static function getGroupBy($filter)
+    private static function getGroupBy($filter, &$relatedColumns)
     {
         $groupBy = "";
-        if(array_key_exists('groupBy', $filter) && count($filter['groupBy']) > 0 ){
+        if (array_key_exists('groupBy', $filter) && count($filter['groupBy']) > 0) {
             $groupByColumns = implode("\" , \"", $filter['groupBy']);
             $groupByColumns = "\"$groupByColumns\"";
-            $groupBy = "GROUP BY ".$groupByColumns;
+            $groupBy = "GROUP BY " . $groupByColumns;
+            foreach ($filter['groupBy'] as $colName) {
+                $relatedColumns[$colName] = true;
+            }
         }
         return $groupBy;
     }
 
-    private static function getSort($filter, $columns)
+    private static function getSort($filter, $columns, &$relatedColumns)
     {
         $sort = '';
-        if(array_key_exists('sort', $filter)){
+        if (array_key_exists('sort', $filter)) {
             $sort = [];
             foreach ($filter['sort'] as $item) {
-                if(array_search($item['column'],$columns) !== false){
-                    $sort[] = '"'.$item['column'].'" '.$item['type'];
+                if (array_search($item['column'], $columns) !== false) {
+                    $sort[] = '"' . $item['column'] . '" ' . $item['type'];
+                    $relatedColumns[$item['column']] = true;
                 }
             }
 
-            if(count($sort) > 0){
+            if (count($sort) > 0) {
                 $sort = implode(' , ', $sort);
                 $sort = " ORDER BY $sort";
-            }else{
+            } else {
                 $sort = '';
             }
         }
@@ -85,7 +162,7 @@ class ModelFilterHelper{
 
     private static function getFrom($table)
     {
-        if(stripos($table, "select ") !== false){
+        if (stripos($table, "select ") !== false) {
             $table = "( $table ) as symper_tmp_table ";
         }
         return $table;
@@ -98,52 +175,53 @@ class ModelFilterHelper{
      * @param array $selectableColumns danh sách các cột có thể đưa vào mệnh đề select do dev quy định khi tạo Model hoặc truyền vào
      * @return array
      */
-    private static function getColumnArrForSelect($filter, $selectableColumns)
+    private static function getColumnArrForSelect($filter, $selectableColumns, &$relatedColumns)
     {
         $columns = [];
-        if(array_key_exists('columns', $filter) && count($filter['columns']) > 0){
+        if (array_key_exists('columns', $filter) && count($filter['columns']) > 0) {
             $columns = $filter['columns'];
-        }else{
+        } else {
             foreach ($selectableColumns as $col) {
-                if(is_array($col)){
+                if (is_array($col)) {
                     $columns[] = $col['name'];
-                }else if(is_string($col)){
+                } else if (is_string($col)) {
                     $columns[] = $col;
                 }
+                $relatedColumns[$columns[count($columns) - 1]] = true;
             }
         }
         return $columns;
     }
 
-    private static function getWhereCondition($filter, $filterableColumns, $columns)
+    private static function getWhereCondition($filter, $filterableColumns, $columns, &$relatedColumns)
     {
         $whereItems = [];
         foreach ($filter['filter'] as $filterItem) {
-            $str = self::convertConditionToWhereItem($filterItem, $filterableColumns);
-            if($str != ''){
+            $str = self::convertConditionToWhereItem($filterItem, $filterableColumns, $relatedColumns);
+            if ($str != '') {
                 $whereItems[] = $str;
             }
         }
 
         // get search query
         $searchKey = $filter['search'];
-        if(trim($searchKey) != ''){
+        if (trim($searchKey) != '') {
             $searchConditions = [];
             foreach ($columns as $colName) {
                 $searchConditions[] = " CAST(\"$colName\" AS VARCHAR) ILIKE '%$searchKey%' ";
             }
 
-            if(count($searchConditions) > 0){
-                $whereItems[] = "(".implode(" OR ", $searchConditions).")";
+            if (count($searchConditions) > 0) {
+                $whereItems[] = "(" . implode(" OR ", $searchConditions) . ")";
             }
         }
         $whereItems = implode(" AND ", $whereItems);
 
         $where = '';
-        if(trim($whereItems) != ''){
-            $where = " WHERE $whereItems ".$filter['stringCondition'];
-        }else if($filter['stringCondition'] != ''){
-            $where = " WHERE ".$filter['stringCondition'];
+        if (trim($whereItems) != '') {
+            $where = " WHERE $whereItems " . $filter['stringCondition'];
+        } else if ($filter['stringCondition'] != '') {
+            $where = " WHERE " . $filter['stringCondition'];
         }
 
 
@@ -156,39 +234,40 @@ class ModelFilterHelper{
      * @param array $conditionItem 
      * @return string
      */
-    public static function convertConditionToWhereItem($conditionItem, $filterableColumns)
+    public static function convertConditionToWhereItem($conditionItem, $filterableColumns, &$relatedColumns)
     {
         $colName = $conditionItem['column'];
+        $relatedColumns[$colName] = true;
         $mapColumns = [];
         foreach ($filterableColumns as $col) {
             $mapColumns[$col['name']] = $col;
         }
         $conds = [];
 
-        if( array_key_exists('conditions', $conditionItem) && count($conditionItem['conditions']) > 0){
+        if (array_key_exists('conditions', $conditionItem) && count($conditionItem['conditions']) > 0) {
             $cond = [];
             foreach ($conditionItem['conditions'] as $item) {
                 $value = '';
-                if(array_key_exists('value', $item)){
+                if (array_key_exists('value', $item)) {
                     $value = $item['value'];
                 }
 
-                if(!($item['name'] == 'contains' && $value == '')){
+                if (!($item['name'] == 'contains' && $value == '')) {
                     $cond[] = self::bindValueToWhereItem($item['name'], $colName, $value, $mapColumns);
                 }
             }
 
             $conjunction = array_key_exists('operation', $conditionItem) ? $conditionItem['operation'] : ' AND';
-            $conds[] = implode(" ".$conjunction." ", $cond);
+            $conds[] = implode(" " . $conjunction . " ", $cond);
         }
 
-        if(array_key_exists('valueFilter', $conditionItem)){
+        if (array_key_exists('valueFilter', $conditionItem)) {
             $colType = $mapColumns[$colName];
             $values = '';
-            if($colType == 'number'){
+            if ($colType == 'number') {
                 $values = implode(' , ', $conditionItem['valueFilter']['values']);
                 $values = "($values)";
-            }else{
+            } else {
                 $values = implode("' , '", $conditionItem['valueFilter']['values']);
                 $values = "('$values')";
             }
@@ -198,26 +277,26 @@ class ModelFilterHelper{
         return implode(' AND ', $conds);
     }
 
-    public static function bindValueToWhereItem( $op ,$colName, $value, $mapColumns)
+    public static function bindValueToWhereItem($op, $colName, $value, $mapColumns)
     {
-        
+
         $COLUMN = 'SYMPER_COLUMN_PLACE_HOLDER';
         $VALUE = 'SYMPER_VALUE_PLACE_HOLDER';
 
-        if(array_key_exists($colName, $mapColumns)){
+        if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
-            if($op == 'in' || $op == 'not_in'){
+            if ($op == 'in' || $op == 'not_in') {
                 $colType = $colDef['type'];
-                if($colType == 'number'){
+                if ($colType == 'number') {
                     $value = implode(' , ', $value);
                     $value = "($value)";
-                }else{
+                } else {
                     $value = implode("' , '", $value);
                     $value = "('$value')";
                 }
             }
         }
-        
+
         $mapOpertationToSQL = [
             'empty'                 => "($COLUMN IS NULL OR $COLUMN = '' ) ",
             'not_empty'             => "($COLUMN IS NOT NULL AND $COLUMN != '' ) ",
@@ -236,14 +315,14 @@ class ModelFilterHelper{
         ];
 
         $str = $mapOpertationToSQL[$op];
-        if(array_key_exists($colName, $mapColumns)){
+        if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
-            if(!array_key_exists($op, self::$notCheckType)){
-                if($colDef['type'] != 'number'){
+            if (!array_key_exists($op, self::$notCheckType)) {
+                if ($colDef['type'] != 'number') {
                     $value = "'$value'";
                 }
                 $colName = "\"$colName\"";
-            }else if($colDef['type'] != 'string'){
+            } else if ($colDef['type'] != 'string') {
                 $colName = "CAST(\"$colName\" AS VARCHAR)";
             }
         }
@@ -253,25 +332,88 @@ class ModelFilterHelper{
         return $str;
     }
 
-    private static function standardlizeFilterData($filter)
+    private static function standardlizeFilterData($filter, $filterableColumns, $selectableColumns)
     {
         $result = $filter;
-        if(!array_key_exists('page', $filter)){
+        if (!array_key_exists('page', $filter)) {
             $result['page'] = 1;
         }
 
-        if(!array_key_exists('pageSize', $filter)){
+        if (!array_key_exists('pageSize', $filter)) {
             $result['pageSize'] = 50;
         }
 
-        if(!array_key_exists('filter', $filter)){
+        if (!array_key_exists('filter', $filter)) {
             $result['filter'] = [];
         }
 
-        if(!array_key_exists('search', $filter)){
+        if (!array_key_exists('search', $filter)) {
             $result['search'] = '';
         }
 
+        $result = self::toJoinConditionIfExist($result, $filterableColumns, $selectableColumns);
+        $result = self::addParamsToJoinCondition($result);
+
         return $result;
+    }
+
+    public static function addParamsToJoinCondition($filter)
+    {
+        if(array_key_exists('linkTable', $filter)){
+            $joinCond = &$filter['linkTable'];
+            $counter = 2;
+            foreach ($joinCond as &$cond) {
+                $tmpTb = "tb$counter";
+                $cond['table2TmpName'] = $tmpTb;
+                $counter += 1;
+            }
+        }
+        return $filter;
+    }
+
+    public static function uniqueMultidimArray($array, $key) {
+        $temp_array = array();
+        $i = 0;
+        $key_array = array();
+       
+        foreach($array as $val) {
+            if (!in_array($val[$key], $key_array)) {
+                $key_array[$i] = $val[$key];
+                $temp_array[$i] = $val;
+            }
+            $i++;
+        }
+        return $temp_array;
+    }
+
+    public static function toJoinConditionIfExist($filter, $filterableColumns, $selectableColumns)
+    {
+        $joinCond = [
+            // [
+            //     'column1'   => 'user_create',
+            //     'operator'  => '=',
+            //     'column2'   => 'email'
+            //     'table'     => 'users'
+            //     'mask'   => 'email'
+            // ]
+        ];
+        $cols = array_merge($filterableColumns, $selectableColumns);
+        $cols = self::uniqueMultidimArray($cols, 'name');
+        foreach ($cols as $key => $col) {
+            if(array_key_exists('linkTo', $col)){
+                $linkTo = $col['linkTo'];
+                $joinCond[] = [
+                    'column1'   => $col['name'],
+                    'operator'  => '=',
+                    'column2'   => $linkTo['column'],
+                    'mask'      => $linkTo['mask'],
+                    'table'     => $linkTo['table']
+                ];
+            }
+        }
+        if(count($joinCond) > 0){
+            $filter['linkTable'] = $joinCond;
+        }
+        return $filter;
     }
 }
