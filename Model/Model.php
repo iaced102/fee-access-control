@@ -403,8 +403,8 @@ class Model{
             $filter['stringCondition'] = '';
         }
 
-        if(!array_key_exists('joinInfo', $filter)){
-            $filter['joinInfo'] = [];
+        if(!array_key_exists('linkTable', $filter)){
+            $filter['linkTable'] = [];
         }
 
         return $filter;

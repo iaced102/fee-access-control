@@ -1,8 +1,10 @@
 <?php
+
 /**
  * Class phục vụ cho việc tạo ra câu lệnh SQL cho việ filter các bản ghi
  */
-class ModelFilterHelper{
+class ModelFilterHelper
+{
 
     public static $notCheckType = [
         'begins_with'   => true,
@@ -12,28 +14,40 @@ class ModelFilterHelper{
     ];
 
 
-    public static function getJoinedSQL($table, $columns, $filter, $relatedColumns)
+    public static function getAllRelatedColumns($filter)
     {
-        $joinInfo = $filter['joinInfo'];
-        $tb2Name = $joinInfo['table'];
+        $rsl = [];
 
-        $condition = [];
-        foreach ($joinInfo['condition'] as $c) {
-            $col1 = $c['column1'];
-            $col2 = $c['column2'];
-            $operator = $c['operator'];
-            $condition[] = " tb1.$col1 $operator tb2.$col2";
-        }
-
-        $condition = implode(' AND ', $condition);
-        $items = self::getMaskedItems($joinInfo, $columns, $relatedColumns);
-        $items = array_values($items);
-        $items = implode(" , ", $items);
-        $sql = "SELECT $items FROM $table AS tb1 LEFT JOIN $tb2Name AS tb2 ON $condition";
-        return "($sql) tb_temp ";
+        return $rsl;
     }
 
-    public static function getMaskedItems($joinInfo, $columns, $relatedColumns)
+    public static function getMultilJoinTable($info)
+    {
+        // LEFT JOIN users AS tb2 ON tb1.user_last_update = tb2.email
+        $rsl = [];
+        foreach ($info as $item) {
+            $joinTable = $item['table'];
+            $ttb = $item['table2TmpName'];
+            $col1 = $item['column1'];
+            $col2 = $item['column2'];
+            $rsl[] = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
+        }
+        return implode(' ', $rsl);
+    }
+
+    public static function getJoinedSQL($table, $filter, $relatedColumns)
+    {
+        $joinInfo = $filter['linkTable'];
+        $items = self::getMaskedItems($joinInfo, $relatedColumns);
+        $moreJoin = self::getMultilJoinTable($joinInfo);
+        $items = array_values($items);
+        $items = implode(" , ", $items);
+        $sql = "SELECT $items FROM $table AS tb1 $moreJoin";
+        return "($sql) tb_temp ";
+    }
+    
+
+    public static function getMaskedItems($joinInfo, $relatedColumns)
     {
         $items = [];
         foreach ($relatedColumns as $colName => $flag) {
@@ -41,21 +55,25 @@ class ModelFilterHelper{
         }
 
         $map = [];
-        foreach ($joinInfo['masks'] as $item) {
-            $map[$item['column1']] = $item['column2'];
+        foreach ($joinInfo as $item) {
+            $map[$item['column1']] = $item;
         }
-
+        $columns = array_keys($relatedColumns);
         foreach ($columns as $col) {
             if (is_array($col)) {
                 $name = $col['name'];
                 if (array_key_exists($name, $map)) {
-                    $items[$col['name']] = "tb2." . $map[$name] . " AS $name";
+                    $mask = $map[$name]['mask'];
+                    $tempTb = $map[$name]['table2TmpName'];            
+                    $items[$col['name']] = "$tempTb." . $mask . " AS $name";
                 } else {
                     $items[$col['name']] = "tb1." . $name;
                 }
             } else {
                 if (array_key_exists($col, $map)) {
-                    $items[$col] = "tb2." . $map[$col] . " AS $col";
+                    $mask = $map[$col]['mask'];
+                    $tempTb = $map[$col]['table2TmpName'];            
+                    $items[$col] = "$tempTb." . $mask . " AS $col";
                 } else {
                     $items[$col] = "tb1." . $col;
                 }
@@ -63,6 +81,7 @@ class ModelFilterHelper{
         }
         return $items;
     }
+
 
     /**
      * Hàm lấy danh sách bản ghi dựa theo điều kiện filter (search, order, filter by value, filter by condition)
@@ -93,8 +112,8 @@ class ModelFilterHelper{
             $distnct = 'DISTINCT';
         }
 
-        if (count($filter['joinInfo']) > 0) {
-            $table = self::getJoinedSQL($table, $columns, $filter, $relatedColumns);
+        if (count($filter['linkTable']) > 0) {
+            $table = self::getJoinedSQL($table, $filter, $relatedColumns);
         }
         $columns = implode("\" , \"", $columns);
         $columns = "\"$columns\"";
@@ -333,49 +352,67 @@ class ModelFilterHelper{
         }
 
         $result = self::toJoinConditionIfExist($result, $filterableColumns, $selectableColumns);
+        $result = self::addParamsToJoinCondition($result);
+
         return $result;
+    }
+
+    public static function addParamsToJoinCondition($filter)
+    {
+        if(array_key_exists('linkTable', $filter)){
+            $joinCond = &$filter['linkTable'];
+            $counter = 2;
+            foreach ($joinCond as &$cond) {
+                $tmpTb = "tb$counter";
+                $cond['table2TmpName'] = $tmpTb;
+                $counter += 1;
+            }
+        }
+        return $filter;
+    }
+
+    public static function uniqueMultidimArray($array, $key) {
+        $temp_array = array();
+        $i = 0;
+        $key_array = array();
+       
+        foreach($array as $val) {
+            if (!in_array($val[$key], $key_array)) {
+                $key_array[$i] = $val[$key];
+                $temp_array[$i] = $val;
+            }
+            $i++;
+        }
+        return $temp_array;
     }
 
     public static function toJoinConditionIfExist($filter, $filterableColumns, $selectableColumns)
     {
         $joinCond = [
-            'table'     => "",
-            'condition' => [
-                // cấu trúc data như bên dưới
-                // [
-                //     'column1'   => 'user_create',
-                //     'operator'  => '=',
-                //     'column2'   => 'email'
-                // ]
-            ],
-            'masks'      => [
-                // cấu trúc data như bên dưới
-                // [
-                //     'column1'  => 'user_create',
-                //     'column2'  => 'display_name'
-                // ]
-            ]
+            // [
+            //     'column1'   => 'user_create',
+            //     'operator'  => '=',
+            //     'column2'   => 'email'
+            //     'table'     => 'users'
+            //     'mask'   => 'email'
+            // ]
         ];
         $cols = array_merge($filterableColumns, $selectableColumns);
+        $cols = self::uniqueMultidimArray($cols, 'name');
         foreach ($cols as $key => $col) {
             if(array_key_exists('linkTo', $col)){
                 $linkTo = $col['linkTo'];
-                $joinCond['table'] = $linkTo['table'];
-                $joinCond['condition'][] = [
+                $joinCond[] = [
                     'column1'   => $col['name'],
                     'operator'  => '=',
-                    'column2'   => $linkTo['column']
-                ];
-
-                $joinCond['masks'][] = [
-                    'column1'   => $col['name'],
-                    'column2'   => $linkTo['mask']
+                    'column2'   => $linkTo['column'],
+                    'mask'      => $linkTo['mask'],
+                    'table'     => $linkTo['table']
                 ];
             }
         }
-
-        if(count($joinCond['condition']) > 0){
-            $filter['joinInfo'] = $joinCond;
+        if(count($joinCond) > 0){
+            $filter['linkTable'] = $joinCond;
         }
         return $filter;
     }
