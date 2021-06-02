@@ -30,6 +30,12 @@ class ModelFilterHelper
             $ttb = $item['table2TmpName'];
             $col1 = $item['column1'];
             $col2 = $item['column2'];
+            if(array_key_exists('castTypeColumn1', $item)){
+                $col1 = "$col1::".$item['castTypeColumn1'];
+            }
+            if(array_key_exists('castTypeColumn2', $item)){
+                $col2 = "$col2::".$item['castTypeColumn2'];
+            }
             $rsl[] = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
         }
         return implode(' ', $rsl);
