@@ -1,0 +1,27 @@
+{
+    "remotePath": "/var/www/stage.accesscontrol.symper.vn",
+    "host": "stage.accesscontrol.symper.vn",
+    "username": "root",
+    "password": "a4G7BCJQWCZzwjE8Ls!E",
+    "port": 22,
+    "secure": false,
+    "protocol": "sftp",
+    "uploadOnSave": true,
+    "passive": false,
+    "debug": false,
+    "privateKeyPath": null,
+    "passphrase": null,
+    "agent": null,
+    "allow": [],
+    "ignore": [
+        "\\.vscode",
+        "\\.git",
+        "\\.DS_Store"
+    ],
+    "generatedFiles": {
+        "extensionsToInclude": [
+            ""
+        ],
+        "path": ""
+    }
+}

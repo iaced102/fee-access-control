@@ -63,11 +63,13 @@ class KafkaService extends Controller
             }
             
             $object->save();
+           
         }
         else if(isset($item['event'])&&$item['event']=="delete"&& isset($item['data']) && isset($item['data']['id'])){
             $object = new ObjectIdentifier();
             $object->objectIdentifier = $type.":".$item['data']['id'];
             $object->delete();
         }
+        
     } 
 }

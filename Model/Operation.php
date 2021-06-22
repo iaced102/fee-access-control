@@ -25,7 +25,7 @@ class Operation extends SqlObject
     ];
     public static $listAction = [
         'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','drop','restore','list','list_trash','list_instance']],
-        'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','print','list_trash']],
+        'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','print','list_trash','update_by_workflow']],
         'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>['list','create','deploy','drop','update','list_instance','start_instance','view']],
         'workflow_instance'     => ['name'=>'thể hiện quy trình',   'ownerDomain' => 'workflow.symper.vn',              'action'=>['detail','drop']],
         'syql'                  => ['name'=>'công thức',            'ownerDomain' => 'syql.symper.vn',                  'action'=>['create','update','execute']],
