@@ -59,7 +59,7 @@ class AccessControl{
     */
     public static function getRoleActionRemote($roleIdentifier,$objectIdentifier){
         $listAction = []; 
-        $dataResponse = Request::request(Request::API_ACCESS_CONTROL."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
+        $dataResponse = Request::request(self::getAccessControlDomain()."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
@@ -76,7 +76,7 @@ class AccessControl{
     */
     public static function getRoleActionRemoteAllObject($roleIdentifier){
         $listAction = []; 
-        $dataResponse = Request::request(Request::API_ACCESS_CONTROL."/roles/$roleIdentifier/accesscontrol");
+        $dataResponse = Request::request(self::getAccessControlDomain()."/roles/$roleIdentifier/accesscontrol");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
@@ -126,5 +126,10 @@ class AccessControl{
             print json_encode($output);
             exit;
         }
+    }
+
+    public static function getAccessControlDomain()
+    {
+        return "https://".Environment::getPrefixEnvironment()."accesscontrol.symper.vn";
     }
 }
