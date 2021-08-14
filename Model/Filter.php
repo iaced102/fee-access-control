@@ -10,7 +10,7 @@ class Filter extends SqlObject
         $description,
         $formula,
         $status,
-        $objectIdenfifier;
+        $objectIdentifier;
     public static $mappingFromDatabase = [
         'id'                =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
         'userId'            =>  [ 'name' => 'user_id',              'type' => 'number'],
@@ -19,7 +19,7 @@ class Filter extends SqlObject
         'description'       =>  [ 'name' => 'description',          'type' => 'string'],
         'formula'           =>  [ 'name' => 'formula',              'type' => 'string'],
         'status'            =>  [ 'name' => 'status',               'type' => 'number'],
-        'objectIdenfifier'  =>  [ 'name' => 'object_idenfifier',    'type' => 'string'],
+        'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

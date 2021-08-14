@@ -55,3 +55,10 @@ Route::post('env/action_packs/save','Env','saveActionPackByIds',[],false,false,t
 Route::get('env/permission_packs','Env','listPermission',[],false,false,true);
 Route::post('env/permission_packs/ids','Env','getPermissionByIds',[],false,false,true);
 Route::post('env/permission_packs/save','Env','savePermissionByIds',[],false,false,true);
+
+Route::get('filters','FilterService','list');
+Route::post('filters','FilterService','create');
+Route::put('filters/{id}','FilterService','update');
+Route::get('filters/{id}','FilterService','detail');
+Route::delete('filters/{id}','FilterService','delete');
+Route::post('filters/delete-many','FilterService','deleteMany');

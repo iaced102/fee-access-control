@@ -10,6 +10,7 @@ use Model\RoleAction;
 use Model\FilterInActionPack;
 use Model\PermissionRole;
 use Model\Users;
+use Model\SqlObject;
 
 class FilterService extends Controller
 {
@@ -37,7 +38,7 @@ class FilterService extends Controller
             }
             else{
                 $obj =  new Filter();
-                $obj->id = SqlObject::createUUID();
+                $obj->id = Filter::createUUID();
                 $obj->userId = Auth::getCurrentUserId();
                 $obj->createTime = Str::currentTimeString();
                 $obj->name = trim($this->parameters['name']);
@@ -55,14 +56,13 @@ class FilterService extends Controller
     
     function update(){
         if($this->checkParameter(['id','name','formula'])){
-            if(trim($this->parameters['name'])==''||trim($this->parameters['objectIdentifier'])==''){
+            if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
                 $this->output['message'] = '"name","formula" may not be blank';
             }
             else{
                 $obj = Filter::getById($this->parameters['id']);
                 if($obj!=false){
-                    $obj =  new Filter();
                     $obj->userId = Auth::getCurrentUserId();
                     $obj->name = trim($this->parameters['name']);
                     $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
