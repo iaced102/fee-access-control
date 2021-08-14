@@ -1,6 +1,6 @@
 {
-    "remotePath": "/var/www/stage.accesscontrol.symper.vn",
-    "host": "stage.accesscontrol.symper.vn",
+    "remotePath": "/var/www/dev.accesscontrol.symper.vn",
+    "host": "dev.accesscontrol.symper.vn",
     "username": "root",
     "password": "a4G7BCJQWCZzwjE8Ls!E",
     "port": 22,

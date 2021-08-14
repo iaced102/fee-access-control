@@ -35,11 +35,12 @@ class ActionPack extends SqlObject
     function saveOperation($listOperation){
         if($this->id!=''){
             $this->removeAllOperation();
-            foreach($listOperation as $operationId){
+            foreach($listOperation as $operationId=>$filter){
                 if(Operation::count("id=".$operationId)>0){
                     $operationInActionPackObj =  new OperationInActionPack();
                     $operationInActionPackObj->actionPackId = $this->id;
                     $operationInActionPackObj->operationId = $operationId;
+                    $operationInActionPackObj->filter = $filter;
                     $operationInActionPackObj->save();
                 }
             }

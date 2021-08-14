@@ -5,11 +5,13 @@ class OperationInActionPack extends SqlObject
 {
     public $id,
         $operationId,
-        $actionPackId;
+        $actionPackId,
+        $filter;
     public static $mappingFromDatabase = [
         'id'                =>  [ 'name' => 'id',               'type' => 'number', 'primary'=>true, 'auto_increment' => true],
         'operationId'       =>  [ 'name' => 'operation_id',     'type' => 'number'],
-        'actionPackId'      =>  [ 'name' => 'action_pack_id',   'type' => 'number']
+        'actionPackId'      =>  [ 'name' => 'action_pack_id',   'type' => 'number'],
+        'filter'            =>  [ 'name' => 'filter',           'type' => 'string']
     ];
     public function __construct($data=[]){
         parent::__construct($data);
