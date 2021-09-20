@@ -206,6 +206,9 @@ class AccessControl{
      */
     public static function getFilterString($objectIdentifier, $action, $andAsPrefix = true)
     {
+        if(Auth::isBa()){
+            return '';
+        }
         $oprations = self::getOperations($objectIdentifier, $action);
         if(count($oprations) > 0){
             $filterArr = [];
