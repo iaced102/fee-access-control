@@ -7,6 +7,8 @@ use Model\RoleAction;
 
 class AccessControl{ 
     public static $variables = [];
+    public static $mapOperation = [];
+    
     public static function checkPermission($objectIdentifier,$action,$variables=[]){
         $variables = array_merge(self::$variables,$variables);
         $objectIdentifier = Str::bindDataToString($objectIdentifier,$variables); 
@@ -131,5 +133,99 @@ class AccessControl{
     public static function getAccessControlDomain()
     {
         return "https://".Environment::getPrefixEnvironment()."accesscontrol.symper.vn";
+    }
+    
+
+    /**
+     * Lấy tất cả các operation ứng với $objectIdentifier, $action của user hiện tại
+     */
+    public static function getOperations($objectIdentifier, $action)
+    {
+        $currentRole = Auth::getCurrentRole();
+        $mapOperation = self::$mapOperation;
+
+        if(count($mapOperation) == 0){
+            $remoteOperations = Request::request(self::getAccessControlDomain()."/roles/$currentRole/accesscontrol/$objectIdentifier");
+            if(isset($remoteOperations['status']) && $remoteOperations['status'] == 200 &&  isset($remoteOperations['data']) && is_array($remoteOperations['data'])){
+            
+                foreach ($remoteOperations['data'] as $opr) {
+                    $iden = $opr['objectIdentifier'];
+                    $ac = $opr['action'];
+
+                    if(!isset($mapOperation[$iden])){
+                        $mapOperation[$iden] = [];
+                    }
+
+                    if(!isset($mapOperation[$iden][$ac])){
+                        $mapOperation[$iden][$ac] = [];
+                    }
+
+                    $mapOperation[$iden][$ac][] = $opr;
+                }
+            }
+            self::$mapOperation = $mapOperation;
+        }
+
+        if(isset($mapOperation[$objectIdentifier]) && isset($mapOperation[$objectIdentifier][$action]) ){
+            return $mapOperation[$objectIdentifier][$action];
+        }else{
+            return [];
+        }
+    }
+
+    /**
+     * Bind giá trị của các câu query với ref(nếu có) vào bằng cách xác định chúng và gọi api sang syql để lấy dữ liệu về
+     */
+    public static function translateFilterStr($str)
+    {
+        $str = preg_replace("/\r\n|\r|\n/", ' ', $str);
+        $remoteQueries = Str::getAllFunctionsCallInString($str, 'ref');
+        $dataDomain = "https://".Environment::getPrefixEnvironment()."syql.symper.vn/formulas/get-data";
+        foreach ($remoteQueries as $query) {
+            $request = new Request($dataDomain);
+            $request->setPost([
+                'formula' => $query,
+                'distinct' => 0
+            ]);
+            $request->send(Auth::getBearerToken());
+            $result = $request->result();
+            $jsonResult = json_decode($result, true);
+            if(is_array($jsonResult) && $jsonResult['status'] == 200 && count($jsonResult['data']['data']) > 0){
+                $row = $jsonResult['data']['data'][0];
+                $value = array_values($row)[0];
+                $str = str_replace($query, $value, $str);
+            }
+        }
+        return $str;
+    }
+
+    /**
+     * Lấy chuỗi filter cho một đối tượng ứng với action từ cấu hình filter access control 
+     * @return false|String Nếu user không có quyền thì trả về false, nếu có quyền thì trả về chuỗi rỗng (khi không có filter)
+     * hoặc chuỗi filter để append vào câu lệnh sql
+     */
+    public static function getFilterString($objectIdentifier, $action, $andAsPrefix = true)
+    {
+        if(Auth::isBa()){
+            return '';
+        }
+        $oprations = self::getOperations($objectIdentifier, $action);
+        if(count($oprations) > 0){
+            $filterArr = [];
+            foreach ($oprations as $op) {
+                if(isset($op['filter']) && trim($op['filter']) != ''){
+                    $filterArr[] = self::translateFilterStr($op['filter']);
+                }
+            }
+
+            if(count($filterArr) > 0){
+                $prefix = $andAsPrefix ? 'AND' : '';
+                return $prefix.implode(' AND ', $filterArr);
+            }else{
+                return '';
+            }
+        }else{
+            return false;
+        }
     }
 }
