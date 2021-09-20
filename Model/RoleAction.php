@@ -12,13 +12,15 @@ class RoleAction extends SqlObject{
         $objectType,
         $name,
         $roleIdentifier,
-        $status;
+        $status,
+        $filter;
     public static $mappingFromDatabase = [
         'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
         'action'            =>  [ 'name' => 'action',               'type' => 'string'],
         'objectType'        =>  [ 'name' => 'object_type',          'type' => 'string'],
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
-        'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string']
+        'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
+        'filter'            =>  [ 'name' => 'filter',               'type' => 'string'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
@@ -43,6 +45,7 @@ class RoleAction extends SqlObject{
             operation.name as name,
             operation.status as status,
             permission_role.role_identifier as role_identifier
+            operation_in_action_pack.filter as filter
         FROM
             operation,
             operation_in_action_pack,

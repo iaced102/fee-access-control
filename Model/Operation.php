@@ -151,6 +151,11 @@ class Operation extends SqlObject
             "ownerDomain" => "task-management-service.symper.vn",
             "action" => ['view']
         ],
+        "dataset" => [
+            "name" => "Dataset",
+            "ownerDomain" => "bi.symper.vn",
+            "action" => ['list','add','query','edit','delete','detail']
+        ]
     ];
     public function __construct($data=[]){
         parent::__construct($data);
