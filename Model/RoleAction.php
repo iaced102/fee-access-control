@@ -21,6 +21,7 @@ class RoleAction extends SqlObject{
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
         'filter'            =>  [ 'name' => 'filter',               'type' => 'string'],
+        'filter_status'     =>  [ 'name' => 'filter_status',        'type' => 'string'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
@@ -37,24 +38,23 @@ class RoleAction extends SqlObject{
     }
     public static function createView(){
         $createViewQuery = "
-        CREATE MATERIALIZED VIEW ".self::getTableName()." AS
-        SELECT 
-            operation.object_identifier as object_identifier,
-            operation.action as action,
-            operation.object_type as object_type,
-            operation.name as name,
-            operation.status as status,
-            permission_role.role_identifier as role_identifier
-            operation_in_action_pack.filter as filter
-        FROM
-            operation,
-            operation_in_action_pack,
-            action_in_permission_pack,
-            permission_role
-        WHERE
-            operation.id=operation_in_action_pack.operation_id
-            AND operation_in_action_pack.action_pack_id = action_in_permission_pack.action_pack_id
-            AND action_in_permission_pack.permission_pack_id=permission_role.permission_pack_id
+        SELECT operation.object_identifier,
+        operation.action,
+        operation.object_type,
+        operation.name,
+        operation.status,
+        permission_role.role_identifier,
+        filter.formula AS filter,
+        filter.status AS filter_status
+    FROM operation,
+        operation_in_action_pack,
+        action_in_permission_pack,
+        permission_role,
+        filter
+        WHERE operation.id = operation_in_action_pack.operation_id AND 
+        operation_in_action_pack.action_pack_id = action_in_permission_pack.action_pack_id AND 
+        action_in_permission_pack.permission_pack_id = permission_role.permission_pack_id AND 
+        filter.id::text = operation_in_action_pack.filter::text;
         ";
     }
    
