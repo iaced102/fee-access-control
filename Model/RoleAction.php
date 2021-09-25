@@ -20,7 +20,7 @@ class RoleAction extends SqlObject{
         'objectType'        =>  [ 'name' => 'object_type',          'type' => 'string'],
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
-        'filter'            =>  [ 'name' => 'filter',               'type' => 'string'],
+        'filter'            =>  [ 'name' => 'filter_formula',               'type' => 'string'],
         'status'            =>  [ 'name' => 'filter_status',        'type' => 'string'],
     ];
     public function __construct($data=[]){
@@ -44,7 +44,7 @@ class RoleAction extends SqlObject{
         operation.name,
         operation.status,
         permission_role.role_identifier,
-        filter.formula AS filter,
+        filter.formula AS filter_formula,
         filter.status AS filter_status
     FROM operation,
         operation_in_action_pack,
