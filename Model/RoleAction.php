@@ -21,7 +21,7 @@ class RoleAction extends SqlObject{
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
         'filter'            =>  [ 'name' => 'filter',               'type' => 'string'],
-        'filter_status'     =>  [ 'name' => 'filter_status',        'type' => 'string'],
+        'status'            =>  [ 'name' => 'filter_status',        'type' => 'string'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
