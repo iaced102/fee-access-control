@@ -24,7 +24,7 @@ class FilterService extends Controller
     function list(){
         $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
         $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
-        $listObj = Filter::getByPaging($page,$pageSize,'id ASC','');
+        $listObj = Filter::getByPaging($page,$pageSize,'id DESC','');
         $this->output = [
             'status'=>STATUS_OK,
             'data' => $listObj
@@ -70,6 +70,7 @@ class FilterService extends Controller
                     $obj->objectIdentifier = trim($this->parameters['objectIdentifier']);
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):Filter::STATUS_ENABLE;
                     if($obj->update()){
+                        RoleAction::refresh();
                         $this->output['status'] = STATUS_OK;
                     }
                     else{

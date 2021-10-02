@@ -23,7 +23,7 @@ class PermissionService extends Controller
     function list(){
         $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
         $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
-        $listObj = PermissionPack::getByPaging($page,$pageSize,'id ASC','');
+        $listObj = PermissionPack::getByPaging($page,$pageSize,'id DESC','');
         $this->output = [
             'status'=>STATUS_OK,
             'data' => $listObj
