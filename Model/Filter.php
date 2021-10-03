@@ -3,6 +3,7 @@ namespace Model;
 use SqlObject;
 class Filter extends SqlObject
 {
+    public const STATUS_ENABLE  = 1;
     public $id,
         $userId,
         $createTime,
