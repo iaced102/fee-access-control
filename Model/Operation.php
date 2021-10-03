@@ -32,7 +32,7 @@ class Operation extends SqlObject
         'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['add','update','info','detail','change_pass','disable','change_avatar','list','set_role']],
         'report'                => ['name'=>'báo cáo',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop']],
         'report_folder'         => ['name'=>'thư mục báo cáo ',     'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','rename','remove']],
-        'dashboard'              => ['name'=>'dashboard',           'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop']],
+        'dashboard'              => ['name'=>'dashboard',           'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop', 'export-data']],
         'dataflow'              => ['name'=>'dataset',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','drop','list','update','detail']],
         'orgchart'              => ['name'=>'sơ đồ tổ chức',        'ownerDomain' => 'orgchart.symper.vn',              'action'=>['create','update','drop','list','detail','view_all','view_only_owner','view_only_sub']],
         'job'                   => ['name'=>'công việc',            'ownerDomain' => 'orgchart.symper.vn',              'action'=>['set_permission','set_user']],
@@ -151,10 +151,15 @@ class Operation extends SqlObject
             "ownerDomain" => "task-management-service.symper.vn",
             "action" => ['view']
         ],
+        "dashboard_tab" => [
+            "name" => "Tab trong dashboard",
+            "ownerDomain" => "bi-service.symper.vn",
+            "action" => ['view', 'export-data']
+        ],
         "dataset" => [
             "name" => "Dataset",
-            "ownerDomain" => "bi.symper.vn",
-            "action" => ['list','add','query','edit','delete','detail']
+            "ownerDomain" => "bi-service.symper.vn",
+            "action" => ['query']
         ]
     ];
     public function __construct($data=[]){
