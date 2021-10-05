@@ -212,17 +212,21 @@ class AccessControl{
         $oprations = self::getOperations($objectIdentifier, $action);
         if(count($oprations) > 0){
             $filterArr = [];
+            $hasOperationWithoutFilter = false;
             foreach ($oprations as $op) {
                 if(isset($op['filter']) && trim($op['filter']) != ''){
                     $filterArr[] = self::translateFilterStr($op['filter']);
+                }else{
+                    $hasOperationWithoutFilter = true;
+                    break;
                 }
             }
 
-            if(count($filterArr) > 0){
-                $prefix = $andAsPrefix ? 'AND' : '';
-                return $prefix.implode(' AND ', $filterArr);
-            }else{
+            if($hasOperationWithoutFilter || count($filterArr) == 0){
                 return '';
+            }else{
+                $prefix = $andAsPrefix ? 'AND' : '';
+                return $prefix.'( '.implode(' OR ', $filterArr).' )';
             }
         }else{
             return false;
