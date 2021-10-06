@@ -212,21 +212,41 @@ class AccessControl{
         $oprations = self::getOperations($objectIdentifier, $action);
         if(count($oprations) > 0){
             $filterArr = [];
+            /**
+             * Gom nhóm các operation theo id action pack để đảm bảo logic: 
+             *  - các filter cùng 1 action pack thì nối với nhau bằng AND, 
+             *  - các filter giữa các action pack nối với nhau bằng OR
+             */
+            $groupByActionPackId = [];
+
             $hasOperationWithoutFilter = false;
             foreach ($oprations as $op) {
+                $acId = $op['actionPackId'];
+                if(!isset($groupByActionPackId[$acId])){
+                    $groupByActionPackId[$acId] = [];
+                }
                 if(isset($op['filter']) && trim($op['filter']) != ''){
                     $filterArr[] = self::translateFilterStr($op['filter']);
+                    $groupByActionPackId[$acId][] = self::translateFilterStr($op['filter']);
                 }else{
                     $hasOperationWithoutFilter = true;
                     break;
                 }
             }
 
+            // Nếu xuất hiện operation mà ko có filter nào gắn vào thì trả về là không có filter
             if($hasOperationWithoutFilter || count($filterArr) == 0){
                 return '';
             }else{
                 $prefix = $andAsPrefix ? 'AND' : '';
-                return $prefix.'( '.implode(' OR ', $filterArr).' )';
+                $rsl = [];
+                foreach ($groupByActionPackId as $idAc => $strs) {
+                    // Các filter cùng action pack nối với nhau bằng AND
+                    $rsl[] = '( '.implode(' AND ', $strs).' )';
+                }
+                // các filter giữa các action pack nối với nhau bằng OR
+                $rsl = '( '.implode(' OR ', $rsl).' )';
+                return $prefix.$rsl;
             }
         }else{
             return false;
