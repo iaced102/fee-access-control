@@ -36,15 +36,25 @@ class ActionPack extends SqlObject
         if($this->id!=''){
             $this->removeAllOperation();
             foreach($listOperation as $operationId=>$filter){
-                if(Operation::count("id=".$operationId)>0){
-                    $operationInActionPackObj =  new OperationInActionPack();
-                    $operationInActionPackObj->actionPackId = $this->id;
-                    $operationInActionPackObj->operationId = $operationId;
-                    $operationInActionPackObj->filter = $filter;
-                    $operationInActionPackObj->save();
+                if(!empty($filter)){
+                    $filter = explode(",",$filter);
+                    for ($i=0; $i < count($filter); $i++) { 
+                        $this->insertActionPack($operationId, $filter[$i]);
+                    }
+                }else{
+                    $this->insertActionPack($operationId, "");
                 }
             }
         }   
+    }
+    private function insertActionPack($operationId, $filter){
+        if(Operation::count("id=".$operationId)>0){
+            $operationInActionPackObj =  new OperationInActionPack();
+            $operationInActionPackObj->actionPackId = $this->id;
+            $operationInActionPackObj->operationId = $operationId;
+            $operationInActionPackObj->filter = $filter;
+            $operationInActionPackObj->save();
+        }
     }
     function removeAllOperation(){
         Connection::exeQuery("DELETE FROM operation_in_action_pack WHERE action_pack_id=".$this->id);
