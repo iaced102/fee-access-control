@@ -58,7 +58,7 @@ class AccessControl{
     * Lấy quyền về memcache, và set flag là đã lấy bất kể là có quyền hoặc không.
     */
     public static function getRoleActionRemote($roleIdentifier,$objectIdentifier){
-        $dataResponse = Request::request(Request::API_ACCESS_CONTROL."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
+        $dataResponse = Request::request(API_ACCESS_CONTROL."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
