@@ -47,6 +47,15 @@ class ActionPack extends SqlObject
             }
         }   
     }
+    function saveFilter($listFilter){
+        if(!empty($this->id)){
+            $this->removeAllFilter();
+            for ($i=0; $i < count($listFilter); $i++) { 
+                $filter = $listFilter[$i];
+                FilterInActionPack::create($filter['id'], $this->id,$filter['action']);
+            }
+        }
+    }
     private function insertActionPack($operationId, $filter){
         if(Operation::count("id=".$operationId)>0){
             $operationInActionPackObj =  new OperationInActionPack();
@@ -58,5 +67,8 @@ class ActionPack extends SqlObject
     }
     function removeAllOperation(){
         Connection::exeQuery("DELETE FROM operation_in_action_pack WHERE action_pack_id=".$this->id);
+    }
+    function removeAllFilter(){
+        Connection::exeQuery("DELETE FROM filter_in_action_pack WHERE action_pack_id=".$this->id);
     }
 }

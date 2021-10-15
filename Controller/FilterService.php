@@ -2,7 +2,9 @@
 namespace Controller;
 
 use Library\Auth;
+use Library\Environment;
 use Library\Message;
+use Library\Request;
 use Library\Str;
 use Model\ObjectIdentifier;
 use Model\Filter;
@@ -22,15 +24,40 @@ class FilterService extends Controller
         $this->requireLogin = true;
     }
     function list(){
-        $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
-        $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
-        $listObj = Filter::getByPaging($page,$pageSize,'id DESC','');
+        if(!isset($this->parameters['pageSize'])){
+            $this->parameters['pageSize'] = 500;
+        }
+        if(!isset($this->parameters['sort'])){
+            $this->parameters['sort'] = [["column"=>"id","type"=>'DESC']];            
+        }
+        $listObj = Filter::getByFilter($this->parameters);
+        $data = [
+            'listObject'  => $listObj['list'],
+            'columns'     => $this->getListColumns(),
+            'total'       => $listObj['total'],
+            'sql'       => $listObj['sql'],
+        ];
         $this->output = [
             'status'=>STATUS_OK,
-            'data' => $listObj
-        ];   
+            'data' => $data
+        ];     
     }
+    function getListColumns(){
+        return [
+            ["name"=>"id","title"=>"id","type"=>"numeric"],
+            ["name"=>"userId","title"=>"userId","type"=>"text"],
+            ["name"=>"status","title"=>"status","type"=>"text"],
+            ["name"=>"description","title"=>"description","type"=>"text"],
+            ["name"=>"name","title"=>"name","type"=>"text"],
+            ["name"=>"createTime","title"=>"createTime","type"=>"text"],
+            ["name"=>"formula","title"=>"formula","type"=>"text"],
+            ["name"=>"objectIdentifier","title"=>"objectIdentifier","type"=>"text"],
+        ];
+    }
+    
     function create(){
+        $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -39,7 +66,7 @@ class FilterService extends Controller
             else{
                 $obj =  new Filter();
                 $obj->id = Filter::createUUID();
-                $obj->userId = Auth::getCurrentUserId();
+                $obj->userId = Auth::getCurrentBaEmail();
                 $obj->createTime = Str::currentTimeString();
                 $obj->name = trim($this->parameters['name']);
                 $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
@@ -55,6 +82,8 @@ class FilterService extends Controller
     }
     
     function update(){
+        $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['id','name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -63,7 +92,7 @@ class FilterService extends Controller
             else{
                 $obj = Filter::getById($this->parameters['id']);
                 if($obj!=false){
-                    $obj->userId = Auth::getCurrentUserId();
+                    $obj->userId = Auth::getCurrentBaEmail();
                     $obj->name = trim($this->parameters['name']);
                     $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                     $obj->formula = trim($this->parameters['formula']);
@@ -76,7 +105,6 @@ class FilterService extends Controller
                     else{
                         $this->output['status'] = STATUS_SERVER_ERROR;
                     }
-                    
                 }
                 else{
                     $this->output['status'] = STATUS_NOT_FOUND;
@@ -130,6 +158,14 @@ class FilterService extends Controller
                 $this->output['status']     = STATUS_NOT_FOUND;
                 $this->output['message']    = 'Filter not found';
             }
+        }
+    }
+
+    function getFilterInActionPack(){
+        if($this->checkParameter(['actionPackId'])){
+            $actionPackId = $this->parameters['actionPackId'];
+            $this->output['data']   = FilterInActionPack::getFilterInActionPack($actionPackId);
+            $this->output['status'] = STATUS_OK;
         }
     }
   

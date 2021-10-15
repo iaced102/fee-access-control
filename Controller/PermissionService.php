@@ -2,7 +2,9 @@
 namespace Controller;
 
 use Library\Auth;
+use Library\Environment;
 use Library\Message;
+use Library\Request;
 use Library\Str;
 use Model\ActionInPermissionPack;
 use Model\ActionPack;
@@ -21,15 +23,39 @@ class PermissionService extends Controller
         $this->requireLogin = true;
     }
     function list(){
-        $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
-        $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
-        $listObj = PermissionPack::getByPaging($page,$pageSize,'id DESC','');
+        if(!isset($this->parameters['pageSize'])){
+            $this->parameters['pageSize'] = 500;
+        }
+        if(!isset($this->parameters['sort'])){
+            $this->parameters['sort'] = [["column"=>"id","type"=>'DESC']];            
+        }
+        $listObj = PermissionPack::getByFilter($this->parameters);
+        $data = [
+            'listObject'  => $listObj['list'],
+            'columns'     => $this->getListColumns(),
+            'total'       => $listObj['total'],
+        ];
         $this->output = [
             'status'=>STATUS_OK,
-            'data' => $listObj
-        ];   
+            'data' => $data
+        ];     
+    }
+    function getListColumns(){
+        return [
+            ["name"=>"id","title"=>"id","type"=>"numeric"],
+            ["name"=>"name","title"=>"name","type"=>"text"],
+            ["name"=>"type","title"=>"type","type"=>"text"],
+            ["name"=>"status","title"=>"status","type"=>"text"],
+            ["name"=>"description","title"=>"description","type"=>"text"],
+            ["name"=>"baCreate","title"=>"userCreate","type"=>"text"],
+            ["name"=>"baUpdate","title"=>"userUpdate","type"=>"text"],
+            ["name"=>"createAt","title"=>"createAt","type"=>"text"],
+            ["name"=>"updateAt","title"=>"updateAt","type"=>"text"],
+        ];
     }
     function create(){
+        $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -41,8 +67,8 @@ class PermissionService extends Controller
                 $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                 $obj->type = isset($this->parameters['type'])?trim($this->parameters['type']):PermissionPack::TYPE_USER;
                 $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):PermissionPack::STATUS_ENABLE;
-                $obj->userCreate = Auth::getCurrentUserId();
-                $obj->userUpdate = Auth::getCurrentUserId();
+                $obj->userCreate = Auth::getCurrentBaEmail();
+                $obj->userUpdate = Auth::getCurrentBaEmail();
                 $obj->createAt  =date(DATETIME_FORMAT);
                 $obj->updateAt  =date(DATETIME_FORMAT);
                 $obj->insert();
@@ -58,6 +84,8 @@ class PermissionService extends Controller
     }
    
     function update(){
+        $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -70,7 +98,7 @@ class PermissionService extends Controller
                     $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                     $obj->type = isset($this->parameters['type'])?trim($this->parameters['type']):PermissionPack::TYPE_USER;
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):PermissionPack::STATUS_ENABLE;
-                    $obj->userUpdate = Auth::getCurrentUserId();
+                    $obj->userUpdate = Auth::getCurrentBaEmail();
                     $obj->updateAt  =date(DATETIME_FORMAT);
                     if($obj->update()){
                         if(isset($this->parameters['listActionPacks'])){
@@ -146,6 +174,8 @@ class PermissionService extends Controller
         }
     }
     function addActionPack(){
+        $messageBusData = ['topic'=>ActionInPermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['id','actionPackId'])){
             $obj = PermissionPack::getById(intval($this->parameters['id']));
             if($obj!=false){

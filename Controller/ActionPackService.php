@@ -2,7 +2,9 @@
 namespace Controller;
 
 use Library\Auth;
+use Library\Environment;
 use Library\Message;
+use Library\Request;
 use Library\Str;
 use Model\ActionPack;
 use Model\Operation;
@@ -25,15 +27,39 @@ class ActionPackService extends Controller
     * @operation("pack","list2")
     */
     public function  list(){
-        $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
-        $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
-        $listObj = ActionPack::getByPaging($page,$pageSize,'id DESC','');
+        if(!isset($this->parameters['pageSize'])){
+            $this->parameters['pageSize'] = 500;
+        }
+        if(!isset($this->parameters['sort'])){
+            $this->parameters['sort'] = [["column"=>"id","type"=>'DESC']];            
+        }
+        $listObj = ActionPack::getByFilter($this->parameters);
+        $data = [
+            'listObject'  => $listObj['list'],
+            'columns'     => $this->getListColumns(),
+            'total'       => $listObj['total'],
+            'sql'       => $listObj['sql'],
+        ];
         $this->output = [
             'status'=>STATUS_OK,
-            'data' => $listObj
+            'data' => $data
         ];   
     }
+    function getListColumns(){
+        return [
+            ["name"=>"id","title"=>"id","type"=>"numeric"],
+            ["name"=>"name","title"=>"name","type"=>"text"],
+            ["name"=>"status","title"=>"status","type"=>"text"],
+            ["name"=>"description","title"=>"description","type"=>"text"],
+            ["name"=>"baCreate","title"=>"userCreate","type"=>"text"],
+            ["name"=>"baUpdate","title"=>"userUpdate","type"=>"text"],
+            ["name"=>"createAt","title"=>"createAt","type"=>"text"],
+            ["name"=>"updateAt","title"=>"updateAt","type"=>"text"],
+        ];
+    }
     function create(){
+        $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -44,14 +70,18 @@ class ActionPackService extends Controller
                 $obj->name = trim($this->parameters['name']);
                 $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                 $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
-                $obj->userCreate = Auth::getCurrentUserId();
-                $obj->userUpdate = Auth::getCurrentUserId();
+                $obj->userCreate = Auth::getCurrentBaEmail();
+                $obj->userUpdate = Auth::getCurrentBaEmail();
                 $obj->createAt = date(DATETIME_FORMAT);
                 $obj->updateAt = date(DATETIME_FORMAT);
                 $obj->insert();
                 if(isset($this->parameters['listOperations'])){
                     $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
                     $obj->saveOperation($listOperations);
+                }
+                if(isset($this->parameters['listFilter'])){
+                    $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                    $obj->saveFilter($listFilter);
                 }
                 $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
@@ -60,6 +90,8 @@ class ActionPackService extends Controller
     
     }
     function update(){
+        $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
+        Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -68,16 +100,19 @@ class ActionPackService extends Controller
             else{
                 $obj = ActionPack::getById(intval($this->parameters['id']));
                 if($obj!=false){
-                   
                     $obj->name = trim($this->parameters['name']);
                     $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
-                    $obj->userUpdate = Auth::getCurrentUserId();
+                    $obj->userUpdate = Auth::getCurrentBaEmail();
                     $obj->updateAt = date(DATETIME_FORMAT);
                     if($obj->update()){
                         if(isset($this->parameters['listOperations'])){
                             $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
                             $obj->saveOperation($listOperations);
+                        }
+                        if(isset($this->parameters['listFilter'])){
+                            $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                            $obj->saveFilter($listFilter);
                         }
                         RoleAction::refresh();
                         $this->output['status'] = STATUS_OK;

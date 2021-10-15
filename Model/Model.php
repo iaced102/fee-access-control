@@ -22,7 +22,6 @@ class Model{
     public static function getPrimaryKey(){
         return 'id';
     }
-
     public static function getValueForSqlCommand($columnData,$value){
         $type = strtolower($columnData['type']);
         if(!($type == 'number' 
@@ -151,7 +150,7 @@ class Model{
         foreach($listVar as $key => $value){
             $columnData = static::getColumnNameInDataBase($key,true);
             if(is_string($value) || is_numeric($value)){
-                if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false)){
+                if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false ||$value!='')){
                     $columns[] = $columnData['name'];
                     $values[]  = self::getValueForSqlCommand($columnData,$value);
                 }   
@@ -182,15 +181,10 @@ class Model{
     }
     private function setAutoIncrementValueAfterInsert($result,$returnQuery,$returnColumn){
         if($returnQuery != ''){
-            if(is_numeric($result)){
+            $result = pg_fetch_all($result);
+            if(isset($result[0][$returnColumn])){
+                $result                 = $result[0][$returnColumn];
                 $this->$returnColumn    = $result;
-            }
-            else{
-                $result = pg_fetch_all($result);
-                if(isset($result[0][$returnColumn])){
-                    $result                 = $result[0][$returnColumn];
-                    $this->$returnColumn    = $result;
-                }
             }
         }
     }
@@ -205,7 +199,7 @@ class Model{
                 $values[$i]=[];
                 foreach($listVar as $key => $value){
                     $columnData = static::getColumnNameInDataBase($key,true);
-                    if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false)){
+                    if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false|| $value!='')){
                         if($i===0){
                             $columns[] = $columnData['name'];
                         }
@@ -278,13 +272,16 @@ class Model{
      * @param array $filterableColumns danh sách các cột được phép áp dụng filter
      * @param array $selectableColumns danh sách các cột được phép select dữ liệu
      * @param string $table Tên bảng hoặc câu Lệnh SQL chứa dataset cần filter dữ liệu
+     * @param string $sqlOnly Chỉ trả về SQL
+     * @param string $returnSQL data trả về của hàm có chứa câu lệnh SQL hay không
      * @return array
      */
-    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '')
+    public static function getByFilter($filter, $moreConditions = [], $filterableColumns = [], $selectableColumns = [], $table = '', $sqlOnly = false, $returnSQL = false)
     {
         $calledClass = get_called_class();
         $returnObject = false;
-        $filter = self::standardlizeFilterData($filter, $moreConditions);
+        $callFromModel = $calledClass == 'Model\Model';
+        $filter = self::standardlizeFilterData($filter, $moreConditions, $callFromModel);
         $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
         $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
         
@@ -298,12 +295,18 @@ class Model{
         }
 
         $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
-
         $data = [];
-        $data['list'] = self::get($sql['full'], $returnObject);
-        $data['list'] = $data['list'] == false ? [] : $data['list'];
-        $data['total'] = self::get($sql['count'], false)[0]['count_items'];
-        $data['sql'] = $sql;
+        if(!$sqlOnly){
+            $data['list'] = self::get($sql['full'], $returnObject);
+            $data['list'] = $data['list'] == false ? [] : $data['list'];
+            $data['total'] = self::get($sql['count'], false)[0]['count_items'];
+            $data['sql'] = $sql;
+        }
+
+        // $data['sql'] = '';
+        if($returnSQL && !$sqlOnly){
+            $data['sql'] = $sql;
+        }
         return $data;
     }
 
@@ -353,24 +356,27 @@ class Model{
      * @param array $moreConditions Các điều kiện khác cần truyền vào
      * @return void
      */
-    public static function standardlizeFilterData($filter, $moreConditions = [])
+    public static function standardlizeFilterData($filter, $moreConditions = [], $callFromModel = true)
     {
-        $mappingFromDatabase = static::$mappingFromDatabase;
         $columns = [];
         if(array_key_exists('columns', $filter)){
             foreach ($filter['columns'] as $columnName) {
-                if(array_key_exists($columnName, $mappingFromDatabase)){
-                    $columns[] = $mappingFromDatabase[$columnName]['name'];
-                }
+                $columns[] = self::getProperColumnName($columnName, $callFromModel);
             }
         }
         $filter['columns'] = $columns;
+
+        if(array_key_exists('groupBy', $filter)){
+            $groupByColumns = [];
+            foreach ($filter['groupBy'] as $columnName) {
+                $groupByColumns[] = self::getProperColumnName($columnName, $callFromModel);
+            }
+            $filter['groupBy'] = $groupByColumns;
+        }
+        
         if(array_key_exists('filter', $filter)){
             foreach ($filter['filter'] as $index  => &$item) {
-                $columnName = $item['column'];
-                if(array_key_exists($columnName, $mappingFromDatabase)){
-                    $item['column'] = $mappingFromDatabase[$columnName]['name'];
-                }
+                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
             }
         }
 
@@ -383,10 +389,45 @@ class Model{
 
         if(array_key_exists('sort', $filter)){
             foreach ($filter['sort'] as $index => $sortItem) {
-                $filter['sort'][$index]['column'] = $mappingFromDatabase[$sortItem['column']]['name'];
+                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
             }
         }
 
+        
+        if(array_key_exists('sort', $filter)){
+            foreach ($filter['sort'] as $index => $sortItem) {
+                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
+            }
+        }
+
+        if(!array_key_exists('stringCondition', $filter)){
+            $filter['stringCondition'] = '';
+        }
+
+        if(!array_key_exists('linkTable', $filter)){
+            $filter['linkTable'] = [];
+        }
+
         return $filter;
+    }
+
+
+    /**
+     * Trả về tên phù hợp với các cột của kết quả trả về
+     * @param originColumn tên cột có trong cấu hình
+     * @param callFromModel Biến chỉ định xem hàm filter có được gọi từ class Model hay gọi từ các class kết thừa Model
+     */
+    public static function getProperColumnName($originColumn, $callFromModel)
+    {
+        $mappingFromDatabase = static::$mappingFromDatabase;
+        if($callFromModel){
+            return $originColumn;
+        }else{
+            if(array_key_exists($originColumn, $mappingFromDatabase)){
+                return $mappingFromDatabase[$originColumn]['name'];
+            }else {
+                return '';
+            }
+        }
     }
 }
