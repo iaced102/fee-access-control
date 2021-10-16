@@ -14,7 +14,7 @@ class Filter extends SqlObject
         $objectIdentifier;
     public static $mappingFromDatabase = [
         'id'                =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
-        'userId'            =>  [ 'name' => 'user_id',              'type' => 'number'],
+        'userId'            =>  [ 'name' => 'user_id',              'type' => 'string'],
         'createTime'        =>  [ 'name' => 'create_time',          'type' => 'datetime'],
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'description'       =>  [ 'name' => 'description',          'type' => 'string'],
