@@ -47,8 +47,8 @@ class PermissionService extends Controller
             ["name"=>"type","title"=>"type","type"=>"text"],
             ["name"=>"status","title"=>"status","type"=>"text"],
             ["name"=>"description","title"=>"description","type"=>"text"],
-            ["name"=>"baCreate","title"=>"userCreate","type"=>"text"],
-            ["name"=>"baUpdate","title"=>"userUpdate","type"=>"text"],
+            ["name"=>"userCreate","title"=>"userCreate","type"=>"text"],
+            ["name"=>"userUpdate","title"=>"userUpdate","type"=>"text"],
             ["name"=>"createAt","title"=>"createAt","type"=>"text"],
             ["name"=>"updateAt","title"=>"updateAt","type"=>"text"],
         ];
