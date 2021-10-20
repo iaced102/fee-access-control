@@ -39,7 +39,7 @@ class Controller{
                 'userAgent'     => $_SERVER['HTTP_USER_AGENT'],
                 'clientIp'      => $_SERVER['REMOTE_ADDR']
             ];
-            $messageBusData = ['topic'=>'request-input', 'event' => 'log','resource' => json_encode($dataKafka),'env' => Environment::getEnvironment()];
+            $messageBusData = ['topic'=>'request-input', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         }
         if(method_exists($this,$action)){
@@ -131,7 +131,7 @@ class Controller{
                 'output'        => $this->output,
                 'processUuid'   => $this->processUuid
             ];
-            $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka),'env' => Environment::getEnvironment()];
+            $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         }
     }
