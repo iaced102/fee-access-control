@@ -129,7 +129,8 @@ class Controller{
         if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
             $dataKafka = [
                 'output'        => $this->output,
-                'processUuid'   => $this->processUuid
+                'processUuid'   => $this->processUuid,
+                'error'         => error_get_last()
             ];
             $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
