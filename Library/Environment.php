@@ -9,4 +9,12 @@ class Environment{
             return "";
         }
     }
+    public static function getEnvironment(){
+        if($GLOBALS['env']['environment']!=""){
+            return $GLOBALS['env']['environment'];
+        }
+        else{
+            return "";
+        }
+    }
 }

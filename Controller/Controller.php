@@ -8,10 +8,10 @@
 namespace Controller;
 
 use Library\Auth;
-use Library\CacheService;
-use Library\Library;
+use Library\Environment;
 use Library\Redirect;
 use Library\Message;
+use Library\Request;
 
 class Controller{
     public $defaultAction;
@@ -24,6 +24,19 @@ class Controller{
     public function run(){
         $this->checkRequireLogin();
         $action = $this->currentAction !='' ? $this->currentAction : $this->defaultAction;
+        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE'])) {
+            $dataKafka = [
+                'parameters'=>$this->parameters,
+                'method'    => $_SERVER['REQUEST_METHOD'],
+                'action'    => $action,
+                'uri'       => $_REQUEST['uri'],
+                'queryString' => $_SERVER['QUERY_STRING'],
+                'userAgent' => $_SERVER['HTTP_USER_AGENT'],
+                'clientIp' => $_SERVER['REMOTE_ADDR']
+            ];
+            $messageBusData = ['topic'=>'request-input', 'event' => 'log','resource' => json_encode($dataKafka),'env' => Environment::getEnvironment()];
+            Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
+        }
         if(method_exists($this,$action)){
             $this->$action();
         }
@@ -108,5 +121,9 @@ class Controller{
             $this->output['message'] = Message::getStatusResponse($this->output['status']);
         }
         print json_encode($this->output);
+        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE'])) {
+            $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($this->output),'env' => Environment::getEnvironment()];
+            Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
+        }
     }
 }
