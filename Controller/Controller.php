@@ -24,7 +24,7 @@ class Controller{
     public function run(){
         $this->checkRequireLogin();
         $action = $this->currentAction !='' ? $this->currentAction : $this->defaultAction;
-        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE'])) {
+        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
             $dataKafka = [
                 'parameters'=>$this->parameters,
                 'method'    => $_SERVER['REQUEST_METHOD'],
@@ -121,7 +121,7 @@ class Controller{
             $this->output['message'] = Message::getStatusResponse($this->output['status']);
         }
         print json_encode($this->output);
-        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE'])) {
+        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
             $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($this->output),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
         }
