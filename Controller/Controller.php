@@ -137,6 +137,7 @@ class Controller{
                 'output'        => $this->output,
                 'processUuid'   => $this->processUuid,
                 'error'         => error_get_last(),
+                'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y"),
                 'requestTime'   => $endTime - $this->requestTime
             ];
