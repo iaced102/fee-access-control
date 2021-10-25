@@ -12,6 +12,7 @@ use Library\Environment;
 use Library\Redirect;
 use Library\Message;
 use Library\Request;
+use Library\Str;
 use SqlObject;
 
 class Controller{
@@ -21,10 +22,12 @@ class Controller{
     public $requireLogin = true;
     public $parameters = [];
     private $processUuid;
+    private $requestTime;
     public function __construct(){
         $this->processUuid = SqlObject::createUUID();
     }
     public function run(){
+        $this->requestTime = microtime(true);
         $this->checkRequireLogin();
         $action = $this->currentAction !='' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
@@ -37,7 +40,9 @@ class Controller{
                 'host'          => $_SERVER['HTTP_HOST'],
                 'queryString'   => $_SERVER['QUERY_STRING'],
                 'userAgent'     => $_SERVER['HTTP_USER_AGENT'],
-                'clientIp'      => $_SERVER['REMOTE_ADDR']
+                'clientIp'      => $_SERVER['REMOTE_ADDR'],
+                'timeStamp'     => Str::currentTimeString(),
+                'date'          => date("d-m-Y")
             ];
             $messageBusData = ['topic'=>'request-input', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
@@ -127,10 +132,13 @@ class Controller{
         }
         print json_encode($this->output);
         if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
+            $endTime = microtime(true);
             $dataKafka = [
                 'output'        => $this->output,
                 'processUuid'   => $this->processUuid,
-                'error'         => error_get_last()
+                'error'         => error_get_last(),
+                'date'          => date("d-m-Y"),
+                'requestTime'   => $endTime - $this->requestTime
             ];
             $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
