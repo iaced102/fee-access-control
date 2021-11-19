@@ -29,6 +29,7 @@ class Connection{
             return $resultTest;
         }
         $command = trim($command);
+        $command = self::checkJoinTableForTenant($command);
         $connection = self::connectSql($server, $database, $userName, $password);
         $result = pg_query($connection, $command);
         return $result;
@@ -50,6 +51,7 @@ class Connection{
         if($cacheCommandResult){
             return $cacheCommandResult;
         }
+        $command = self::checkJoinTableForTenant($command);
         $resultData  = self::exeQueryAndFetchData($command);
         CacheService::set($command,$resultData);
         return $resultData;
@@ -62,5 +64,25 @@ class Connection{
         else{
             return '';
         }
+    }
+
+    // nếu có join trong câu lệnh thì bổ sung điều kiện trên tenant
+    private static function checkJoinTableForTenant($sql){
+        $newSql = $sql;
+        preg_match_all('/join\s*\w*\s*on\s*[a-z0-9_.]*\s*=\s*[a-z0-9_.]*/i', $sql, $output_array);
+        if(count($output_array) > 0) {
+            $allMatch = $output_array[0];
+            $c = count($allMatch);
+            if($c > 0) {
+                for ($i=0; $i < $c; $i++) { 
+                    $onClause = $allMatch[$i];
+                    preg_match_all('/\w*\./i', $onClause, $listTable);
+                    $tenantClause = $listTable[0][0]."tenant_id = ".$listTable[0][1]."tenant_id";
+                    $clauseReplace = $onClause . " AND ".$tenantClause;
+                    $newSql = str_replace($onClause,$clauseReplace,$newSql);
+                }
+            }
+        }
+        return $newSql;
     }
 }
