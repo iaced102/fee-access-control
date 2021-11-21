@@ -51,4 +51,62 @@ class Str{
         }
         return $String;
     }
+    public static function createUUID(){
+        return sprintf('%08x-%04x-%04x-%04x-%04x%08x',
+            microtime(true),
+            getmypid(),
+            mt_rand( 0, 0xffff ),
+            mt_rand( 0, 0xffff ),
+            mt_rand( 0, 0xffff ),
+            Auth::getCurrentIP()
+        );
+    }
+    /**
+     * Lấy các function xuất hiện trong chuỗi
+     */
+    public static function getAllFunctionsCallInString($str, $functionName, $openStr = '(', $closeSrt = ')')
+    {
+        $startIndexs = [];
+        $strPatt = "\b$functionName\s*\\".$openStr;
+        preg_match_all("/$strPatt/i", $str, $startIndexs, PREG_OFFSET_CAPTURE);
+        $matches = $startIndexs[0];
+        $count = count($matches);
+        if($count > 0){
+            $rsl = [];
+            for ($i=0; $i < ($count - 1); $i++) { 
+                $start = $matches[$i][1];
+                $end = $matches[$i+1][1] ;
+                $rsl[] = self::getSingleFunctionCallInString(substr($str, $start, $end - $start), $openStr = '(', $closeSrt = ')');
+            }
+
+            $start = $matches[$count - 1][1];
+            $end = strlen($str);
+
+            $rsl[] = self::getSingleFunctionCallInString(substr($str, $start, $end - $start), $openStr = '(', $closeSrt = ')');
+            return $rsl;
+        }else{
+            return [];
+        }
+    }
+
+    /**
+     * Lấy function đầu tiên xuất hiện trong chuỗi
+     */
+    public static function getSingleFunctionCallInString($str, $openStr = '(', $closeSrt = ')')
+    {
+        $stackCount = 0;
+        $endIndex = 0;
+        for ($i=strpos($str, $openStr); $i < strlen($str); $i++) { 
+            if($str[$i] == $openStr){
+                $stackCount += 1;
+            }else if($str[$i] == $closeSrt){
+                $stackCount -= 1;
+            }
+            if($stackCount == 0){
+                $endIndex = $i+1;
+                break;
+            }
+        }
+        return substr($str, 0, $endIndex);
+    }
 }

@@ -23,7 +23,6 @@ class Route{
             }
             else{
                 $runRouterWithParameter = self::runRouterWithParameter($method,$uri);
-                
                 if(!$runRouterWithParameter){
                     self::runDefaultRouter($method,$uri);
                 }
@@ -59,24 +58,24 @@ class Route{
     public static function redirect($uri,$newUri){
         self::addRouter('redirect',$uri,$newUri);
     }
-    public static function get($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
-        self::addRouter('get',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction);
+    public static function get($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
+        self::addRouter('get',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction,$onlyBA);
     }
-    public static function post($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
-        self::addRouter('post',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction);
+    public static function post($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
+        self::addRouter('post',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction,$onlyBA);
     }
-    public static function put($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
-        self::addRouter('put',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction);
+    public static function put($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
+        self::addRouter('put',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction,$onlyBA);
     }
-    public static function patch($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
-        self::addRouter('patch',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction);
+    public static function patch($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
+        self::addRouter('patch',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction,$onlyBA);
         
     }
-    public static function delete($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
-        self::addRouter('delete',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction);
+    public static function delete($uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
+        self::addRouter('delete',$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction,$onlyBA);
     }
-    private static function addRouter($method,$uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false){
-        $routerObject = new Router($method,$uri,$controller,$action,$parameters);
+    private static function addRouter($method,$uri,$controller,$action='',$parameters=[],$permissionObjectIdentifier=false,$permissionAction=false,$onlyBA=false){
+        $routerObject = new Router($method,$uri,$controller,$action,$parameters,$permissionObjectIdentifier,$permissionAction,$onlyBA);
         self::$routersData[$method][$uri]=$routerObject;
     }
     

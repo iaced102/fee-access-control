@@ -148,7 +148,7 @@ class Auth{
     }
     public static function getCurrentRole(){
         $dataLogin = self::getDataToken();
-            if(!empty($dataLogin)){
+        if(!empty($dataLogin)){
             if(isset($dataLogin['type'])&&$dataLogin['type']=='ba' && isset($dataLogin['userDelegate']['role'])){
                 return $dataLogin['userDelegate']['role'];
             }

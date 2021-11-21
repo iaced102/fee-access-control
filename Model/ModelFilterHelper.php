@@ -118,7 +118,7 @@ class ModelFilterHelper
             $distnct = 'DISTINCT';
         }
 
-        if (!empty($filter['linkTable']) && count($filter['linkTable']) > 0) {
+        if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
         }
         $columns = implode("\" , \"", $columns);

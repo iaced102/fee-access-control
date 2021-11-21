@@ -7,7 +7,7 @@ class Database{
     private  $modelClass = false;
     private  $objectModel = false;
     private static $dataTypeMapping = [
-        'string'            =>  'VARCHAR(256)',
+        'string'            =>  'text',
         'number'            =>  'INTEGER',
         'datetime'          =>  'TIMESTAMP WITHOUT TIME ZONE',
         'timestamp'         =>  'TIMESTAMP WITHOUT TIME ZONE',
@@ -29,12 +29,10 @@ class Database{
     public  function createTable($data){
         $this->getObjectModel($data);
         if($this->objectModel!=false){
-            
             if(!$this->checkTableExist()){
                 $columnQuerys           = $this->getSqlCreateColumn();
                 $columnQueryString      = implode(",", $columnQuerys);
                 $sqlQuery               = "CREATE TABLE ".$this->modelClass::getTableName()." ($columnQueryString)";
-                var_dump($sqlQuery);
                 $result = Connection::exeQuery($sqlQuery);
                 if($result!=false){
                     return [
@@ -78,6 +76,7 @@ class Database{
         }
     }
     private  function checkTableExist(){
+        $modelClass = 
         $tableName = $this->modelClass::getTableName();
         $command = "SELECT EXISTS (SELECT table_name FROM information_schema.tables WHERE table_name = '$tableName');";
         $result = Connection::getDataQuerySelect($command);{

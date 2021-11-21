@@ -300,10 +300,9 @@ class Model{
             $data['list'] = self::get($sql['full'], $returnObject);
             $data['list'] = $data['list'] == false ? [] : $data['list'];
             $data['total'] = self::get($sql['count'], false)[0]['count_items'];
-            $data['sql'] = $sql;
         }
 
-        // $data['sql'] = '';
+        $data['sql'] = '';
         if($returnSQL && !$sqlOnly){
             $data['sql'] = $sql;
         }

@@ -8,10 +8,12 @@
 namespace Controller;
 
 use Library\Auth;
-use Library\CacheService;
-use Library\Library;
+use Library\Environment;
 use Library\Redirect;
 use Library\Message;
+use Library\Request;
+use Library\Str;
+use SqlObject;
 
 class Controller{
     public $defaultAction;
@@ -19,12 +21,32 @@ class Controller{
     public $output = array();
     public $requireLogin = true;
     public $parameters = [];
+    private $processUuid;
+    private $requestTime;
     public function __construct(){
+        $this->processUuid = SqlObject::createUUID();
     }
-    
     public function run(){
+        $this->requestTime = microtime(true);
         $this->checkRequireLogin();
         $action = $this->currentAction !='' ? $this->currentAction : $this->defaultAction;
+        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
+            $dataKafka = [
+                'parameters'    =>$this->parameters,
+                'method'        => $_SERVER['REQUEST_METHOD'],
+                'action'        => $action,
+                'processUuid'   => $this->processUuid,
+                'uri'           => $_REQUEST['uri'],
+                'host'          => $_SERVER['HTTP_HOST'],
+                'queryString'   => $_SERVER['QUERY_STRING'],
+                'userAgent'     => $_SERVER['HTTP_USER_AGENT'],
+                'clientIp'      => $_SERVER['REMOTE_ADDR'],
+                'timeStamp'     => Str::currentTimeString(),
+                'date'          => date("d-m-Y")
+            ];
+            $messageBusData = ['topic'=>'request-input', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
+            Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
+        }
         if(method_exists($this,$action)){
             $this->$action();
         }
@@ -59,7 +81,7 @@ class Controller{
         }
         $this->output = [
             'status' => STATUS_PERMISSION_DENIED,
-            'message'=> \Library\Message::getStatusResponse(STATUS_PERMISSION_DENIED)
+            'message'=> Message::getStatusResponse(STATUS_PERMISSION_DENIED)
         ];
         return false;
     }
@@ -92,7 +114,7 @@ class Controller{
                 if(!isset($this->parameters[$parameter])){
                     $this->output = [
                         'status' => STATUS_BAD_REQUEST,
-                        'message'=> \Library\Message::getStatusResponse(STATUS_BAD_REQUEST)
+                        'message'=> Message::getStatusResponse(STATUS_BAD_REQUEST)
                     ];
                     return false;
                 }
@@ -102,9 +124,25 @@ class Controller{
     }
     private function returnOutput(){
         header('Content-Type: application/json');
-        if((!isset($this->output['message']))|| $this->output['message']==''){
+        if(!isset($this->output['status'])){
+            $this->output['status'] = STATUS_OK;
+        }
+        if((!isset($this->output['message'])) || $this->output['message']==''){
             $this->output['message'] = Message::getStatusResponse($this->output['status']);
         }
         print json_encode($this->output);
+        if (in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','DELETE','GET','PATCH'])) {
+            $endTime = microtime(true);
+            $dataKafka = [
+                'output'        => $this->output,
+                'processUuid'   => $this->processUuid,
+                'error'         => error_get_last(),
+                'timeStamp'     => Str::currentTimeString(),
+                'date'          => date("d-m-Y"),
+                'requestTime'   => $endTime - $this->requestTime
+            ];
+            $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
+            Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
+        }
     }
 }
