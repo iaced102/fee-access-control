@@ -119,7 +119,18 @@ class RoleService extends Controller
         if($this->checkParameter(['role_identifier','object_identifier'])){
             $roleIdentifier = trim($this->parameters['role_identifier']);
             $objectIdentifier = trim($this->parameters['object_identifier']);
-            $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier'");
+            $listAccessControl = [];
+            if($roleIdentifier == 'auto'){
+                $user = Auth::getDataToken();
+                $allRoles = $user['allRoles'];
+                if(count($allRoles) > 0){
+                    $allRoles = "'".implode("','", $allRoles)."'";
+                    $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles) AND object_identifier='$objectIdentifier'");
+                }
+            }else{
+                $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier'");
+            }
+
             $this->output = [
                 'status'=>STATUS_OK,
                 'data' =>$listAccessControl
@@ -129,7 +140,17 @@ class RoleService extends Controller
     public function getAccessControlByRole(){
         if($this->checkParameter(['role_identifier'])){
             $roleIdentifier = trim($this->parameters['role_identifier']);
-            $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier'");
+            $listAccessControl = [];
+            if($roleIdentifier == 'auto'){
+                $user = Auth::getDataToken();
+                $allRoles = isset($user['allRoles']) ? $user['allRoles'] : [];
+                if(count($allRoles) > 0){
+                    $allRoles = "'".implode("','", $allRoles)."'";
+                    $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles)");
+                }
+            }else{
+                $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier'");
+            }
             $this->output = [
                 'status'=>STATUS_OK,
                 'data' =>$listAccessControl
