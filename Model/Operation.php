@@ -24,7 +24,7 @@ class Operation extends SqlObject
         'status'            =>  [ 'name' => 'status',               'type' => 'number']
     ];
     public static $listAction = [
-        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','drop','restore','list','list_trash','submit_by_workflow']],
+        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','import','drop','restore','list','list_trash','submit_by_workflow']],
         'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','list_instance','print','list_trash','update_by_workflow']],
         'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>['list','create','deploy','drop','update','list_instance','start_instance','view']],
         'workflow_instance'     => ['name'=>'thể hiện quy trình',   'ownerDomain' => 'workflow.symper.vn',              'action'=>['detail','drop']],
@@ -42,115 +42,8 @@ class Operation extends SqlObject
         'action_pack'           => ['name'=>'nhóm hành động',       'ownerDomain' => 'accesscontrol.symper.vn',          'action'=>['create','update','detail','remove','list','add_operation','remove_operation']],
         'permission_pack'       => ['name'=>'nhóm quyền hạn',       'ownerDomain' => 'accesscontrol.symper.vn',         'action'=>['create','update','detail','remove','list','add_action_pack','remove_action_pack']],
         'application_definition'=> ['name'=>'Ứng dụng',             'ownerDomain' => 'core.symper.vn',                  'action'=>['view','create','update','remove']],
-        'knowledge'             => ['name'=>'knowledge',            'ownerDomain' => 'kh.symper.vn',                    'action'=>['view','create','update','remove']],
         'file'                  => ['name'=>'file',                 'ownerDomain' => 'file.symper.vn',                  'action'=>['view','create','update','remove']],
         'timesheet'             => ['name'=>'timesheet',            'ownerDomain' => 'timesheet.symper.vn',             'action'=>['list','view','create','update','remove']],
-        "task_manager_project" => [
-            "name" => "Dự án",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_project_category" => [
-            "name" => "Loại dự án",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_project_setting" => [
-            "name" => "Cài đặt dự án",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['config']
-        ],
-        "task_manager_access" => [
-            "name" => "Truy cập",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_role" => [
-            "name" => "Vai trò người dùng",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_permission" => [
-            "name" => "Phân quyền người dùng",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_kanban_board" => [
-            "name" => "Bảng Kanban",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_sprint" => [
-            "name" => "Sprint",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_component" => [
-            "name" => "Sprint",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_version" => [
-            "name" => "Sprint",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_issue_type" => [
-            "name" => "Loại tác vụ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_sub_task" => [
-            "name" => "Công việc chi tiết",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_task_life_cycle" => [
-            "name" => "Vòng đời của tác vụ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_field" => [
-            "name" => "Trường thông tin của tác vụ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_time_tracking" => [
-            "name" => "Theo dõi tiến độ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['config']
-        ],
-        "task_manager_issue_link" => [
-            "name" => "Liên kết tác vụ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_status" => [
-            "name" => "Trạng thái",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_priority" => [
-            "name" => "Mức độ ưu tiên",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail']
-        ],
-        "task_manager_issue" => [
-            "name" => "Tác vụ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['add','list','edit','delete','detail','editOwnIssue','addAttachFile','editAttachFile','removeAttachFile','assignUser','linkIssue','moveIssue','addComment','editAllComment','editOwnComment','deleteAllComment','deleteOwnComment']
-        ],
-        "task_manager_issue_field_config" => [
-            "name" => "Cấu hình trường thông tin của tác vụ",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['config']
-        ],
-       
-        "task_manager_report_config" => [
-            "name" => "Báo cáo",
-            "ownerDomain" => "task-management-service.symper.vn",
-            "action" => ['view']
-        ],
         "dashboard_tab" => [
             "name" => "Tab trong dashboard",
             "ownerDomain" => "bi-service.symper.vn",
@@ -182,3 +75,110 @@ class Operation extends SqlObject
         return array_keys(self::$listAction);
     }
 }
+
+// "task_manager_project" => [
+//     "name" => "Dự án",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_project_category" => [
+//     "name" => "Loại dự án",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_project_setting" => [
+//     "name" => "Cài đặt dự án",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['config']
+// ],
+// "task_manager_access" => [
+//     "name" => "Truy cập",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_role" => [
+//     "name" => "Vai trò người dùng",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_permission" => [
+//     "name" => "Phân quyền người dùng",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_kanban_board" => [
+//     "name" => "Bảng Kanban",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_sprint" => [
+//     "name" => "Sprint",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_component" => [
+//     "name" => "Sprint",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_version" => [
+//     "name" => "Sprint",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_issue_type" => [
+//     "name" => "Loại tác vụ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_sub_task" => [
+//     "name" => "Công việc chi tiết",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_task_life_cycle" => [
+//     "name" => "Vòng đời của tác vụ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_field" => [
+//     "name" => "Trường thông tin của tác vụ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_time_tracking" => [
+//     "name" => "Theo dõi tiến độ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['config']
+// ],
+// "task_manager_issue_link" => [
+//     "name" => "Liên kết tác vụ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_status" => [
+//     "name" => "Trạng thái",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_priority" => [
+//     "name" => "Mức độ ưu tiên",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail']
+// ],
+// "task_manager_issue" => [
+//     "name" => "Tác vụ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['add','list','edit','delete','detail','editOwnIssue','addAttachFile','editAttachFile','removeAttachFile','assignUser','linkIssue','moveIssue','addComment','editAllComment','editOwnComment','deleteAllComment','deleteOwnComment']
+// ],
+// "task_manager_issue_field_config" => [
+//     "name" => "Cấu hình trường thông tin của tác vụ",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['config']
+// ],
+
+// "task_manager_report_config" => [
+//     "name" => "Báo cáo",
+//     "ownerDomain" => "task-management-service.symper.vn",
+//     "action" => ['view']
+// ],
