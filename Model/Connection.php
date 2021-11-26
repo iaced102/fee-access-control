@@ -69,7 +69,7 @@ class Connection{
     // nếu có join trong câu lệnh thì bổ sung điều kiện trên tenant
     private static function checkJoinTableForTenant($sql){
         $newSql = $sql;
-        preg_match_all('/join\s*.*\s*on\s*[a-z0-9_.]*\s*=\s*[a-z0-9_.]*/i', $sql, $output_array);
+        preg_match_all('/[a-zA-Z0-9_"]+\.[a-zA-Z0-9_:"]+\s*=\s*[a-zA-Z0-9_"]+\.[a-zA-Z0-9_:"]+/', $sql, $output_array);
         if(count($output_array) > 0) {
             $allMatch = $output_array[0];
             $c = count($allMatch);
