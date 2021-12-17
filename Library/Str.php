@@ -88,7 +88,7 @@ class Str{
                     if($lastItem['end'] == -1){
                         $lastItem['end'] = $i;
                         $needReplaceStr = substr($str, $lastItem['start'] + 1, $lastItem['end'] - $lastItem['start'] -1);
-                        $key = "__SYMPER_PLACEHOLDER_STRING_$count";
+                        $key = "__SYMPER_PLACEHOLDER_STRING_$count"."_";
                         $newStr = str_replace($needReplaceStr, $key, $newStr);
                         $count += 1;
                         $rsl['placeHolder'][$key] = $needReplaceStr;
