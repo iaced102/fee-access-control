@@ -52,7 +52,7 @@ class ActionPack extends SqlObject
             $this->removeAllFilter();
             for ($i=0; $i < count($listFilter); $i++) { 
                 $filter = $listFilter[$i];
-                FilterInActionPack::create($filter['id'], $this->id,$filter['action']);
+                FilterInActionPack::create($filter['id'], $this->id,$filter);
             }
         }
     }

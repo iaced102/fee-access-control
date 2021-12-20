@@ -47,12 +47,14 @@ class RoleAction extends SqlObject{
         o.status,                                                                         
         pr.role_identifier,                                                               
         filter.formula AS filter_formula,                                                 
-        filter.status AS filter_status                                                    
-       FROM operation o                                                               
+        filter.status AS filter_status,
+        fia.filter_values as filter_values
+        FROM operation o 
          JOIN operation_in_action_pack op ON o.id = op.operation_id and o.tenant_id = op.tenant_id               
          JOIN action_in_permission_pack app ON op.action_pack_id = app.action_pack_id and op.tenant_id = app.tenant_id      
          JOIN permission_role pr ON app.permission_pack_id = pr.permission_pack_id and pr.tenant_id = app.tenant_id   
-         LEFT JOIN filter ON (op.filter)::text = (filter.id)::text and op.tenant_id = filter.tenant_id;
+         LEFT JOIN filter ON (op.filter)::text = (filter.id)::text and op.tenant_id = filter.tenant_id
+         LEFT JOIN filter_in_action_pack fia ON op.action_pack_id  = fia.action_pack_id and fia.tenant_id = filter.tenant_id;
         ";
     }
    
