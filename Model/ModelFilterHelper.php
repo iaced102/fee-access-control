@@ -336,7 +336,7 @@ class ModelFilterHelper
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
             if (!array_key_exists($op, self::$notCheckType)) {
-                $value = pg_escape_string("$vl");
+                $value = pg_escape_string("$value");
                 if ($colDef['type'] != 'number') {
                     $value = "'$value'";
                 }
