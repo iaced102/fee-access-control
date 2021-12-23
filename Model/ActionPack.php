@@ -71,4 +71,15 @@ class ActionPack extends SqlObject
     function removeAllFilter(){
         Connection::exeQuery("DELETE FROM filter_in_action_pack WHERE action_pack_id=".$this->id);
     }
+    public static function checkNameExist($name, $id = false){
+        if($id == false){
+            $listObject = self::getByTop('',"name = '$name'");
+        }else{
+            $listObject = self::getByTop('',"name = '$name' and id != $id");
+        }
+        if(count($listObject) > 0){
+            return true;
+        }
+        return false;
+    }
 }

@@ -20,7 +20,7 @@ class ActionPackService extends Controller
     {
         parent::__construct();
         $this->defaultAction = 'list';
-        $this->requireLogin = true;
+        $this->requireLogin = false;
     }
    /**
     * @operation("pack","list")
@@ -68,23 +68,28 @@ class ActionPackService extends Controller
             else{
                 $obj =  new ActionPack();
                 $obj->name = trim($this->parameters['name']);
-                $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
-                $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
-                $obj->userCreate = Auth::getCurrentBaEmail();
-                $obj->userUpdate = Auth::getCurrentBaEmail();
-                $obj->createAt = date(DATETIME_FORMAT);
-                $obj->updateAt = date(DATETIME_FORMAT);
-                $obj->insert();
-                if(isset($this->parameters['listOperations'])){
-                    $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
-                    $obj->saveOperation($listOperations);
+                if(ActionPack::checkNameExist($obj->name)){
+                    $this->output['status'] = STATUS_SERVER_ERROR;
+                    $this->output['message'] = "Action pack already exists";
+                }else{
+                    $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
+                    $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
+                    $obj->userCreate = Auth::getCurrentBaEmail();
+                    $obj->userUpdate = Auth::getCurrentBaEmail();
+                    $obj->createAt = date(DATETIME_FORMAT);
+                    $obj->updateAt = date(DATETIME_FORMAT);
+                    $obj->insert();
+                    if(isset($this->parameters['listOperations'])){
+                        $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
+                        $obj->saveOperation($listOperations);
+                    }
+                    if(isset($this->parameters['listFilter'])){
+                        $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                        $obj->saveFilter($listFilter);
+                    }
+                    $this->output['data'] = $obj;
+                    $this->output['status'] = STATUS_OK;
                 }
-                if(isset($this->parameters['listFilter'])){
-                    $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
-                    $obj->saveFilter($listFilter);
-                }
-                $this->output['data'] = $obj;
-                $this->output['status'] = STATUS_OK;
             }
         }
     
@@ -101,26 +106,30 @@ class ActionPackService extends Controller
                 $obj = ActionPack::getById(intval($this->parameters['id']));
                 if($obj!=false){
                     $obj->name = trim($this->parameters['name']);
-                    $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
-                    $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
-                    $obj->userUpdate = Auth::getCurrentBaEmail();
-                    $obj->updateAt = date(DATETIME_FORMAT);
-                    if($obj->update()){
-                        if(isset($this->parameters['listOperations'])){
-                            $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
-                            $obj->saveOperation($listOperations);
-                        }
-                        if(isset($this->parameters['listFilter'])){
-                            $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
-                            $obj->saveFilter($listFilter);
-                        }
-                        RoleAction::refresh();
-                        $this->output['status'] = STATUS_OK;
-                    }
-                    else{
+                    if(ActionPack::checkNameExist($obj->name, $obj->id)){
                         $this->output['status'] = STATUS_SERVER_ERROR;
+                        $this->output['message'] = "Action pack already exists";
+                    }else{
+                        $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
+                        $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
+                        $obj->userUpdate = Auth::getCurrentBaEmail();
+                        $obj->updateAt = date(DATETIME_FORMAT);
+                        if($obj->update()){
+                            if(isset($this->parameters['listOperations'])){
+                                $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
+                                $obj->saveOperation($listOperations);
+                            }
+                            if(isset($this->parameters['listFilter'])){
+                                $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                                $obj->saveFilter($listFilter);
+                            }
+                            RoleAction::refresh();
+                            $this->output['status'] = STATUS_OK;
+                        }
+                        else{
+                            $this->output['status'] = STATUS_SERVER_ERROR;
+                        }
                     }
-                    
                 }
                 else{
                     $this->output['status'] = STATUS_NOT_FOUND;
