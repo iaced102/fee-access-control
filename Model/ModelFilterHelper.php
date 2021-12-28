@@ -165,7 +165,6 @@ class ModelFilterHelper
 
         return $sort;
     }
-
     private static function getFrom($table)
     {
         if (stripos($table, "select ") !== false) {
@@ -212,8 +211,13 @@ class ModelFilterHelper
         // get search query
         $searchKey = $filter['search'];
         if (trim($searchKey) != '') {
+            $searchKey = pg_escape_string("$searchKey");
             $searchConditions = [];
-            foreach ($columns as $colName) {
+            $searchColumns = $columns;
+            if($filter['searchColumns'] != '*'){
+                $searchColumns = explode(',', $filter['searchColumns']);
+            }
+            foreach ($searchColumns as $colName) {
                 $searchConditions[] = " CAST(\"$colName\" AS VARCHAR) ILIKE '%$searchKey%' ";
             }
 
@@ -270,6 +274,9 @@ class ModelFilterHelper
         if (array_key_exists('valueFilter', $conditionItem)) {
             $colType = $mapColumns[$colName];
             $values = '';
+            foreach ($conditionItem['valueFilter']['values'] as $key => $vl) {
+                $conditionItem['valueFilter']['values'][$key] = pg_escape_string("$vl");
+            }
             if ($colType == 'number') {
                 $values = implode(' , ', $conditionItem['valueFilter']['values']);
                 $values = "($values)";
@@ -293,6 +300,11 @@ class ModelFilterHelper
             $colDef = $mapColumns[$colName];
             if ($op == 'in' || $op == 'not_in') {
                 $colType = $colDef['type'];
+                if(is_array($value)){
+                    foreach ($value as $key => $vl) {
+                        $value[$key] = pg_escape_string("$vl");
+                    }
+                }
                 if ($colType == 'number') {
                     $value = implode(' , ', $value);
                     $value = "($value)";
@@ -324,6 +336,7 @@ class ModelFilterHelper
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
             if (!array_key_exists($op, self::$notCheckType)) {
+                $value = pg_escape_string("$value");
                 if ($colDef['type'] != 'number') {
                     $value = "'$value'";
                 }
@@ -355,6 +368,10 @@ class ModelFilterHelper
 
         if (!array_key_exists('search', $filter)) {
             $result['search'] = '';
+        }
+
+        if (!array_key_exists('searchColumns', $filter)) {
+            $result['searchColumns'] = '*';
         }
 
         $result = self::toJoinConditionIfExist($result, $filterableColumns, $selectableColumns);
