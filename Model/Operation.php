@@ -53,7 +53,17 @@ class Operation extends SqlObject
             "name" => "Dataset",
             "ownerDomain" => "bi-service.symper.vn",
             "action" => ['query']
-        ]
+        ],
+        "document_control" => [
+            "name" => "Control",
+            "ownerDomain" => "document-management.symper.vn",
+            "action" => ['hide','readonly', 'remove']
+        ],
+        "document_table" => [
+            "name" => "Document table",
+            "ownerDomain" => "document-management.symper.vn",
+            "action" => ['hide','old_rows_readonly','old_rows_not_remove',]
+        ],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
