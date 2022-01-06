@@ -186,7 +186,7 @@ class OperationService extends Controller
         }
         if(isset($this->parameters['keyword'])&&$this->parameters['keyword']!=''){
             $keyword = pg_escape_string($this->parameters['keyword']);
-            $condition[] = "name ilike '%$keyword%'";
+            $condition[] = "(name ilike '%$keyword%' OR object_identifier ilike '%$keyword%' OR title ilike '%$keyword%')";
         }
         if(isset($this->parameters['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
