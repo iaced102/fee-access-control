@@ -126,6 +126,10 @@ class RoleService extends Controller
                 if(count($allRoles) > 0){
                     $allRoles = "'".implode("','", $allRoles)."'";
                     $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles) AND object_identifier='$objectIdentifier'");
+                    foreach ($listAccessControl as &$item) {
+                        $item->originRoleIdentifier = $item->roleIdentifier;
+                        $item->roleIdentifier = 'auto';
+                    }
                 }
             }else{
                 $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier'");
@@ -147,6 +151,10 @@ class RoleService extends Controller
                 if(count($allRoles) > 0){
                     $allRoles = "'".implode("','", $allRoles)."'";
                     $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles)");
+                    foreach ($listAccessControl as &$item) {
+                        $item->originRoleIdentifier = $item->roleIdentifier;
+                        $item->roleIdentifier = 'auto';
+                    }
                 }
             }else{
                 $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier'");

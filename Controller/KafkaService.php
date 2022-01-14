@@ -41,7 +41,7 @@ class KafkaService extends Controller
             $this->output['status'] = $result?STATUS_OK: STATUS_SERVER_ERROR;
         }
     }
-    function processObject($type,$item){
+    public function processObject($type,$item){
         if(isset($item['event'])&&($item['event']=="create"||$item['event']=="update" )&& isset($item['data']) && isset($item['data']['id'])){
             $object = new ObjectIdentifier();
             $object->type = $type;
