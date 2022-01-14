@@ -46,6 +46,7 @@ Route::post('operations/objects','OperationService','getListObjectIdentifier');
 Route::get('operations/{type}/actions','OperationService','getActionByObjectType');
 
 Route::get('env/object-types','Env','listObjectType',[],false,false,true);
+Route::get('test','Api','testGet');
 
 Route::get('env/action_packs','Env','listActionPack',[],false,false,true);
 Route::post('env/action_packs/ids','Env','getActionPackByIds',[],false,false,true);
