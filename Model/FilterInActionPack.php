@@ -5,11 +5,15 @@ class FilterInActionPack extends SqlObject
 {
     public $filterId,
         $actionPackId,
-        $action;
+        $action,
+        $filterStruct,
+        $filterValues;
     public static $mappingFromDatabase = [
         'filterId'            =>  [ 'name' => 'filter_id',              'type' => 'string'],
         'actionPackId'        =>  [ 'name' => 'action_pack_id',         'type' => 'number'],
         'action'              =>  [ 'name' => 'action',                 'type' => 'string'],
+        'filterStruct'        =>  [ 'name' => 'filter_struct',                 'type' => 'string'],
+        'filterValues'        =>  [ 'name' => 'filter_values',                 'type' => 'string'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
@@ -20,11 +24,13 @@ class FilterInActionPack extends SqlObject
     public static function getTopicName(){
        return 'filter_in_action_pack';
     }
-    public static function create($filterId, $actionPackId, $action){
+    public static function create($filterId, $actionPackId, $filter){
         $obj = new FilterInActionPack();
         $obj->actionPackId = $actionPackId;
         $obj->filterId = $filterId;
-        $obj->action = json_encode($action);
+        $obj->action = json_encode($filter['action']);
+        $obj->filterStruct = isset($filter['filterStruct']) ? $filter['filterStruct'] : "";
+        $obj->filterValues = isset($filter['filterValues']) ? $filter['filterValues'] : "";
         $obj->insert();
     }
     public static function getFilterInActionPack($actionPackId){
