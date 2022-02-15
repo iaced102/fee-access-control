@@ -20,7 +20,7 @@ class Filter extends SqlObject
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'description'       =>  [ 'name' => 'description',          'type' => 'string'],
         'formula'           =>  [ 'name' => 'formula',              'type' => 'string'],
-        'formulaStruct'    =>  [ 'name' => 'formula_struct',       'type' => 'string'],
+        'formulaStruct'     =>  [ 'name' => 'formula_struct',        'type' => 'string'],
         'status'            =>  [ 'name' => 'status',               'type' => 'number'],
         'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
     ];

@@ -97,7 +97,7 @@ class FilterService extends Controller
                     $obj->name = trim($this->parameters['name']);
                     $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                     $obj->formula = trim($this->parameters['formula']);
-                    $obj->formulaStruct = isset($this->parameters['formulaStruct']) ? ($this->parameters['formulaStruct']):"";
+                    $obj->formulaStruct = isset($this->parameters['formulaStruct']) ? ($this->parameters['formulaStruct']) : "";
                     $obj->objectIdentifier = trim($this->parameters['objectIdentifier']);
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):Filter::STATUS_ENABLE;
                     if($obj->update()){
