@@ -57,6 +57,7 @@ Route::post('env/permission_packs/ids','Env','getPermissionByIds',[],false,false
 Route::post('env/permission_packs/save','Env','savePermissionByIds',[],false,false,true);
 
 Route::get('filters','FilterService','list');
+Route::get('test','ServerKeyService','test');
 Route::get('filters-in-action-pack/{actionPackId}','FilterService','getFilterInActionPack');
 Route::post('filters','FilterService','create');
 Route::put('filters/{id}','FilterService','update');

@@ -14,6 +14,7 @@ class RoleAction extends SqlObject{
         $roleIdentifier,
         $status,
         $filter,
+        $filterNew,
         $actionPackId;
     public static $mappingFromDatabase = [
         'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
@@ -22,6 +23,7 @@ class RoleAction extends SqlObject{
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
         'filter'            =>  [ 'name' => 'filter_formula',               'type' => 'string'],
+        'filterNew'         =>  [ 'name' => 'filter_formula_new',               'type' => 'string'],
         'status'            =>  [ 'name' => 'filter_status',        'type' => 'string'],
         'actionPackId'      =>  [ 'name' => 'action_pack_id',        'type' => 'string'],
     ];
