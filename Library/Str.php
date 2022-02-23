@@ -61,54 +61,6 @@ class Str{
             Auth::getCurrentIP()
         );
     }
-
-    public static function removeStringWrapper($str, $wrapper = "'")
-    {
-        $sections = [];
-        $count = 1;
-        $rsl = [
-            'str'           => '',
-            'placeHolder'   => []
-        ];
-        $str = str_replace("''", "__SYMPER_PLACEHOLDER_STRING_0", $str);
-        $newStr = $str;
-        $strLength = strlen($str);
-
-        
-        for($i = 0; $i < $strLength; $i++){
-            if($str[$i] == $wrapper && $str[$i] != "\\$wrapper"){
-                if(count($sections) == 0){
-                    $sections[] = [
-                        'start' => $i,
-                        'end'   => -1
-                    ];
-                }else{
-                    // Nếu đã ghi nhận chuỗi bắt đầu
-                    $lastItem = &$sections[count($sections) - 1];
-                    if($lastItem['end'] == -1){
-                        $lastItem['end'] = $i;
-                        $needReplaceStr = substr($str, $lastItem['start'] + 1, $lastItem['end'] - $lastItem['start'] -1);
-                        $key = "__SYMPER_PLACEHOLDER_STRING_$count"."_";
-                        $newStr = str_replace($needReplaceStr, $key, $newStr);
-                        $count += 1;
-                        $rsl['placeHolder'][$key] = $needReplaceStr;
-                    }else{
-                    // Nếu cụm trước đó đã khép
-                        $sections[] = [
-                            'start' => $i,
-                            'end'   => -1
-                        ];
-                    }
-                }
-            }
-        }
-        
-        $rsl['placeHolder']['__SYMPER_PLACEHOLDER_STRING_0'] =  "''"; // ký tự đặc biệt của '
-        $rsl['str'] = $newStr;
-        return $rsl;
-    }
-
-
     /**
      * Lấy các function xuất hiện trong chuỗi
      */
@@ -116,11 +68,6 @@ class Str{
     {
         $startIndexs = [];
         $strPatt = "\b$functionName\s*\\".$openStr;
-
-        $newStr = self::removeStringWrapper($str);
-        $str = $newStr['str'];
-
-
         preg_match_all("/$strPatt/i", $str, $startIndexs, PREG_OFFSET_CAPTURE);
         $matches = $startIndexs[0];
         $count = count($matches);
@@ -136,11 +83,6 @@ class Str{
             $end = strlen($str);
 
             $rsl[] = self::getSingleFunctionCallInString(substr($str, $start, $end - $start), $openStr = '(', $closeSrt = ')');
-            foreach ($rsl as $idx => $value) {
-                foreach ($newStr['placeHolder'] as $pkey => $newValue) {
-                    $rsl[$idx] = str_replace($pkey, $newValue, $rsl[$idx]);
-                }
-            }
             return $rsl;
         }else{
             return [];

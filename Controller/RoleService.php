@@ -126,6 +126,7 @@ class RoleService extends Controller
                 if(count($allRoles) > 0){
                     $allRoles = "'".implode("','", $allRoles)."'";
                     $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles) AND object_identifier='$objectIdentifier'");
+                    self::standardRoleActionFilterValue($listAccessControl);
                     foreach ($listAccessControl as &$item) {
                         $item->originRoleIdentifier = $item->roleIdentifier;
                         $item->roleIdentifier = 'auto';
@@ -133,6 +134,7 @@ class RoleService extends Controller
                 }
             }else{
                 $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier'");
+                self::standardRoleActionFilterValue($listAccessControl);
             }
 
             $this->output = [
@@ -151,6 +153,7 @@ class RoleService extends Controller
                 if(count($allRoles) > 0){
                     $allRoles = "'".implode("','", $allRoles)."'";
                     $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles)");
+                    self::standardRoleActionFilterValue($listAccessControl);
                     foreach ($listAccessControl as &$item) {
                         $item->originRoleIdentifier = $item->roleIdentifier;
                         $item->roleIdentifier = 'auto';
@@ -158,6 +161,7 @@ class RoleService extends Controller
                 }
             }else{
                 $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier'");
+                self::standardRoleActionFilterValue($listAccessControl);
             }
             $this->output = [
                 'status'=>STATUS_OK,
@@ -172,6 +176,7 @@ class RoleService extends Controller
             if(is_array($roleIdentifiers) && count($roleIdentifiers)>0){
                 $roleIdentifiersStr = implode("','",$roleIdentifiers);
                 $listAccessControl = RoleAction::getByTop("","role_identifier IN ('$roleIdentifiersStr')");
+                self::standardRoleActionFilterValue($listAccessControl);
             }
            
             $this->output = [
@@ -185,10 +190,18 @@ class RoleService extends Controller
             $roleIdentifier = trim($this->parameters['role_identifier']);
             $objectIdentifiers = implode("','",Str::getArrayFromUnclearData($this->parameters['object_identifiers']));
             $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier in ('$objectIdentifiers')","",false,false,true);
+            self::standardRoleActionFilterValue($listAccessControl);
             $this->output = [
                 'status'=>STATUS_OK,
                 'data' =>$listAccessControl
             ];
         }
     }   
+
+    public static function standardRoleActionFilterValue(&$roleActionArr)
+    {
+        foreach ($roleActionArr as &$ra) {
+            $ra->filter = ($ra->filterNew != '' && !is_null($ra->filterNew )) ? $ra->filterNew :$ra->filter;
+        }
+    }
 }

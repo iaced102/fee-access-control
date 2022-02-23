@@ -85,7 +85,7 @@ class ActionPackService extends Controller
                     }
                     if(isset($this->parameters['listFilter'])){
                         $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
-                        $obj->saveFilter($listFilter);
+                        $obj->saveFilter($listFilter, $obj->id);
                     }
                     $this->output['data'] = $obj;
                     $this->output['status'] = STATUS_OK;
@@ -115,13 +115,16 @@ class ActionPackService extends Controller
                         $obj->userUpdate = Auth::getCurrentBaEmail();
                         $obj->updateAt = date(DATETIME_FORMAT);
                         if($obj->update()){
-                            if(isset($this->parameters['listOperations'])){
-                                $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
-                                $obj->saveOperation($listOperations);
-                            }
+                            $filterAttachToOperation = [];
                             if(isset($this->parameters['listFilter'])){
                                 $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                                $filterAttachToOperation = $obj->attachFilterToOperation($listFilter, $obj->id);
                                 $obj->saveFilter($listFilter);
+                            }
+
+                            if(isset($this->parameters['listOperations'])){
+                                $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
+                                $obj->saveOperation($listOperations, $filterAttachToOperation);
                             }
                             RoleAction::refresh();
                             $this->output['status'] = STATUS_OK;
