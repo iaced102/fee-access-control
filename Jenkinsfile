@@ -1,20 +1,19 @@
 pipeline{
     agent any
     stages{
-        stage("A"){
+        stage("build"){
             steps{
-                echo "========executing A========"
+                // sh "docker build -t localhost:5000/accesscontrol.symper.vn:${}"
             }
-            post{
-                always{
-                    echo "========always========"
-                }
-                success{
-                    echo "========A executed successfully========"
-                }
-                failure{
-                    echo "========A execution failed========"
-                }
+        }
+        stage("test"){
+            steps{
+                echo "test"
+            }
+        }
+        stage("deploy"){
+            steps{
+                echo "deploy"
             }
         }
     }
