@@ -4,6 +4,7 @@ pipeline{
         stage("build"){
             steps{
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
+                    sh "docker logout localhost:5000"
                     sh "docker login -u ${DOCKER_REGISTRY_USER} -p ${DOCKER_REGISTRY_PWD} localhost:5000"
                 }
                 script {
