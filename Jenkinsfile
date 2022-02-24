@@ -4,7 +4,7 @@ pipeline{
         stage("build"){
             steps{
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
-                    sh "docker login -u ${DOCKER_REGISTRY_USER} -p ${DOCKER_REGISTRY_PWD}"
+                    sh "docker login -u ${DOCKER_REGISTRY_USER} - ${DOCKER_REGISTRY_PWD} localhost:5000"
                 }
                 script {
                     latestTag = sh(returnStdout:  true, script: "git tag --sort=-creatordate | head -n 1").trim()
