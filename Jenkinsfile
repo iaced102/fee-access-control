@@ -6,8 +6,8 @@ pipeline{
                 script {
                     latestTag = sh(returnStdout:  true, script: "git tag --sort=-creatordate | head -n 1").trim()
                     env.BUILD_VERSION = latestTag
-                    echo "env-BUILD_VERSION"
-                    echo "${env.BUILD_VERSION}"
+                    sh "docker build -t localhost:5000/accesscontrol.symper.vn:${env.BUILD_VERSION} ."
+                    sh "docker push localhost:5000/accesscontrol.symper.vn:${env.BUILD_VERSION}"
                 }
             }
         }
