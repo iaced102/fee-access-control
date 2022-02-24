@@ -3,5 +3,5 @@ ARG BASE_VERSION=1.0
 FROM ${REPO_LOCATION}/php-7.4.8-master:${BASE_VERSION}
 # Copy source code
 WORKDIR /src
-ADD ./src /var/www/accesscontrol.symper.vn
+ADD ./ /var/www/accesscontrol.symper.vn
 EXPOSE 9000
