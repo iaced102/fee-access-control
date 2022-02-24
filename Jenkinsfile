@@ -11,6 +11,7 @@ pipeline{
                     env.BUILD_VERSION = latestTag
                     sh "docker build -t localhost:5000/accesscontrol.symper.vn:${env.BUILD_VERSION} ."
                     sh "docker push localhost:5000/accesscontrol.symper.vn:${env.BUILD_VERSION}"
+                    sh "docker image rm localhost:5000/accesscontrol.symper.vn:${env.BUILD_VERSION}"
                 }
             }
         }
