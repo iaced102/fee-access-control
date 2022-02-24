@@ -3,7 +3,7 @@ pipeline{
     stages{
         stage("build"){
             steps{
-                // sh "docker build -t localhost:5000/accesscontrol.symper.vn:${}"
+                echo "test"
             }
         }
         stage("test"){
