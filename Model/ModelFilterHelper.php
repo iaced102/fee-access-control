@@ -121,12 +121,34 @@ class ModelFilterHelper
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
         }
-        $columns = implode("\" , \"", $columns);
-        $columns = "\"$columns\"";
+        
+        if(array_key_exists('aggregate', $filter)){
+            $columns = self::getSelectItemsWhenHasAgg($filter['aggregate'], $groupBy);
+        }else{
+            $columns = implode("\" , \"", $columns);
+            $columns = "\"$columns\"";
+        }
+
         return [
             'full'  => " SELECT $distnct $columns FROM $table $where $groupBy $sort LIMIT $limit ",
             'count' => " SELECT COUNT(*) as count_items FROM (SELECT $distnct $columns FROM $table $where $groupBy) tmp_table",
         ];
+    }
+    
+    public static function getSelectItemsWhenHasAgg($aggCols, $groupBy)
+    {
+        $columns = [];
+        if($groupBy != ''){
+            $groupByCol = str_replace('GROUP BY ', '', $groupBy);
+            $columns[] = $groupByCol;
+        }
+        foreach ($aggCols as $item) {
+            $func = $item['func'];
+            $col = $item['column'];
+            $columns[] = "$func($col) AS $col";
+        }
+        $columns = implode(' , ', $columns);
+        return $columns;
     }
 
     private static function getGroupBy($filter, &$relatedColumns)
@@ -183,7 +205,12 @@ class ModelFilterHelper
     private static function getColumnArrForSelect($filter, $selectableColumns, &$relatedColumns)
     {
         $columns = [];
-        if (array_key_exists('columns', $filter) && count($filter['columns']) > 0) {
+        if(array_key_exists('aggregate', $filter) && count($filter['aggregate']) > 0){
+            foreach ($filter['aggregate'] as $item) {
+                $relatedColumns[$item['column']] = true;
+                $columns[] = $item['column'];
+            }
+        } else if (array_key_exists('columns', $filter) && count($filter['columns']) > 0) {
             $columns = $filter['columns'];
         } else {
             foreach ($selectableColumns as $col) {
