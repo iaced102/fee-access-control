@@ -264,6 +264,29 @@ class Model{
         return implode(' AND ',$listQuery);
     }
 
+
+    public static function makeUnionQuery($table, $filter, $filterableColumns, $selectableColumns)
+    {
+        $unionMode = $filter['unionMode'];
+        unset($filter['unionMode']);
+        $items = [];
+        $count = 1;
+        foreach ($unionMode['items'] as $it) {
+            $newFilter = array_merge($filter, $it);
+            $sql = ModelFilterHelper::getSQLFromFilter($table, $newFilter, $filterableColumns, $selectableColumns);
+            $newItem = $sql['full'];
+            $items[] = "SELECT * FROM ($newItem) tmp_tb$count";
+            $count += 1;
+        }
+
+        $connectItemsKey = isset($unionMode['all']) ? ($unionMode['all'] ? ' UNION ALL ': ' UNION ') : ' UNION ALL ';
+        return [
+            'full'  => implode($connectItemsKey, $items),
+            'count' => 'SELECT 1 AS count_items'
+        ];
+    }
+
+
     /**
      * Lấy danh sách bản ghi theo filter
      *
@@ -284,7 +307,8 @@ class Model{
         $filter = self::standardlizeFilterData($filter, $moreConditions, $callFromModel);
         $filterableColumns = count($filterableColumns) > 0 ? $filterableColumns :  self::getFilterableColumns();
         $selectableColumns = count($selectableColumns) > 0 ? $selectableColumns :  self::getSelectableColumns();
-        
+        $needTotal = true;
+
         if($calledClass != 'Model\Model' ){
             if($table == ''){
                 $returnObject = true;
@@ -294,16 +318,28 @@ class Model{
             }
         }
 
-        $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
-        $data = [];
+        $sql = '';
+        if(isset($filter['unionMode'])){
+            $needTotal = false;
+            $sql = self::makeUnionQuery($table, $filter, $filterableColumns, $selectableColumns);
+        }else{
+            $sql = ModelFilterHelper::getSQLFromFilter($table, $filter, $filterableColumns, $selectableColumns);
+        }
+        $GLOBALS['get-by-filter'] = $sql;
+        $data = [
+            'total' => 0
+        ];
         if(!$sqlOnly){
             $data['list'] = self::get($sql['full'], $returnObject);
             $data['list'] = $data['list'] == false ? [] : $data['list'];
-            $data['total'] = self::get($sql['count'], false)[0]['count_items'];
+
+            if($needTotal){
+                $data['total'] = self::get($sql['count'], false)[0]['count_items'];
+            }
         }
 
         $data['sql'] = '';
-        if($returnSQL && !$sqlOnly){
+        if($returnSQL){
             $data['sql'] = $sql;
         }
         return $data;
@@ -371,6 +407,13 @@ class Model{
                 $groupByColumns[] = self::getProperColumnName($columnName, $callFromModel);
             }
             $filter['groupBy'] = $groupByColumns;
+        }
+
+        
+        if(array_key_exists('aggregate', $filter)){
+            foreach ($filter['aggregate'] as &$item) {
+                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
+            }
         }
         
         if(array_key_exists('filter', $filter)){
