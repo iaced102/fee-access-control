@@ -245,6 +245,7 @@ class ModelFilterHelper
                 $searchColumns = explode(',', $filter['searchColumns']);
             }
             foreach ($searchColumns as $colName) {
+                $relatedColumns[$colName] = true;
                 $searchConditions[] = " CAST(\"$colName\" AS VARCHAR) ILIKE '%$searchKey%' ";
             }
 
