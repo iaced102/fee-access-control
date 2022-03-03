@@ -271,7 +271,8 @@ class Model{
         unset($filter['unionMode']);
         $items = [];
         $count = 1;
-        foreach ($unionMode['items'] as $it) {
+        foreach ($unionMode['items'] as &$it) {
+            $it['filter'] = array_merge($it['filter'], $filter['filter']);
             $newFilter = array_merge($filter, $it);
             $sql = ModelFilterHelper::getSQLFromFilter($table, $newFilter, $filterableColumns, $selectableColumns);
             $newItem = $sql['full'];
