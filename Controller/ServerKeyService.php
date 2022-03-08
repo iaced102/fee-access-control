@@ -153,5 +153,9 @@ class ServerKeyService extends Controller
         }
     }
     
+    public function test()
+    {
+        var_dump('xxxxxxxxx');
+    }
     
 }
