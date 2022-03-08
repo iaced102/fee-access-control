@@ -201,7 +201,7 @@ class RoleService extends Controller
     public static function standardRoleActionFilterValue(&$roleActionArr)
     {
         foreach ($roleActionArr as &$ra) {
-            $ra->filter = ($ra->filterNew != '' && !is_null($ra->filterNew )) ? $ra->filterNew : $ra->filter;
+            $ra->filter = ($ra->filterNew != '' && !is_null($ra->filterNew )) ? $ra->filterNew :$ra->filter;
         }
     }
 }

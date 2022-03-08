@@ -111,9 +111,6 @@ class ActionPack extends SqlObject
     }
 
     function attachFilterToOperation($listFilter, $apId){
-        if(count($listFilter) == 0 || !isset($listFilter[0]['filterStruct'])){
-            return [];
-        }
         $mapFilterIdToFilterStruct = [];
         foreach ($listFilter as $item) {
             $mapFilterIdToFilterStruct[$item['id']] = $item;

@@ -20,7 +20,7 @@ class ActionPackService extends Controller
     {
         parent::__construct();
         $this->defaultAction = 'list';
-        $this->requireLogin = true;
+        $this->requireLogin = false;
     }
    /**
     * @operation("pack","list")
@@ -90,8 +90,6 @@ class ActionPackService extends Controller
                     $this->output['data'] = $obj;
                     $this->output['status'] = STATUS_OK;
                 }
-                $this->output['data'] = $obj;
-                $this->output['status'] = STATUS_OK;
             }
         }
     
@@ -131,14 +129,10 @@ class ActionPackService extends Controller
                             RoleAction::refresh();
                             $this->output['status'] = STATUS_OK;
                         }
-                        if(isset($this->parameters['listFilter'])){
-                            $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
-                            $obj->saveFilter($listFilter);
+                        else{
+                            $this->output['status'] = STATUS_SERVER_ERROR;
                         }
-                        RoleAction::refresh();
-                        $this->output['status'] = STATUS_OK;
                     }
-                    
                 }
                 else{
                     $this->output['status'] = STATUS_NOT_FOUND;

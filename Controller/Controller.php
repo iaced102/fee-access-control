@@ -36,12 +36,11 @@ class Controller{
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
                 'processUuid'   => $this->processUuid,
-                'uri'           => $_SERVER['REQUEST_URI'],
+                'uri'           => $_REQUEST['uri'],
                 'host'          => $_SERVER['HTTP_HOST'],
                 'queryString'   => $_SERVER['QUERY_STRING'],
                 'userAgent'     => $_SERVER['HTTP_USER_AGENT'],
                 'clientIp'      => $_SERVER['REMOTE_ADDR'],
-                'serverIp'      => $_SERVER['SERVER_ADDR'],
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y")
             ];
