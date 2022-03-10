@@ -24,11 +24,11 @@ class Operation extends SqlObject
         'status'            =>  [ 'name' => 'status',               'type' => 'number']
     ];
     public static $listAction = [
-        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','import','drop','restore','list','list_trash','submit_by_workflow']],
+        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','import','drop','restore','list_trash','submit_by_workflow']],
         'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','list_instance','print','list_trash','update_by_workflow']],
         'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>['list','create','deploy','drop','update','list_instance','start_instance','view']],
         'workflow_instance'     => ['name'=>'thể hiện quy trình',   'ownerDomain' => 'workflow.symper.vn',              'action'=>['detail','drop']],
-        // 'syql'                  => ['name'=>'công thức',            'ownerDomain' => 'syql.symper.vn',                  'action'=>['create','update','execute']],
+        'syql'                  => ['name'=>'công thức',            'ownerDomain' => 'syql.symper.vn',                  'action'=>['create','update','execute']],
         'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['add','update','info','detail','change_pass','disable','change_avatar','list','set_role']],
         'report'                => ['name'=>'báo cáo',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop']],
         'report_folder'         => ['name'=>'thư mục báo cáo ',     'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','rename','remove']],
@@ -63,6 +63,11 @@ class Operation extends SqlObject
             "name" => "Document table",
             "ownerDomain" => "document-management.symper.vn",
             "action" => ['hide','old_rows_readonly','old_rows_not_remove',]
+        ],
+        "stateflow_flow" => [
+            "name" => "Stateflow flow",
+            "ownerDomain" => "kanban-service.symper.vn",
+            "action" => ['use']
         ],
     ];
     public function __construct($data=[]){
