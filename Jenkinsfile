@@ -3,45 +3,41 @@ pipeline{
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
+        DOCKER_TAG = "GIT_COMMIT.substring(0,7)"
     }
     stages{
-        stage("test") {
+        stage("build"){
             steps{
-                sh "echo ${BRANCH_NAME}"
+                withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
+                    sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
+                }
+                script {
+                    sh "docker build -t localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ."
+                    sh "docker push localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG}"
+                    sh "docker image rm localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG}"
+                }
             }
         }
-        // stage("build"){
-        //     steps{
-        //         withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
-        //             sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
-        //         }
-        //         script {
-        //             latestTag = sh(returnStdout:  true, script: "git tag --sort=-creatordate | head -n 1").trim()
-        //             env.BUILD_VERSION = latestTag
-        //             sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
-        //             sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
-        //             sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
-        //         }
-        //     }
-        // }
-        // stage("deploy to k8s"){
-        //     steps{
-        //         sh "chmod +x changeTag.sh"
-        //         sh "./changeTag.sh ${env.BUILD_VERSION}"
-        //         sshagent(['ssh-remote']) {
-        //             sh "scp -o StrictHostKeyChecking=no n8n/* root@103.148.57.32:/root/kubernetes/deployment/inter/${SERVICE_NAME}"
-        //             sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/inter/${SERVICE_NAME}/php_deployment.yaml"
-        //             sh "ssh root@103.148.57.32 kubectl apply -f /root/kubernetes/deployment/inter/${SERVICE_NAME}"
-        //         }
-        //     }
-        // }
+        stage("deploy to k8s"){
+            steps{
+                sh "chmod +x changeTag.sh"
+                sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG}"
+                sshagent(['ssh-remote']) {
+                    sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/test/${SERVICE_NAME}"
+                    sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/test/${SERVICE_NAME}"
+                    sh "scp -o StrictHostKeyChecking=no n8n/* root@103.148.57.32:/root/kubernetes/deployment/test/${SERVICE_NAME}"
+                    sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/test/${SERVICE_NAME}/php_deployment.yaml"
+                    sh "ssh root@103.148.57.32 kubectl apply -f /root/kubernetes/deployment/test/${SERVICE_NAME}"
+                }
+            }
+        }
     }
     post{
-        // always{
-        //     emailext body: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS: \nCheck console output at $BUILD_URL to view the results.',
-        //     subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!',
-        //     to: 'hoangnd@symper.vn'
-        // }
+        always{
+            emailext body: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS: \nCheck console output at $BUILD_URL to view the results.',
+            subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!',
+            to: 'hoangnd@symper.vn'
+        }
         success{
             echo "========pipeline executed successfully ========"
         }
