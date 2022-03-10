@@ -3,7 +3,7 @@ pipeline{
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
-        DOCKER_TAG = "GIT_COMMIT.substring(0,7)"
+        DOCKER_TAG = "${GIT_COMMIT.substring(0,7)}"
     }
     stages{
         stage("build"){
