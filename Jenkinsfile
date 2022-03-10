@@ -28,7 +28,7 @@ pipeline{
                     sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/test/${SERVICE_NAME}"
                     sh "scp -o StrictHostKeyChecking=no n8n/* root@103.148.57.32:/root/kubernetes/deployment/test/${SERVICE_NAME}"
                     sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/test/${SERVICE_NAME}/php_deployment.yaml"
-                    sh "kubectl config set-context --current --namespace=${SERVICE_ENV}"
+                    sh "ssh root@103.148.57.32 kubectl config set-context --current --namespace=${SERVICE_ENV}"
                     sh "ssh root@103.148.57.32 kubectl apply -f /root/kubernetes/deployment/test/${SERVICE_NAME}"
                 }
             }
