@@ -23,10 +23,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - inter1-accesscontrol.symper.vn
+    - test-accesscontrol.symper.vn
     secretName: symper-tls
   rules:
-  - host: inter1-accesscontrol.symper.vn
+  - host: test-accesscontrol.symper.vn
     http:
       paths:
       - path: /

@@ -7,11 +7,11 @@ metadata:
 data:
   env.json : | 
     {
-    "environment":"inter1",
+    "environment":"test",
     "db":{
       "postgresql":{
           "host":"103.56.157.180",
-          "dbname":"inter_accesscontrol_symper_vn",
+          "dbname":"test_accesscontrol_symper_vn",
           "username":"postgres",
           "password":"SymPER!!12345_1"
       }
