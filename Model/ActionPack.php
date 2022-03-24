@@ -171,11 +171,14 @@ class ActionPack extends SqlObject
         }
         $rsl = [];
         foreach ($operationAndFilter as &$item) {
-            $operationObj = $mapObjIdenAndction[$item['objectIdentify'].'_'.$item['action']];
-            $rsl[$operationObj->id]  = [
-                'formulaValue' => $item['formulaValue'],
-                'formulaStruct' => $item['formulaStruct']
-            ];
+            $key = $item['objectIdentify'].'_'.$item['action'];
+            if(isset($mapObjIdenAndction[$key])){
+                $operationObj = $mapObjIdenAndction[$key];
+                $rsl[$operationObj->id]  = [
+                    'formulaValue' => $item['formulaValue'],
+                    'formulaStruct' => $item['formulaStruct']
+                ];
+            }
         }
 
         if(count($usedFilterIds) > 0){

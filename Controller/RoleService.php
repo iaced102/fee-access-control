@@ -136,7 +136,6 @@ class RoleService extends Controller
                 $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier'");
                 self::standardRoleActionFilterValue($listAccessControl);
             }
-
             $this->output = [
                 'status'=>STATUS_OK,
                 'data' =>$listAccessControl
@@ -164,11 +163,11 @@ class RoleService extends Controller
                 self::standardRoleActionFilterValue($listAccessControl);
             }
             $this->output = [
-                'status'=>STATUS_OK,
-                'data' =>$listAccessControl
+                'status'=> STATUS_OK,
+                'data'  => $listAccessControl
             ];
         }
-    }   
+    }
     public function getAccessControlByRoles(){
         if($this->checkParameter(['role_identifiers'])){
             $listAccessControl=[];
