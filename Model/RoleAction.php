@@ -14,6 +14,7 @@ class RoleAction extends SqlObject{
         $roleIdentifier,
         $status,
         $filter,
+        $filterCombination,
         $filterNew,
         $actionPackId;
     public static $mappingFromDatabase = [
@@ -26,6 +27,7 @@ class RoleAction extends SqlObject{
         'filterNew'         =>  [ 'name' => 'filter_formula_new',               'type' => 'string'],
         'status'            =>  [ 'name' => 'filter_status',        'type' => 'string'],
         'actionPackId'      =>  [ 'name' => 'action_pack_id',        'type' => 'string'],
+        'filterCombination' =>  [ 'name' => 'filter_combination',        'type' => 'string'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
@@ -42,21 +44,23 @@ class RoleAction extends SqlObject{
     }
     public static function createView(){
         $createViewQuery = "
-        SELECT o.object_identifier,                                                          
-        o.action,                                                                         
-        o.object_type,                                                                    
-        o.name,                                                                           
-        o.status,                                                                         
-        pr.role_identifier,                                                               
-        filter.formula AS filter_formula,                                                 
-        filter.status AS filter_status,
-        fia.filter_values as filter_values
-        FROM operation o 
-         JOIN operation_in_action_pack op ON o.id = op.operation_id and o.tenant_id = op.tenant_id               
-         JOIN action_in_permission_pack app ON op.action_pack_id = app.action_pack_id and op.tenant_id = app.tenant_id      
-         JOIN permission_role pr ON app.permission_pack_id = pr.permission_pack_id and pr.tenant_id = app.tenant_id   
-         LEFT JOIN filter ON (op.filter)::text = (filter.id)::text and op.tenant_id = filter.tenant_id
-         LEFT JOIN filter_in_action_pack fia ON op.action_pack_id  = fia.action_pack_id and fia.tenant_id = filter.tenant_id;
+        SELECT o.object_identifier,
+        o.action,
+        o.object_type,
+        o.name,
+        o.status,
+        pr.role_identifier,
+        filter.formula AS filter_formula,
+    filter.status AS filter_status,
+    filter.id AS filter_id,
+    op.formula_value AS filter_formula_new,
+    op.formula_struct AS filter_combination,
+    app.action_pack_id
+    FROM ((((operation o
+    JOIN operation_in_action_pack op ON (((o.id = op.operation_id) AND (o.tenant_id = op.tenant_id))))
+    JOIN action_in_permission_pack app ON (((op.action_pack_id = app.action_pack_id) AND (op.tenant_id = app.tenant_id))))
+    JOIN permission_role pr ON (((app.permission_pack_id = pr.permission_pack_id) AND (pr.tenant_id = app.tenant_id))))
+    LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id = filter.tenant_id))));
         ";
     }
    
