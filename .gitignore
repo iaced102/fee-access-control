@@ -1,4 +1,3 @@
 .vscode/sftp.json
 Crypt/private.pem
 env.json
-k8n/config_env.*
