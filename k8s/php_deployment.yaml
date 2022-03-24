@@ -22,7 +22,7 @@ spec:
       - name: php-accesscontrol
         ports:
         - containerPort: 9000
-        image: registry.symper.vn/SymperImage
+        image: registry.symper.vn/{SYMPER_IMAGE}
         lifecycle:
             postStart:
               exec:
