@@ -55,26 +55,67 @@ class OperationService extends Controller
         if($this->checkParameter(['operations'])){
             $listObj = [];
             $operations = Str::getArrayFromUnclearData($this->parameters['operations']);
-            foreach($operations as $item){
+            $mapOperations = [];
+            $objIdens = [];
+            $actions = [];
+
+            foreach($operations as &$item){
                 if(isset($item['name'])&&isset($item['action'])&&$item['objectIdentifier']){
-                    $name = pg_escape_string($item['name']);
-                    $action = pg_escape_string($item['action']);
-                    $objectIdentifier = pg_escape_string($item['objectIdentifier']);
-                    $listNewObj = Operation::getByTop(1,"action='$action' AND object_identifier='$objectIdentifier'");
-                    $newObj =  new Operation();
-                    if(count($listNewObj)>0){
-                        $newObj = $listNewObj[0];
-                    }
-                    $newObj->name = trim($item['name']);
-                    $newObj->description = isset($item['description'])?trim($item['description']):'';
-                    $newObj->action = trim($item['action']);
-                    $newObj->objectName = isset($item['objectName'])?trim($item['objectName']):'';
-                    $newObj->objectType = isset($item['objectType'])?trim($item['objectType']):'';
-                    $newObj->objectIdentifier = trim($item['objectIdentifier']);
-                    $newObj->status = Operation::STATUS_ENABLE;
-                    $newObj->save();
-                    $listObj[] = $newObj;
+                    $mapOperations[$item['objectIdentifier'].$item['action']] = $item;
+                    $objIdens[$item['objectIdentifier']] = true;
+                    $actions[$item['action']] = true;
+                    // ----------------------------------------------------------------------- //
+                    // $action = pg_escape_string($item['action']);
+                    // $objectIdentifier = pg_escape_string($item['objectIdentifier']);
+                    // $listNewObj = Operation::getByTop(1,"action='$action' AND object_identifier='$objectIdentifier'");
+                    // $newObj =  new Operation();
+                    // if(count($listNewObj)>0){
+                    //     $newObj = $listNewObj[0];
+                    // }
+                    // $newObj->name = trim(pg_escape_string($item['name']));
+                    // $newObj->description = isset($item['description'])?trim($item['description']):'';
+                    // $newObj->action = trim($item['action']);
+                    // $newObj->objectName = isset($item['objectName'])?trim($item['objectName']):'';
+                    // $newObj->objectType = isset($item['objectType'])?trim($item['objectType']):'';
+                    // $newObj->objectIdentifier = trim($item['objectIdentifier']);
+                    // $newObj->status = Operation::STATUS_ENABLE;
+                    // $newObj->save();
+                    // $listObj[] = $newObj;
                 
+                }
+            }
+
+            $objIdens = array_keys($objIdens);
+            $actions = array_keys($actions);
+
+            if(count($actions) > 0 && count($objIdens) > 0){
+                $objIdens = "'".implode("','", $objIdens)."'";
+                $actions = "'".implode("','", $actions)."'";
+                $savedOperations = Operation::getByTop('', " object_identifier IN ($objIdens) AND action IN ($actions)");
+                if(is_array($savedOperations)){
+                    foreach ($savedOperations as $opr) {
+                        if(isset($mapOperations[$opr->objectIdentifier.$opr->action])){
+                            unset($mapOperations[$opr->objectIdentifier.$opr->action]);
+                            $listObj[] = $opr;
+                        }
+                    }
+                }
+
+                $insertOperations = array_values($mapOperations);
+                if(count($insertOperations) > 0){
+                    foreach ($insertOperations as $item) {
+                        $start = microtime(true);
+                        $newObj =  new Operation();
+                        $newObj->name = trim(pg_escape_string($item['name']));
+                        $newObj->description = isset($item['description'])?trim($item['description']):'';
+                        $newObj->action = trim(pg_escape_string($item['action']));
+                        $newObj->objectName = isset($item['objectName'])?trim($item['objectName']):'';
+                        $newObj->objectType = isset($item['objectType'])?trim($item['objectType']):'';
+                        $newObj->objectIdentifier = trim(pg_escape_string($item['objectIdentifier']));
+                        $newObj->status = Operation::STATUS_ENABLE;
+                        $newObj->insert();
+                        $listObj[] = $newObj;
+                    }
                 }
             }
             $this->output['data']= $listObj;

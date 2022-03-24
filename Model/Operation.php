@@ -57,7 +57,7 @@ class Operation extends SqlObject
         "document_control" => [
             "name" => "Control",
             "ownerDomain" => "document-management.symper.vn",
-            "action" => ['hide','readonly', 'remove']
+            "action" => ['hide','readonly', 'remove', 'not_edit_old_rows', 'old_rows_readonly','old_rows_not_remove']
         ],
         "document_table" => [
             "name" => "Document table",
