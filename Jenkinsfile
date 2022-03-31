@@ -5,6 +5,8 @@ pipeline{
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         DOCKER_TAG = "${GIT_COMMIT.substring(0,7)}"
         SERVICE_ENV = "test"
+        POSTGRES_USER = ""
+        POSTGRES_PASSWORD = ""
     }
     stages{
         stage("build"){
@@ -21,6 +23,12 @@ pipeline{
         }
         stage("deploy to k8s"){
             steps{
+                withCredentials([usernamePassword(credentialsId: 'accesscontrol_database', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    env.POSTGRES_USER = USER
+                    env.POSTGRES_PASSWORD = PASS
+                }
+                sh "echo ${env.POSTGRES_USER}"
+                sh "echo ${env.POSTGRES_PASSWORD}"
                 sh "chmod +x changeTag.sh"
                 sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ${SERVICE_ENV}"
                 sshagent(['ssh-remote']) {
