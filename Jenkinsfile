@@ -24,14 +24,13 @@ pipeline{
         stage("deploy to k8s"){
             steps{
                 withCredentials([usernamePassword(credentialsId: 'accesscontrol_database', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh "echo ${PASS}"
-                    sh "echo ${USER}"
-
+                    POSTGRES_USER = USER
+                    POSTGRES_PASSWORD = PASS
                 }
                 sh "echo ${POSTGRES_USER}"
                 sh "echo ${POSTGRES_PASSWORD}"
                 sh "chmod +x changeTag.sh"
-                sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ${SERVICE_ENV}"
+                sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ${SERVICE_ENV} ${POSTGRES_USER} ${POSTGRES_PASSWORD}"
                 sshagent(['ssh-remote']) {
                     sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/test/${SERVICE_NAME}"
                     sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/test/${SERVICE_NAME}"
