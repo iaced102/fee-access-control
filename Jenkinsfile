@@ -23,7 +23,7 @@ pipeline{
             steps{
                 withCredentials([usernamePassword(credentialsId: 'accesscontrol_database', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                     sh "chmod +x changeTag.sh"
-                    sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ${SERVICE_ENV} ${POSTGRES_USER} ${POSTGRES_PASSWORD}"
+                    sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ${SERVICE_ENV} ${USER} ${PASS}"
                     sshagent(['ssh-remote']) {
                         sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/test/${SERVICE_NAME}"
                         sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/test/${SERVICE_NAME}"
