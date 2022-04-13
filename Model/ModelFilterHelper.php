@@ -275,6 +275,7 @@ class ModelFilterHelper
     public static function convertConditionToWhereItem($conditionItem, $filterableColumns, &$relatedColumns)
     {
         $colName = $conditionItem['column'];
+        $dataType = isset($conditionItem['dataType']) ? $conditionItem['dataType'] : 'text';
         $relatedColumns[$colName] = true;
         $mapColumns = [];
         foreach ($filterableColumns as $col) {
@@ -290,8 +291,10 @@ class ModelFilterHelper
                     $value = $item['value'];
                 }
 
-                if (!($item['name'] == 'contains' && $value == '')) {
-                    $cond[] = self::bindValueToWhereItem($item['name'], $colName, $value, $mapColumns);
+                if (!($item['name'] == 'contains' && $value == '')) {$condItem = self::bindValueToWhereItem($item['name'], $colName, $value, $mapColumns, $dataType);
+                    if($condItem){
+                        $cond[] = $condItem;
+                    }
                 }
             }
 
@@ -318,7 +321,7 @@ class ModelFilterHelper
         return implode(' AND ', $conds);
     }
 
-    public static function bindValueToWhereItem($op, $colName, $value, $mapColumns)
+    public static function bindValueToWhereItem($op, $colName, $value, $mapColumns, $dataType)
     {
 
         $COLUMN = 'SYMPER_COLUMN_PLACE_HOLDER';
@@ -359,6 +362,10 @@ class ModelFilterHelper
             'in'                    => "$COLUMN IN $value",
             'not_in'                => "$COLUMN NOT IN $value",
         ];
+        if($dataType == 'number' || $dataType == 'date' || $dataType == 'datetime'){
+            $mapOpertationToSQL['empty'] = "($COLUMN IS NULL)";
+            $mapOpertationToSQL['not_empty'] = "($COLUMN IS NOT NULL)";
+        }
 
         $str = $mapOpertationToSQL[$op];
         if (array_key_exists($colName, $mapColumns)) {
