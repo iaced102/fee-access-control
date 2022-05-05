@@ -6,7 +6,7 @@
  * Time: 3:42 PM
  */
 use Library\Load;
-
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 ignore_user_abort(true);
 set_time_limit(0);
 ob_end_clean();

@@ -12,7 +12,7 @@ data:
       "postgresql":{
           "host":"103.56.157.180",
           "dbname":"{ENVIRONMENT_}accesscontrol_symper_vn",
-          "username":"postgres",
-          "password":"SymPER!!12345_1"
+          "username":"{POSTGRES_USER}",
+          "password":"{POSTGRES_PASSWORD}"
       }
     }}
