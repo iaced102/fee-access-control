@@ -29,7 +29,7 @@ class KafkaService extends Controller
         $listTopic = ['account','role'];
         MessageBus::subscribeMultiTopic(
             $listTopic,
-            'sdocument.symper.vn',
+            SERVICE_DEFINITION,
             function($topic,$item){
                 $this->processObject($topic,$item);
             },

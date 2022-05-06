@@ -61,7 +61,7 @@ class AccessControl{
     */
     public static function getRoleActionRemote($roleIdentifier,$objectIdentifier){
         $listAction = []; 
-        $dataResponse = Request::request(self::getAccessControlDomain()."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
+        $dataResponse = Request::request(ACCESS_CONTROL_SERVICE."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
@@ -78,7 +78,7 @@ class AccessControl{
     */
     public static function getRoleActionRemoteAllObject($roleIdentifier){
         $listAction = []; 
-        $dataResponse = Request::request(self::getAccessControlDomain()."/roles/$roleIdentifier/accesscontrol");
+        $dataResponse = Request::request(ACCESS_CONTROL_SERVICE."/roles/$roleIdentifier/accesscontrol");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
@@ -129,11 +129,6 @@ class AccessControl{
             exit;
         }
     }
-
-    public static function getAccessControlDomain()
-    {
-        return "https://".Environment::getPrefixEnvironment()."accesscontrol.symper.vn";
-    }
     
 
     /**
@@ -145,7 +140,7 @@ class AccessControl{
         $mapOperation = self::$mapOperation;
 
         if(count($mapOperation) == 0){
-            $remoteOperations = Request::request(self::getAccessControlDomain()."/roles/$currentRole/accesscontrol/$objectIdentifier");
+            $remoteOperations = Request::request(ACCESS_CONTROL_SERVICE."/roles/$currentRole/accesscontrol/$objectIdentifier");
             if(isset($remoteOperations['status']) && $remoteOperations['status'] == 200 &&  isset($remoteOperations['data']) && is_array($remoteOperations['data'])){
             
                 foreach ($remoteOperations['data'] as $opr) {
@@ -264,7 +259,7 @@ class AccessControl{
      */
     public static function replacePlaceholderByRealValue($map)
     {
-        $dataDomain = "https://".Environment::getPrefixEnvironment()."syql.symper.vn/formulas/compileClientBulk";
+        $dataDomain = SYQL_SERVICE."/formulas/compileClientBulk";
         $request = new Request($dataDomain);
         $request->setPost([
             'formula' => json_encode($map, JSON_UNESCAPED_UNICODE),

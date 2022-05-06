@@ -15,6 +15,7 @@ header("Connection: close");
 header('Content-Encoding: none');
 define("SITE_NAME", "https://".$_SERVER['SERVER_NAME']);
 define('PRIVATE_KEY','EGRRH^&%&&%6584');
+define('SERVICE_DEFINITION','nana-framework.symper.vn');
 
 define('USE_MEMCACHE',false);
 define('CACHE_ENGINE', 'memcache');
