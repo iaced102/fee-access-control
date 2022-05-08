@@ -1,5 +1,8 @@
 <?php
 
+use Library\Auth;
+use Model\Model;
+
 /**
  * Class phục vụ cho việc tạo ra câu lệnh SQL cho việ filter các bản ghi
  */
@@ -25,6 +28,7 @@ class ModelFilterHelper
     {
         // LEFT JOIN users AS tb2 ON tb1.user_last_update = tb2.email
         $rsl = [];
+        $tenantId = Auth::getTenantId();
         foreach ($info as $item) {
             $joinTable = $item['table'];
             $ttb = $item['table2TmpName'];
@@ -36,7 +40,12 @@ class ModelFilterHelper
             if(array_key_exists('castTypeColumn2', $item)){
                 $col2 = "$col2::".$item['castTypeColumn2'];
             }
-            $rsl[] = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
+
+            $rslItem = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
+            if($tenantId !== ''){
+                $rslItem .= " AND tb1.tenant_id_ = $tenantId AND $ttb.tenant_id_ = $tenantId ";
+            }
+            $rsl[] = $rslItem;
         }
         return implode(' ', $rsl);
     }
@@ -120,6 +129,8 @@ class ModelFilterHelper
 
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
+        }else{
+            $where = " WHERE ".Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where));
         }
         
         if(array_key_exists('aggregate', $filter)){
@@ -330,6 +341,9 @@ class ModelFilterHelper
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
             if ($op == 'in' || $op == 'not_in') {
+                if($value == ''){
+                    return '';
+                }
                 $colType = $colDef['type'];
                 if(is_array($value)){
                     foreach ($value as $key => $vl) {

@@ -2,8 +2,8 @@
 namespace Library;
 class Auth{
     //
-    public static function Hash($Password){
-        return hash_hmac('sha256',$Password,PRIVATE_KEY);
+    public static function Hash($password){
+        return hash_hmac('sha256',$password,PRIVATE_KEY);
     }
 
     public static function sign($data){
@@ -52,7 +52,16 @@ class Auth{
         return self::verifySign($dataToVerify,$signature);
     }
     public static function getJwtToken($data){
+        $data = (array)$data;
         $header = self::getJwtHeader();
+        if(isset($data['tenantId']) || isset($data['tenant_id'])){
+            $data['tenant'] = [
+                'id'    => isset($data['tenantId']) ? $data['tenantId'] : $data['tenant_id']
+            ];
+        }
+        $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
+        $data['tenant_domain'] = isset($GLOBALS['env']['tenant_domain']) ? $GLOBALS['env']['tenant_domain'] : '';
+
         $payload = self::getJwtPayload($data);
         $signature = self::getJwtSignature($header,$payload);
         $jwtToken = "$header.$payload.$signature";
@@ -83,6 +92,9 @@ class Auth{
             $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
             if (isset($requestHeaders['Authorization'])) {
                 $headers = trim($requestHeaders['Authorization']);
+            }
+            if($headers == 'Bearer false'){
+                return null;
             }
         }
         return $headers;
@@ -140,24 +152,16 @@ class Auth{
     public static function getTenantId(){
         $dataLogin = self::getDataToken();
         if(!empty($dataLogin)){
-            if(isset($dataLogin['tenant_id'])){
-                return $dataLogin['tenant_id'];
+            if(isset($dataLogin['tenant'])){
+                return $dataLogin['tenant']['id'];
             }
         }
         return '';
     }
     public static function getCurrentRole(){
-        $dataLogin = self::getDataToken();
-        if(!empty($dataLogin)){
-            if(isset($dataLogin['type'])&&$dataLogin['type']=='ba' && isset($dataLogin['userDelegate']['role'])){
-                return $dataLogin['userDelegate']['role'];
-            }
-            else if(isset($dataLogin['role'])){
-                return $dataLogin['role'];
-            }
-        }
-        return false;
+        return self::getTokenInfo('role');
     }
+
     public static function isBa(){
         $dataLogin = self::getDataToken();
         if(!empty($dataLogin)){
@@ -226,6 +230,17 @@ class Auth{
         }
         return '';
     }
+    
+    public static function getTenantInfo(){
+        $dataLogin = self::getDataToken();
+        if(!empty($dataLogin)){
+            if(isset($dataLogin['tenant'])){
+                return $dataLogin['tenant'];
+            }
+        }
+        return [];
+    }
+
     public static function getTokenIp(){
         return self::getTokenInfo('ip');
     }
@@ -235,5 +250,14 @@ class Auth{
     public static function getTokenLocation(){
         return self::getTokenInfo('location');
     }
+
+    public static function getIsCloud(){
+        return self::getTokenInfo('is_cloud');
+    }
+
+    public static function getTenantDomain(){
+        return self::getTokenInfo('tenant_domain');
+    }
+    
 
 }

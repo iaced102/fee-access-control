@@ -12,12 +12,32 @@ class Model{
     public static function getColumnNameInDataBase($fieldName, $returnArray = false){
         die(get_called_class()." not overriding getColumnNameInDataBase");
     }
+
+    public static function mergeCondWithTenantFilter($cond)
+    {
+        $filterTenantQuery  = static::getFilterTenantQuery();
+        if($filterTenantQuery === ''){
+            return $cond;
+        }else{
+            if($cond == ''){
+                return $filterTenantQuery;
+            }else{
+                return " ($cond) AND $filterTenantQuery ";
+            }
+        }
+    }
+
      /*  Dev create: Dinh
     *   CreateTime: 31/03/2020
     *   description: lấy condition query để lọc theo TanentId. khi đã call đến class model này nghĩa là class kế thừa không định nghĩa, không có tanentid trong db, không cần lọc 
     */
     public static function getFilterTenantQuery(){
-        return '';
+        $tenantId = Auth::getTenantId();
+        if($tenantId === ''){
+            return '';
+        }else{
+            return " tenant_id_ = $tenantId";
+        }
     }
     public static function getPrimaryKey(){
         return 'id';
@@ -72,12 +92,11 @@ class Model{
     }
     public static function getById($id){
         $tableName          = static::getTableName();
-        $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
         $primaryColumnName  = $primaryColumnData['name']; 
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$id);
-        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeCondWithTenantFilter($primaryColumnName. " = ".$primaryValue);
         $command            = "SELECT * FROM $tableName WHERE $where";
         $listObject         = self::get($command);
         if(isset($listObject[0])){
@@ -88,14 +107,14 @@ class Model{
 
     public static function getByAll($returnArrayKeyAsField=false){
         $tableName          = static::getTableName();
-        $filterTenantQuery  = static::getFilterTenantQuery();
+        $filterTenantQuery  = self::mergeCondWithTenantFilter('');
+        
         $command            = "SELECT * FROM $tableName ";
         $command            .= $filterTenantQuery!=''?' WHERE '.$filterTenantQuery:'';
         return self::get($command,true,$returnArrayKeyAsField);
     }
     public static function getByTop($top='',$where='',$order='',$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
-        $filterTenantQuery  = static::getFilterTenantQuery();
-        $where              = self::mergeConditionQuery([$where,$filterTenantQuery]);
+        $where              = self::mergeCondWithTenantFilter($where);
         $tableName          = static::getTableName();
         $command            = "SELECT ";
         $command            .= $hasDistinct?"  DISTINCT ": ' ';
@@ -110,19 +129,18 @@ class Model{
 
     public static function getByPaging($currentPage, $pageSize,$order,$where,$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
         $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
+        $where              = self::mergeCondWithTenantFilter($where);
         return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
     }
 
     public static function deleteMulti($where){
         $tableName          = static::getTableName();
-        $filterTenantQuery  = static::getFilterTenantQuery();
-        $where              = self::mergeConditionQuery([$where,$filterTenantQuery]);
+        $where              = self::mergeCondWithTenantFilter($where);
         $command            = "DELETE FROM $tableName WHERE $where";
         return connection::exeQuery($command);
     }
     public static function count($where){
-        $filterTenantQuery  = static::getFilterTenantQuery();
-        $where              = self::mergeConditionQuery([$where,$filterTenantQuery]);
+        $where              = self::mergeCondWithTenantFilter($where);
         $tableName          = static::getTableName();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
@@ -147,15 +165,25 @@ class Model{
         $values = [];
         $returnQuery = '';
         $returnColumn = '';
+        $tenantInObject = false;
+
         foreach($listVar as $key => $value){
             $columnData = static::getColumnNameInDataBase($key,true);
             if(is_string($value) || is_numeric($value)){
-                if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false ||$value!='')){
+                if(is_array($columnData) && $columnData != false && (!isset($columnData['primary']) || $columnData['primary']==false ||$value!='')){
+                    if($columnData['name'] == 'tenant_id_'){
+                        $tenantInObject = true; 
+                    }
                     $columns[] = $columnData['name'];
                     $values[]  = self::getValueForSqlCommand($columnData,$value);
                 }   
             }
-            if(isset($columnData['auto_increment']) && $columnData['auto_increment']==true){
+            if(!$tenantInObject && is_array($columnData) && $columnData['name'] == 'tenant_id_'){
+                $columns[] = 'tenant_id_';
+                $values[]  = Auth::getTenantId();
+            }
+            
+            if(isset($columnData['primary']) && $columnData['primary']==true){
                 $returnQuery    = ' returning '.$columnData['name'];
                 $returnColumn   = $columnData['name'];
             }
@@ -197,17 +225,29 @@ class Model{
             for($i=0;$i<count($listObject);$i++){ 
                 $listVar = get_object_vars($listObject[$i]);
                 $values[$i]=[];
+                $tenantInObject = false;
+
                 foreach($listVar as $key => $value){
                     $columnData = static::getColumnNameInDataBase($key,true);
-                    if(is_array($columnData) && $columnData != false && (!isset($columnData['auto_increment']) || $columnData['auto_increment']==false|| $value!='')){
+                    if(is_array($columnData) && $columnData['name'] == 'tenant_id_'){
+                        $tenantInObject = true; 
+                    }
+
+                    if(is_array($columnData) && $columnData != false && (!isset($columnData['primary']) || $columnData['primary']==false|| $value!='')){
                         if($i===0){
                             $columns[] = $columnData['name'];
                         }
                         $values[$i][]  = self::getValueForSqlCommand($columnData,$value);
-                    }   
+                    }
+                }
+
+                if(!$tenantInObject){
+                    if($i === 0){
+                        $columns[] = 'tenant_id_';
+                    }
+                    $values[$i][]  = Auth::getTenantId();
                 }
                 $values[$i] = "(".implode(",",$values[$i]).")";
-                
             }
             $keysCommand    = implode(",",$columns);
             $valuesCommand  = implode(",\n",$values);
@@ -232,30 +272,29 @@ class Model{
 			}
         }
         $keysCommand = implode(",",$values);
-        $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
         $primaryColumnName  = $primaryColumnData['name'];
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeCondWithTenantFilter($primaryColumnName. " = ".$primaryValue);
         $command            = "UPDATE ".$tableName." SET $keysCommand WHERE $where";
         return connection::exeQuery($command);
     }
 
-    public static function updateMulti($set,$condition){
+    public static function updateMulti($set, $condition){
         $tableName = static::getTableName();
+        $condition          = self::mergeCondWithTenantFilter($condition);
         $command            = "UPDATE ".$tableName." SET $set WHERE $condition";
         return connection::exeQuery($command);
     }
     public function delete()
     {
         $tableName          = static::getTableName();
-        $filterTenantQuery  = static::getFilterTenantQuery();
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
         $primaryColumnName  = $primaryColumnData['name'];
         $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        $where              = self::mergeConditionQuery([$primaryColumnName. " = ".$primaryValue,$filterTenantQuery]);
+        $where              = self::mergeCondWithTenantFilter($primaryColumnName. " = ".$primaryValue);
         $command            = "DELETE FROM $tableName WHERE $where";
         return connection::exeQuery($command);
     }
@@ -430,13 +469,6 @@ class Model{
             $filter['filter']  = array_merge($filter['filter'], $moreConditions);
         }
 
-        if(array_key_exists('sort', $filter)){
-            foreach ($filter['sort'] as $index => $sortItem) {
-                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
-            }
-        }
-
-        
         if(array_key_exists('sort', $filter)){
             foreach ($filter['sort'] as $index => $sortItem) {
                 $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
