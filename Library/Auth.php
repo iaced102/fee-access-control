@@ -93,11 +93,8 @@ class Auth{
             if (isset($requestHeaders['Authorization'])) {
                 $headers = trim($requestHeaders['Authorization']);
             }
-            if($headers == 'Bearer false'){
-                return null;
-            }
         }
-        return $headers;
+        return $headers == 'Bearer false' ? null : $headers;
     }
     public static function getBearerToken() {
         $headers = self::getAuthorizationHeader();
