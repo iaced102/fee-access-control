@@ -130,7 +130,8 @@ class ModelFilterHelper
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
         }else{
-            $where = " WHERE ".Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where));
+            $cond = Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where));
+            $where = $cond ? " WHERE $cond" : "";
         }
         
         if(array_key_exists('aggregate', $filter)){
