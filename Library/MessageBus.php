@@ -4,8 +4,8 @@ use RdKafka;
 use Library\Request;
 class MessageBus{
     const PING_MEM_KEYWORD = 'lastTimePingLuffy';
-    const LUFFY_URL        = 'https://luffy.symper.vn/consumers';
-    const BOOTSTRAP_BROKER = 'k1.symper.vn:9092';
+    const LUFFY_URL        = LUFFY_SERVICE.'/consumers';
+    const BOOTSTRAP_BROKER = KAFKA_NODE.':9092';
     const TIMEOUT          = 60; //s
     /**
      * Dev create: Dinhnv

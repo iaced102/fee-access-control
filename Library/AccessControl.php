@@ -61,7 +61,7 @@ class AccessControl{
     */
     public static function getRoleActionRemote($roleIdentifier,$objectIdentifier){
         $listAction = []; 
-        $dataResponse = Request::request(self::getAccessControlDomain()."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
+        $dataResponse = Request::request(ACCESS_CONTROL_SERVICE."/roles/$roleIdentifier/accesscontrol/$objectIdentifier");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
@@ -78,7 +78,7 @@ class AccessControl{
     */
     public static function getRoleActionRemoteAllObject($roleIdentifier){
         $listAction = []; 
-        $dataResponse = Request::request(self::getAccessControlDomain()."/roles/$roleIdentifier/accesscontrol");
+        $dataResponse = Request::request(ACCESS_CONTROL_SERVICE."/roles/$roleIdentifier/accesscontrol");
         if(is_array($dataResponse)&&isset($dataResponse['status']) && $dataResponse['status']==STATUS_OK && isset($dataResponse['data'])){
             if(is_array($dataResponse['data']) && count($dataResponse['data'])>0){
                 foreach($dataResponse['data'] as $accessControl){
@@ -129,11 +129,6 @@ class AccessControl{
             exit;
         }
     }
-
-    public static function getAccessControlDomain()
-    {
-        return "https://".Environment::getPrefixEnvironment()."accesscontrol.symper.vn";
-    }
     
 
     /**
@@ -145,7 +140,7 @@ class AccessControl{
         $mapOperation = self::$mapOperation;
 
         if(count($mapOperation) == 0){
-            $remoteOperations = Request::request(self::getAccessControlDomain()."/roles/$currentRole/accesscontrol/$objectIdentifier");
+            $remoteOperations = Request::request(ACCESS_CONTROL_SERVICE."/roles/$currentRole/accesscontrol/$objectIdentifier");
             if(isset($remoteOperations['status']) && $remoteOperations['status'] == 200 &&  isset($remoteOperations['data']) && is_array($remoteOperations['data'])){
             
                 foreach ($remoteOperations['data'] as $opr) {
@@ -174,32 +169,6 @@ class AccessControl{
     }
 
     /**
-     * Bind giá trị của các câu query với ref(nếu có) vào bằng cách xác định chúng và gọi api sang syql để lấy dữ liệu về
-     */
-    public static function translateFilterStr($str)
-    {
-        $str = preg_replace("/\r\n|\r|\n/", ' ', $str);
-        $remoteQueries = Str::getAllFunctionsCallInString($str, 'ref');
-        $dataDomain = "https://".Environment::getPrefixEnvironment()."syql.symper.vn/formulas/get-data";
-        foreach ($remoteQueries as $query) {
-            $request = new Request($dataDomain);
-            $request->setPost([
-                'formula' => $query,
-                'distinct' => 0
-            ]);
-            $request->send(Auth::getBearerToken());
-            $result = $request->result();
-            $jsonResult = json_decode($result, true);
-            if(is_array($jsonResult) && $jsonResult['status'] == 200 && count($jsonResult['data']['data']) > 0){
-                $row = $jsonResult['data']['data'][0];
-                $value = array_values($row)[0];
-                $str = str_replace($query, $value, $str);
-            }
-        }
-        return $str;
-    }
-
-    /**
      * Lấy chuỗi filter cho một đối tượng ứng với action từ cấu hình filter access control 
      * @return false|String Nếu user không có quyền thì trả về false, nếu có quyền thì trả về chuỗi rỗng (khi không có filter)
      * hoặc chuỗi filter để append vào câu lệnh sql
@@ -218,6 +187,7 @@ class AccessControl{
              *  - các filter giữa các action pack nối với nhau bằng OR
              */
             $groupByActionPackId = [];
+            $placeHolderForRemoteQueries = [];
 
             $hasOperationWithoutFilter = false;
             foreach ($oprations as $op) {
@@ -226,12 +196,17 @@ class AccessControl{
                     $groupByActionPackId[$acId] = [];
                 }
                 if(isset($op['filter']) && trim($op['filter']) != ''){
-                    $filterArr[] = self::translateFilterStr($op['filter']);
-                    $groupByActionPackId[$acId][] = self::translateFilterStr($op['filter']);
+                    $translatedFilter = self::replaceRemoteQueryByPlaceholder($op['filter'], $placeHolderForRemoteQueries);
+                    $filterArr[] = $translatedFilter;
+                    $groupByActionPackId[$acId][] = $translatedFilter;
                 }else{
                     $hasOperationWithoutFilter = true;
                     break;
                 }
+            }
+
+            if(count($placeHolderForRemoteQueries) > 0){
+                $placeHolderForRemoteQueries = self::replacePlaceholderByRealValue($placeHolderForRemoteQueries);
             }
 
             // Nếu xuất hiện operation mà ko có filter nào gắn vào thì trả về là không có filter
@@ -246,10 +221,55 @@ class AccessControl{
                 }
                 // các filter giữa các action pack nối với nhau bằng OR
                 $rsl = '( '.implode(' OR ', $rsl).' )';
-                return $prefix.$rsl;
+                $rsl = $prefix.$rsl;
+                foreach ($placeHolderForRemoteQueries as $key => $value) {
+                    $rsl = str_replace($key, $value, $rsl);
+                }
+                return $rsl;
             }
         }else{
             return false;
         }
+    }
+
+    
+
+    /**
+     * Thay thế các chuỗi là lệnh truy vấn sang syql bằng placeholder để chỉ cần gọi 1 là lấy dk giá trị cho tất cả các công thức có ref
+     * @param String $str Chuỗi cần tìm kiếm và thay thế
+     * @param Array $mapPlaceHolder Map chứa các placeholder đã được set
+     */
+    public static function replaceRemoteQueryByPlaceholder($str, &$mapPlaceHolder)
+    {
+        
+        $str = preg_replace("/\r\n|\r|\n/", ' ', $str);
+        $remoteQueries = Str::getAllFunctionsCallInString($str, 'ref');
+        foreach ($remoteQueries as $query) {
+            $placeHolder = '__'.md5($query).'__';
+            $mapPlaceHolder[$placeHolder] = $query;
+            $str = str_replace($query, $placeHolder, $str);
+        }
+        return $str;
+    }
+
+    /**
+     * Thay thế các placeholder bằng giá trị thực tương ứng (sau khi chạy công thức bên syql)
+     * @param Array $map Map chứa các placeholder cần được thay thế
+     * @return Array Map chứa các giá trị sau khi đã được thay thế
+     */
+    public static function replacePlaceholderByRealValue($map)
+    {
+        $dataDomain = SYQL_SERVICE."/formulas/compileClientBulk";
+        $request = new Request($dataDomain);
+        $request->setPost([
+            'formula' => json_encode($map, JSON_UNESCAPED_UNICODE),
+            'variables' => '[]'
+        ]);
+        $request->send(Auth::getBearerToken());
+        $result = $request->result();
+        $jsonResult = json_decode($result, true);
+        unset($jsonResult['status']);
+        unset($jsonResult['message']);
+        return $jsonResult;
     }
 }

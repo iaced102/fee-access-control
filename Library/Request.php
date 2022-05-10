@@ -6,6 +6,7 @@ class Request {
     protected $timeout;
     protected $post;
     protected $postFields;
+    protected $getData;
     protected $dataResponse;
     protected $includeHeader;
     protected $status;
@@ -16,7 +17,7 @@ class Request {
     public    $authName = '';
     public    $authPass = '';
 
-    public function __construct($url,$timeOut = 30,$includeHeader = false)
+    public function __construct($url,$timeOut = 3000,$includeHeader = false)
     {
         $this->url = $url;
         $this->timeOut = $timeOut;
@@ -55,6 +56,10 @@ class Request {
         $this->post = true;
         $this->postFields = $postFields;
     }
+    public function setGet ($data)
+    {
+        $this->getData = $data;
+    }
 
     public function setUserAgent($userAgent)
     {
@@ -65,8 +70,18 @@ class Request {
     {
         //demo authen
         $s = curl_init();
-        curl_setopt($s,CURLOPT_URL,$this->url);
-        $authorization ="Authorization: Bearer ". Auth::getBearerToken();
+        if($this->getData){
+            $url = $this->url . '?' . http_build_query($this->getData);
+            curl_setopt($s, CURLOPT_URL, $url);
+        }
+        else{
+            curl_setopt($s,CURLOPT_URL,$this->url);
+        }
+        $token = Auth::getBearerToken();
+        if(!empty($this->token)){
+            $token = $this->token;
+        }
+        $authorization ="Authorization: Bearer ". $token;
         curl_setopt($s,CURLOPT_HTTPHEADER,array('Content-Type: application/x-www-form-urlencoded',$authorization));
         
         curl_setopt($s,CURLOPT_TIMEOUT,$this->timeOut);
@@ -79,11 +94,15 @@ class Request {
             curl_setopt($s,CURLOPT_POST,true);
             curl_setopt($s,CURLOPT_POSTFIELDS,http_build_query($this->postFields));
         }
+        
+        $certificate = DIR."/Crypt/cacert.pem";
+        curl_setopt($s, CURLOPT_SSL_VERIFYHOST, $certificate);
+        curl_setopt($s, CURLOPT_SSL_VERIFYPEER, $certificate);
+        
         curl_setopt($s,CURLOPT_CUSTOMREQUEST,$this->method);
         curl_setopt($s,CURLOPT_USERAGENT,$this->userAgent);
         $this->dataResponse = curl_exec($s);
         $this->status = curl_getinfo($s,CURLINFO_HTTP_CODE);
-        
         curl_close($s);
     }
 
@@ -103,23 +122,27 @@ class Request {
             return $resultTest;
         }
         $request = new Request($url);
-        if($dataPost != false){
+        if($dataPost != false && $method != "GET"){
             $request->setPost($dataPost);
         }
+        if($dataPost != false && $method == "GET"){
+            $request->setGet($dataPost);
+        }
+
         if($token != false){
             $request->setToken($token);
         }
         $request->setMethod($method);
         $request->send();
         $response = $request->result();
+        // if($method == 'POST' || $method == 'PUT'){
+        //     MessageBus::publish('sdocument-request-logs','request-log',['data'=>$dataPost,'res'=>$response]);
+        // }
+        // var_dump(json_encode($dataPost));
+        // var_dump($response);
+        // die;
         // trường hợp data trả về không đúng định dạng json
-        if(Str::isJson($response)){
-            $jsonData = json_decode($response, true);
-            return $jsonData;
-        }
-        else{
-            return false;
-        }
+        return json_decode($response, true);
 	}
     
 }

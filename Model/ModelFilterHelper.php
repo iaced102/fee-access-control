@@ -1,5 +1,8 @@
 <?php
 
+use Library\Auth;
+use Model\Model;
+
 /**
  * Class phục vụ cho việc tạo ra câu lệnh SQL cho việ filter các bản ghi
  */
@@ -25,6 +28,7 @@ class ModelFilterHelper
     {
         // LEFT JOIN users AS tb2 ON tb1.user_last_update = tb2.email
         $rsl = [];
+        $tenantId = Auth::getTenantId();
         foreach ($info as $item) {
             $joinTable = $item['table'];
             $ttb = $item['table2TmpName'];
@@ -36,7 +40,12 @@ class ModelFilterHelper
             if(array_key_exists('castTypeColumn2', $item)){
                 $col2 = "$col2::".$item['castTypeColumn2'];
             }
-            $rsl[] = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
+
+            $rslItem = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
+            if($tenantId !== ''){
+                $rslItem .= " AND tb1.tenant_id_ = $tenantId AND $ttb.tenant_id_ = $tenantId ";
+            }
+            $rsl[] = $rslItem;
         }
         return implode(' ', $rsl);
     }
@@ -120,13 +129,38 @@ class ModelFilterHelper
 
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
+        }else{
+            $cond = Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where));
+            $where = $cond ? " WHERE $cond" : "";
         }
-        $columns = implode("\" , \"", $columns);
-        $columns = "\"$columns\"";
+        
+        if(array_key_exists('aggregate', $filter)){
+            $columns = self::getSelectItemsWhenHasAgg($filter['aggregate'], $groupBy);
+        }else{
+            $columns = implode("\" , \"", $columns);
+            $columns = "\"$columns\"";
+        }
+
         return [
             'full'  => " SELECT $distnct $columns FROM $table $where $groupBy $sort LIMIT $limit ",
             'count' => " SELECT COUNT(*) as count_items FROM (SELECT $distnct $columns FROM $table $where $groupBy) tmp_table",
         ];
+    }
+    
+    public static function getSelectItemsWhenHasAgg($aggCols, $groupBy)
+    {
+        $columns = [];
+        if($groupBy != ''){
+            $groupByCol = str_replace('GROUP BY ', '', $groupBy);
+            $columns[] = $groupByCol;
+        }
+        foreach ($aggCols as $item) {
+            $func = $item['func'];
+            $col = $item['column'];
+            $columns[] = "$func($col) AS $col";
+        }
+        $columns = implode(' , ', $columns);
+        return $columns;
     }
 
     private static function getGroupBy($filter, &$relatedColumns)
@@ -184,7 +218,12 @@ class ModelFilterHelper
     private static function getColumnArrForSelect($filter, $selectableColumns, &$relatedColumns)
     {
         $columns = [];
-        if (array_key_exists('columns', $filter) && count($filter['columns']) > 0) {
+        if(array_key_exists('aggregate', $filter) && count($filter['aggregate']) > 0){
+            foreach ($filter['aggregate'] as $item) {
+                $relatedColumns[$item['column']] = true;
+                $columns[] = $item['column'];
+            }
+        } else if (array_key_exists('columns', $filter) && count($filter['columns']) > 0) {
             $columns = $filter['columns'];
         } else {
             foreach ($selectableColumns as $col) {
@@ -213,7 +252,12 @@ class ModelFilterHelper
         $searchKey = $filter['search'];
         if (trim($searchKey) != '') {
             $searchConditions = [];
-            foreach ($columns as $colName) {
+            $searchColumns = $columns;
+            if($filter['searchColumns'] != '*'){
+                $searchColumns = explode(',', $filter['searchColumns']);
+            }
+            foreach ($searchColumns as $colName) {
+                $relatedColumns[$colName] = true;
                 $searchConditions[] = " CAST(\"$colName\" AS VARCHAR) ILIKE '%$searchKey%' ";
             }
 
@@ -243,6 +287,7 @@ class ModelFilterHelper
     public static function convertConditionToWhereItem($conditionItem, $filterableColumns, &$relatedColumns)
     {
         $colName = $conditionItem['column'];
+        $dataType = isset($conditionItem['dataType']) ? $conditionItem['dataType'] : 'text';
         $relatedColumns[$colName] = true;
         $mapColumns = [];
         foreach ($filterableColumns as $col) {
@@ -258,8 +303,10 @@ class ModelFilterHelper
                     $value = $item['value'];
                 }
 
-                if (!($item['name'] == 'contains' && $value == '')) {
-                    $cond[] = self::bindValueToWhereItem($item['name'], $colName, $value, $mapColumns);
+                if (!($item['name'] == 'contains' && $value == '')) {$condItem = self::bindValueToWhereItem($item['name'], $colName, $value, $mapColumns, $dataType);
+                    if($condItem){
+                        $cond[] = $condItem;
+                    }
                 }
             }
 
@@ -283,7 +330,7 @@ class ModelFilterHelper
         return implode(' AND ', $conds);
     }
 
-    public static function bindValueToWhereItem($op, $colName, $value, $mapColumns)
+    public static function bindValueToWhereItem($op, $colName, $value, $mapColumns, $dataType)
     {
 
         $COLUMN = 'SYMPER_COLUMN_PLACE_HOLDER';
@@ -292,6 +339,9 @@ class ModelFilterHelper
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
             if ($op == 'in' || $op == 'not_in') {
+                if($value == ''){
+                    return '';
+                }
                 $colType = $colDef['type'];
                 if ($colType == 'number') {
                     $value = implode(' , ', $value);
@@ -319,6 +369,10 @@ class ModelFilterHelper
             'in'                    => "$COLUMN IN $value",
             'not_in'                => "$COLUMN NOT IN $value",
         ];
+        if($dataType == 'number' || $dataType == 'date' || $dataType == 'datetime'){
+            $mapOpertationToSQL['empty'] = "($COLUMN IS NULL)";
+            $mapOpertationToSQL['not_empty'] = "($COLUMN IS NOT NULL)";
+        }
 
         $str = $mapOpertationToSQL[$op];
         if (array_key_exists($colName, $mapColumns)) {

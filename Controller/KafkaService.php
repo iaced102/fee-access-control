@@ -26,7 +26,7 @@ class KafkaService extends Controller
         $listTopic = Operation::getListType();
         MessageBus::subscribeMultiTopic(
             $listTopic,
-            'accesscontrol.symper.vn',
+            SERVICE_DEFINITION,
             function($topic,$item){
                 $this->processObject($topic,$item);
             },
