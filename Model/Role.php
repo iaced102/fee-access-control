@@ -8,13 +8,15 @@ class Role extends SqlObject{
         $name,
         $type,
         $roleIdentifier,
-        $status;
+        $status,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'                =>  [ 'name' => 'id',                   'type' => 'number', 'primary'=>true],
+        'id'                =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'type'              =>  [ 'name' => 'type',                 'type' => 'string'],
         'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
-        'status'            =>  [ 'name' => 'status',               'type' => 'number']
+        'status'            =>  [ 'name' => 'status',               'type' => 'number'],
+        'tenantId'          => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

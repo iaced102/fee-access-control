@@ -19,9 +19,10 @@ class Users extends SqlObject
         $status = 1,
         $avatar,
         $createAt,
-        $updateAt;
+        $updateAt,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'            =>  [ 'name' => 'id',              'type' => 'number','primary'=>true, 'auto_increment' => true],
+        'id'            =>  [ 'name' => 'id',              'type' => 'string','primary'=>true],
         'firstName'     =>  [ 'name' => 'first_name',      'type' => 'string'],
         'lastName'      =>  [ 'name' => 'last_name',       'type' => 'string'],
         'userName'      =>  [ 'name' => 'user_name',       'type' => 'string'],
@@ -32,6 +33,7 @@ class Users extends SqlObject
         'avatar'        =>  [ 'name' => 'avatar',          'type' => 'string'],
         'createAt'      =>  [ 'name' => 'create_at',       'type' => 'datetime'],
         'updateAt'      =>  [ 'name' => 'update_at',       'type' => 'datetime'],
+        'tenantId'      => [ 'name' => 'tenant_id_',       'type' => 'number']
     ];
     public function __construct($data=[]){
         parent::__construct($data,false);

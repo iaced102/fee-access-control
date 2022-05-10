@@ -7,13 +7,15 @@ class FilterInActionPack extends SqlObject
         $actionPackId,
         $action,
         $filterStruct,
-        $filterValues;
+        $filterValues,
+        $tenantId;
     public static $mappingFromDatabase = [
         'filterId'            =>  [ 'name' => 'filter_id',              'type' => 'string'],
-        'actionPackId'        =>  [ 'name' => 'action_pack_id',         'type' => 'number'],
+        'actionPackId'        =>  [ 'name' => 'action_pack_id',         'type' => 'string'],
         'action'              =>  [ 'name' => 'action',                 'type' => 'string'],
         'filterStruct'        =>  [ 'name' => 'filter_struct',                 'type' => 'string'],
         'filterValues'        =>  [ 'name' => 'filter_values',                 'type' => 'string'],
+        'tenantId'            => [ 'name' => 'tenant_id_',              'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

@@ -12,16 +12,18 @@ class Operation extends SqlObject
         $objectName,
         $objectIdentifier,
         $objectType,
-        $status;
+        $status,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'                =>  [ 'name' => 'id',                   'type' => 'number', 'primary'=>true, 'auto_increment' => true],
+        'id'                =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'description'       =>  [ 'name' => 'description',          'type' => 'string'],
         'action'            =>  [ 'name' => 'action',               'type' => 'string'],
         'objectName'        =>  [ 'name' => 'object_name',          'type' => 'string'],
         'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
         'objectType'        =>  [ 'name' => 'object_type',          'type' => 'string'],
-        'status'            =>  [ 'name' => 'status',               'type' => 'number']
+        'status'            =>  [ 'name' => 'status',               'type' => 'number'],
+        'tenantId'          => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public static $listAction = [
         'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','import','drop','restore','list_trash','submit_by_workflow']],

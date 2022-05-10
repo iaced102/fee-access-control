@@ -103,7 +103,7 @@ class ActionPackService extends Controller
                 $this->output['message'] = '"name" may not be blank';
             }
             else{
-                $obj = ActionPack::getById(intval($this->parameters['id']));
+                $obj = ActionPack::getById($this->parameters['id']);
                 if($obj!=false){
                     $obj->name = trim($this->parameters['name']);
                     if(ActionPack::checkNameExist($obj->name, $obj->id)){
@@ -143,7 +143,7 @@ class ActionPackService extends Controller
     }
     function delete(){
         if($this->checkParameter(['id'])){
-            $obj = ActionPack::getById(intval($this->parameters['id']));
+            $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
                 if($obj->delete()){
                     RoleAction::refresh();
@@ -162,7 +162,7 @@ class ActionPackService extends Controller
     }
     function detail(){
         if($this->checkParameter(['id'])){
-            $obj = ActionPack::getById(intval($this->parameters['id']));
+            $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
                 $this->output['data']   = $obj;
                 $this->output['status'] = STATUS_OK;
@@ -175,7 +175,7 @@ class ActionPackService extends Controller
     }
     function listOperation(){
         if($this->checkParameter(['id'])){
-            $obj = ActionPack::getById(intval($this->parameters['id']));
+            $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
                 $listObj = Operation::getByTop('',"operation_in_action_pack.action_pack_id=".$obj->id." and operation_in_action_pack.operation_id=operation.id","","operation.*","operation_in_action_pack");
                 $this->output['data']   = $listObj;
@@ -189,13 +189,13 @@ class ActionPackService extends Controller
     }
     function addOperation(){
         if($this->checkParameter(['id','operationId'])){
-            $obj = ActionPack::getById(intval($this->parameters['id']));
+            $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
-                if(Operation::count("id=".intval($this->parameters['operationId']))>0){
-                    if(OperationInActionPack::count("action_pack_id=".intval($this->parameters['id'])." and operation_id=".intval($this->parameters['operationId']))==0){
+                if(Operation::count("id=".$this->parameters['operationId'])>0){
+                    if(OperationInActionPack::count("action_pack_id=".$this->parameters['id']." and operation_id=".$this->parameters['operationId'])==0){
                         $operationInActionPackObj =  new OperationInActionPack();
                         $operationInActionPackObj->actionPackId = $obj->id;
-                        $operationInActionPackObj->operationId = intval($this->parameters['operationId']);
+                        $operationInActionPackObj->operationId = $this->parameters['operationId'];
                         $operationInActionPackObj->save();
                     }
                     RoleAction::refresh();
@@ -214,10 +214,10 @@ class ActionPackService extends Controller
     }
     function removeOperation(){
         if($this->checkParameter(['id','operationId'])){
-            $obj = ActionPack::getById(intval($this->parameters['id']));
+            $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
-                if(OperationInActionPack::count("action_pack_id=".intval($this->parameters['id'])." and operation_id=".intval($this->parameters['operationId']))>0){
-                    OperationInActionPack::deleteMulti("action_pack_id=".intval($this->parameters['id'])." and operation_id=".intval($this->parameters['operationId']));
+                if(OperationInActionPack::count("action_pack_id=".$this->parameters['id']." and operation_id=".$this->parameters['operationId'])>0){
+                    OperationInActionPack::deleteMulti("action_pack_id=".$this->parameters['id']." and operation_id=".$this->parameters['operationId']);
                     RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
                 }

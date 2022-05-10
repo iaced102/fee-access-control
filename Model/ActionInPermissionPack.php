@@ -5,11 +5,13 @@ class ActionInPermissionPack extends SqlObject
 {
     public $id,
         $actionPackId,
-        $permissionPackId;
+        $permissionPackId,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'                    =>  [ 'name' => 'id',                   'type' => 'number', 'primary'=>true, 'auto_increment' => true],
-        'actionPackId'          =>  [ 'name' => 'action_pack_id',       'type' => 'number'],
-        'permissionPackId'      =>  [ 'name' => 'permission_pack_id',   'type' => 'number']
+        'id'                    =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
+        'actionPackId'          =>  [ 'name' => 'action_pack_id',       'type' => 'string'],
+        'permissionPackId'      =>  [ 'name' => 'permission_pack_id',   'type' => 'string'],
+        'tenantId'              => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

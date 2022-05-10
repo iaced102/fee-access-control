@@ -16,7 +16,8 @@ class RoleAction extends SqlObject{
         $filter,
         $filterCombination,
         $filterNew,
-        $actionPackId;
+        $actionPackId,
+        $tenantId;
     public static $mappingFromDatabase = [
         'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
         'action'            =>  [ 'name' => 'action',               'type' => 'string'],
@@ -28,6 +29,7 @@ class RoleAction extends SqlObject{
         'status'            =>  [ 'name' => 'filter_status',        'type' => 'string'],
         'actionPackId'      =>  [ 'name' => 'action_pack_id',        'type' => 'string'],
         'filterCombination' =>  [ 'name' => 'filter_combination',        'type' => 'string'],
+        'tenantId'          =>  [ 'name' => 'tenant_id_', 'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

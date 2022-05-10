@@ -6,12 +6,14 @@ class PermissionRole extends SqlObject
     public $id,
         $permissionPackId,
         $roleType,
-        $roleIdentifier;
+        $roleIdentifier,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'                    =>  [ 'name' => 'id',               'type' => 'number', 'primary'=>true, 'auto_increment' => true],
-        'permissionPackId'      =>  [ 'name' => 'permission_pack_id', 'type' => 'number'],
+        'id'                    =>  [ 'name' => 'id',               'type' => 'string', 'primary'=>true],
+        'permissionPackId'      =>  [ 'name' => 'permission_pack_id', 'type' => 'string'],
         'roleType'              =>  [ 'name' => 'role_type',         'type' => 'string'],
         'roleIdentifier'        =>  [ 'name' => 'role_identifier',   'type' => 'string'],
+        'tenantId'              => [ 'name' => 'tenant_id_', 'type' => 'number'],
     ];
     
     public function __construct($data=[]){

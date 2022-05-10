@@ -129,7 +129,7 @@ class OperationService extends Controller
                 $this->output['message'] = '"name","objectIdentifier" may not be blank';
             }
             else{
-                $obj = Operation::getById(intval($this->parameters['id']));
+                $obj = Operation::getById($this->parameters['id']);
                 if($obj!=false){
                     $obj =  new Operation();
                     $obj->name = trim($this->parameters['name']);
@@ -157,7 +157,7 @@ class OperationService extends Controller
     }
     function delete(){
         if($this->checkParameter(['id'])){
-            $id = intval($this->parameters['id']);
+            $id = $this->parameters['id'];
             $obj = Operation::getById($id);
             if($obj!=false){
                 if($obj->delete()){
@@ -181,7 +181,7 @@ class OperationService extends Controller
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
             if(count($ids)>0){
                 $ids = array_map(function($item){
-                    return intval($item);
+                    return $item;
                 },$ids);
                 Operation::deleteMulti("id in (".implode(',',$ids).')');
                 OperationInActionPack::deleteMulti("operation_id in (".implode(',',$ids).')');
@@ -196,7 +196,7 @@ class OperationService extends Controller
     }
     function detail(){
         if($this->checkParameter(['id'])){
-            $obj = Operation::getById(intval($this->parameters['id']));
+            $obj = Operation::getById($this->parameters['id']);
             if($obj!=false){
                 $this->output['data']   = $obj;
                 $this->output['status'] = STATUS_OK;

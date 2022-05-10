@@ -36,7 +36,7 @@ class KafkaService extends Controller
     }
     function stopSubscribe(){
         if($this->checkParameter(['processId'])){
-            $processId = intval($this->parameters['processId']);
+            $processId = $this->parameters['processId'];
             $result = posix_kill($processId,9);
             $this->output['status'] = $result?STATUS_OK: STATUS_SERVER_ERROR;
         }

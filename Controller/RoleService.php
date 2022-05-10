@@ -24,7 +24,7 @@ class RoleService extends Controller
     function setPermission(){
         // AccessControl::filterByPermission("role","setPermission");
         if($this->checkParameter(['permission_id','role_identifier'])){
-            $permissionId = intval($this->parameters['permission_id']);
+            $permissionId = $this->parameters['permission_id'];
             $roleIdentifier = trim($this->parameters['role_identifier']);
             $roleType = isset($this->parameters['role_type'])?trim($this->parameters['role_type']):Role::TYPE_ORGCHART;
             if($this->setPermissionItem($roleIdentifier,$permissionId,$roleType)){
@@ -51,12 +51,12 @@ class RoleService extends Controller
                         $roleType = isset($item['role_type'])?trim($item['role_type']):Role::TYPE_ORGCHART;
                         if(is_array($item['permission_id'])){
                             foreach($item['permission_id'] as $permissionitem){
-                                $permissionitem = intval($permissionitem);
+                                $permissionitem = $permissionitem;
                                 $this->setPermissionItem($roleIdentifier,$permissionitem,$roleType);
                             }
                         }
                         else{
-                            $permissionId = intval($item['permission_id']);
+                            $permissionId = ($item['permission_id']);
                             $this->setPermissionItem($roleIdentifier,$permissionId,$roleType);
                         }
                     }

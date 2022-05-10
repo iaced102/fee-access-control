@@ -6,13 +6,14 @@ class UserRole extends SqlObject
     public $id,
         $userId,
         $roleType,
-        $roleIdentifier
-        ;
+        $roleIdentifier,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'                =>  [ 'name' => 'id',               'type' => 'number', 'primary'=>true, 'auto_increment' => true],
-        'userId'            =>  [ 'name' => 'user_id',          'type' => 'number'],
+        'id'                =>  [ 'name' => 'id',               'type' => 'string', 'primary'=>true],
+        'userId'            =>  [ 'name' => 'user_id',          'type' => 'string'],
         'roleType'          =>  [ 'name' => 'role_type',        'type' => 'string'],
         'roleIdentifier'    =>  [ 'name' => 'role_identifier',  'type' => 'string'],
+        'tenantId'          =>  [ 'name' => 'tenant_id_',       'type' => 'number']
     ];
     public function __construct($data=[]){
         parent::__construct($data);

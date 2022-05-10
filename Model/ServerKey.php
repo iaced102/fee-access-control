@@ -13,8 +13,8 @@ class ServerKey extends SqlObject
         $createAt,
         $updateAt,
         $userCreate,
-        $userUpdate
-        ;
+        $userUpdate,
+        $tenantId;
     public static $mappingFromDatabase = [
         'id'            =>  [ 'name' => 'id',           'type' => 'string', 'primary'=>true],
         'name'          =>  [ 'name' => 'name',         'type' => 'string'],
@@ -25,6 +25,7 @@ class ServerKey extends SqlObject
         'updateAt'      =>  [ 'name' => 'update_at',    'type' => 'datetime'],
         'userCreate'    =>  [ 'name' => 'user_create',  'type' => 'string'],
         'userUpdate'    =>  [ 'name' => 'user_update',   'type' => 'string'],
+        'tenantId'      => [ 'name' => 'tenant_id_', 'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

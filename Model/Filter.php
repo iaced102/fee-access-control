@@ -12,7 +12,8 @@ class Filter extends SqlObject
         $formula,
         $formulaStruct,
         $status,
-        $objectIdentifier;
+        $objectIdentifier,
+        $tenantId;
     public static $mappingFromDatabase = [
         'id'                =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
         'userId'            =>  [ 'name' => 'user_id',              'type' => 'string'],
@@ -23,6 +24,7 @@ class Filter extends SqlObject
         'formulaStruct'    =>  [ 'name' => 'formula_struct',       'type' => 'string'],
         'status'            =>  [ 'name' => 'status',               'type' => 'number'],
         'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
+        'tenantId'          => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);

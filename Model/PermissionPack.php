@@ -16,18 +16,19 @@ class PermissionPack extends SqlObject
         $userCreate,
         $userUpdate,
         $createAt,
-        $updateAt;
+        $updateAt,
+        $tenantId;
     public static $mappingFromDatabase = [
-        'id'                =>  [ 'name' => 'id',                   'type' => 'number', 'primary'=>true, 'auto_increment' => true],
+        'id'                =>  [ 'name' => 'id',                   'type' => 'string', 'primary'=>true],
         'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
         'description'       =>  [ 'name' => 'description',          'type' => 'string'],
         'type'              =>  [ 'name' => 'type',                 'type' => 'string'],
-        'status'            =>  [ 'name' => 'status',                 'type' => 'number'],
+        'status'            =>  [ 'name' => 'status',               'type' => 'number'],
         'userCreate'        =>  [ 'name' => 'user_create',          'type' => 'string'],
         'userUpdate'        =>  [ 'name' => 'user_update',          'type' => 'string'],
         'createAt'          =>  [ 'name' => 'create_at',            'type' => 'datetime'],
         'updateAt'          =>  [ 'name' => 'update_at',            'type' => 'datetime'],
-
+        'tenantId'          => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data);
