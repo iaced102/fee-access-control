@@ -13,9 +13,9 @@ class Model{
         die(get_called_class()." not overriding getColumnNameInDataBase");
     }
 
-    public static function mergeCondWithTenantFilter($cond)
+    public static function mergeCondWithTenantFilter($cond, $tb1 = false, $tb2 = false)
     {
-        $filterTenantQuery  = static::getFilterTenantQuery();
+        $filterTenantQuery  = static::getFilterTenantQuery($tb1, $tb2);
         if($filterTenantQuery === ''){
             return $cond;
         }else{
@@ -31,12 +31,30 @@ class Model{
     *   CreateTime: 31/03/2020
     *   description: lấy condition query để lọc theo TanentId. khi đã call đến class model này nghĩa là class kế thừa không định nghĩa, không có tanentid trong db, không cần lọc 
     */
-    public static function getFilterTenantQuery(){
+    public static function getFilterTenantQuery($tb1 = false, $tb2 = false){
         $tenantId = Auth::getTenantId();
         if($tenantId === ''){
             return '';
         }else{
-            return " tenant_id_ = $tenantId";
+            $rsl = '';
+            if($tb1){
+                $rsl = "$tb1.tenant_id_ = $tenantId";
+                if($tb2){
+                    $rsl .= " AND $tb2.tenant_id_ = $tenantId";
+                }
+            }
+
+            if($tb2){
+                $rsl = "$tb2.tenant_id_ = $tenantId";
+                if($tb1){
+                    $rsl .= " AND $tb1.tenant_id_ = $tenantId";
+                }
+            }
+
+            if(!$tb1 && !$tb2 ){
+                $rsl = " tenant_id_ = $tenantId";
+            }
+            return $rsl;
         }
     }
     public static function getPrimaryKey(){
@@ -114,8 +132,8 @@ class Model{
         return self::get($command,true,$returnArrayKeyAsField);
     }
     public static function getByTop($top='',$where='',$order='',$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
-        $where              = self::mergeCondWithTenantFilter($where);
         $tableName          = static::getTableName();
+        $where              = self::mergeCondWithTenantFilter($where, $tableName, $otherTable);
         $command            = "SELECT ";
         $command            .= $hasDistinct?"  DISTINCT ": ' ';
         $command            .= $fields==false ? "$tableName.*":$fields;
@@ -129,7 +147,6 @@ class Model{
 
     public static function getByPaging($currentPage, $pageSize,$order,$where,$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
         $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
-        $where              = self::mergeCondWithTenantFilter($where);
         return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
     }
 
