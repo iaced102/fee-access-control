@@ -83,7 +83,7 @@ class Connection{
                 for ($i=0; $i < $c; $i++) { 
                     $onClause = $allMatch[$i];
                     preg_match_all('/\w*\./i', $onClause, $listTable);
-                    $tenantClause = $listTable[0][0]."tenant_id = ".$listTable[0][1]."tenant_id";
+                    $tenantClause = $listTable[0][0]."tenant_id_ = ".$listTable[0][1]."tenant_id_";
                     $clauseReplace = $onClause . " AND ".$tenantClause;
                     $newSql = str_replace($onClause,$clauseReplace,$newSql);
                 }

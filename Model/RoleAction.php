@@ -46,24 +46,39 @@ class RoleAction extends SqlObject{
     }
     public static function createView(){
         $createViewQuery = "
-        SELECT o.object_identifier,
+        CREATE MATERIALIZED VIEW role_action AS SELECT o.object_identifier,
+
         o.action,
+    
         o.object_type,
+    
         o.name,
+    
         o.status,
+    
         pr.role_identifier,
+    
         filter.formula AS filter_formula,
-    filter.status AS filter_status,
-    filter.id AS filter_id,
-    op.formula_value AS filter_formula_new,
-    op.formula_struct AS filter_combination,
-    app.action_pack_id
-    FROM ((((operation o
-    JOIN operation_in_action_pack op ON (((o.id = op.operation_id) AND (o.tenant_id = op.tenant_id))))
-    JOIN action_in_permission_pack app ON (((op.action_pack_id = app.action_pack_id) AND (op.tenant_id = app.tenant_id))))
-    JOIN permission_role pr ON (((app.permission_pack_id = pr.permission_pack_id) AND (pr.tenant_id = app.tenant_id))))
-    LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id = filter.tenant_id))));
-        ";
+    
+        filter.status AS filter_status,
+    
+        filter.id AS filter_id,
+    
+        op.formula_value AS filter_formula_new,
+    
+        op.formula_struct AS filter_combination,
+    
+        app.action_pack_id,
+        0 AS tenant_id_
+    
+       FROM ((((operation o
+    
+         JOIN operation_in_action_pack op ON (((o.id = op.operation_id) AND (o.tenant_id_ = op.tenant_id_))))
+    
+         JOIN action_in_permission_pack app ON (((op.action_pack_id = app.action_pack_id) AND (op.tenant_id_ = app.tenant_id_))))
+    
+         JOIN permission_role pr ON (((app.permission_pack_id = pr.permission_pack_id) AND (pr.tenant_id_ = app.tenant_id_))))
+    
+         LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id_ = filter.tenant_id_))))"; 
     }
-   
 }

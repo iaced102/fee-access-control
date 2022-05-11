@@ -79,8 +79,8 @@ class RoleService extends Controller
         PermissionRole::deleteMulti("role_identifier in ('".implode("','",$listRoleIdentifier)."')");
     }
     private function setPermissionItem($roleIdentifier,$permissionId,$roleType= Role::TYPE_ORGCHART){
-        if(PermissionPack::count("id=$permissionId")>0){
-            if(PermissionRole::count("role_identifier='$roleIdentifier' and permission_pack_id=$permissionId")==0){
+        if(PermissionPack::count("id='".$permissionId."'")>0){
+            if(PermissionRole::count("role_identifier='$roleIdentifier' and permission_pack_id='$permissionId'")==0){
                 $obj = new PermissionRole();
                 $obj->permissionPackId = $permissionId;
                 $obj->roleType = $roleType;

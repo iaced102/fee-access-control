@@ -183,8 +183,9 @@ class OperationService extends Controller
                 $ids = array_map(function($item){
                     return $item;
                 },$ids);
-                Operation::deleteMulti("id in (".implode(',',$ids).')');
-                OperationInActionPack::deleteMulti("operation_id in (".implode(',',$ids).')');
+                $ids = "'".implode("','", $ids)."'";
+                Operation::deleteMulti("id in ($ids)");
+                OperationInActionPack::deleteMulti("operation_id in ($ids)");
                 RoleAction::refresh();
                 $this->output['status']  = STATUS_OK;
             }

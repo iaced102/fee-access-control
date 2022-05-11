@@ -36,7 +36,7 @@ class FilterInActionPack extends SqlObject
         $obj->insert();
     }
     public static function getFilterInActionPack($actionPackId){
-        $sql = "select * from filter_in_action_pack fa left join filter f on fa.filter_id = f.id where fa.action_pack_id = $actionPackId";
+        $sql = "select * from filter_in_action_pack fa left join filter f on fa.filter_id = f.id where fa.action_pack_id ='".$actionPackId."'";
         return Connection::getDataQuerySelect($sql);
     }
 }

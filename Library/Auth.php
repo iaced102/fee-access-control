@@ -158,12 +158,11 @@ class Auth{
     public static function getCurrentRole(){
         return self::getTokenInfo('role');
     }
-
-    public static function isBa(){
+    public static function getCurrentUserId(){
         $dataLogin = self::getDataToken();
         if(!empty($dataLogin)){
-            if(isset($dataLogin['type'])&&$dataLogin['type']=='ba'&&isset($data['userDelegate'])&&isset($data['userDelegate']['id'])){
-                return $data['userDelegate']['id'];
+            if(isset($dataLogin['type'])&&$dataLogin['type']=='ba'&&isset($dataLogin['userDelegate'])&&isset($dataLogin['userDelegate']['id'])){                
+                return $dataLogin['userDelegate']['id'];
             }
             else if(isset($dataLogin['id'])){
                 return $dataLogin['id'];

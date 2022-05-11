@@ -206,7 +206,7 @@ class ActionPack extends SqlObject
         
     }
     private function insertActionPack($operationId, $formulaStruct,$formulaValue){
-        if(Operation::count("id=".$operationId)>0){
+        if(Operation::count("id='".$operationId."'")>0){
             $operationInActionPackObj =  new OperationInActionPack();
             $operationInActionPackObj->actionPackId = $this->id;
             $operationInActionPackObj->operationId = $operationId;
@@ -217,16 +217,16 @@ class ActionPack extends SqlObject
         }
     }
     function removeAllOperation(){
-        Connection::exeQuery("DELETE FROM operation_in_action_pack WHERE action_pack_id=".$this->id);
+        Connection::exeQuery("DELETE FROM operation_in_action_pack WHERE action_pack_id='".$this->id."'");
     }
     function removeAllFilter(){
-        Connection::exeQuery("DELETE FROM filter_in_action_pack WHERE action_pack_id=".$this->id);
+        Connection::exeQuery("DELETE FROM filter_in_action_pack WHERE action_pack_id='".$this->id."'");
     }
     public static function checkNameExist($name, $id = false){
         if($id == false){
             $listObject = self::getByTop('',"name = '$name'");
         }else{
-            $listObject = self::getByTop('',"name = '$name' and id != $id");
+            $listObject = self::getByTop('',"name = '$name' and id !='". $id."'");
         }
         if(count($listObject) > 0){
             return true;

@@ -158,12 +158,11 @@ class PermissionService extends Controller
             $listObj = [];
             if($obj!=false){
                 if(isset($this->parameters['detail'])&&intval($this->parameters['detail'])==1){
-                    $listObj = ActionPack::getByTop('',"action_in_permission_pack.action_pack_id=action_pack.id AND action_in_permission_pack.permission_pack_id=".$obj->id,'',false,'action_in_permission_pack');
+                    $listObj = ActionPack::getByTop('',"action_in_permission_pack.action_pack_id=action_pack.id AND action_in_permission_pack.permission_pack_id='".$obj->id."'",'',false,'action_in_permission_pack');
                 }
                 else{
-                    $listObj = ActionInPermissionPack::getByTop('',"permission_pack_id=".$obj->id);
+                    $listObj = ActionInPermissionPack::getByTop('',"permission_pack_id='".$obj->id."'");
                 }
-                
                 $this->output['data']   = $listObj;
                 $this->output['status'] = STATUS_OK;
             }
@@ -179,8 +178,8 @@ class PermissionService extends Controller
         if($this->checkParameter(['id','actionPackId'])){
             $obj = PermissionPack::getById($this->parameters['id']);
             if($obj!=false){
-                if(ActionPack::count("id=".$this->parameters['actionPackId'])>0){
-                    if(ActionInPermissionPack::count("permission_pack_id=".$this->parameters['id']." and action_pack_id=".$this->parameters['actionPackId'])==0){
+                if(ActionPack::count("id='".$this->parameters['actionPackId']."'")>0){
+                    if(ActionInPermissionPack::count("permission_pack_id='".$this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'")==0){
                         $actionInPermissionPackObj =  new ActionInPermissionPack();
                         $actionInPermissionPackObj->permissionPackId = $obj->id;
                         $actionInPermissionPackObj->actionPackId = $this->parameters['actionPackId'];
@@ -205,8 +204,8 @@ class PermissionService extends Controller
         if($this->checkParameter(['id','actionPackId'])){
             $obj = ActionPack::getById($this->parameters['actionPackId']);
             if($obj!=false){
-                if(ActionInPermissionPack::count("permission_pack_id=".($this->parameters['id']." and action_pack_id=".$this->parameters['actionPackId']))>0){
-                    ActionInPermissionPack::deleteMulti("permission_pack_id=".$this->parameters['id']." and action_pack_id=".$this->parameters['actionPackId']);
+                if(ActionInPermissionPack::count("permission_pack_id='".($this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'"))>0){
+                    ActionInPermissionPack::deleteMulti("permission_pack_id='".$this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'");
                     $this->saveUserUpdate($this->parameters['id']);
                     RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
@@ -225,7 +224,7 @@ class PermissionService extends Controller
     }
     function saveUserUpdate($id){
         $id = $id;
-        PermissionPack::updateMulti("user_update=".Auth::getCurrentUserId().",update_at='".date(DATETIME_FORMAT)."'","id=$id");
+        PermissionPack::updateMulti("user_update=".Auth::getCurrentUserId().",update_at='".date(DATETIME_FORMAT)."'","id='".$id."'");
     }
     
 }

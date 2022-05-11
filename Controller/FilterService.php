@@ -139,14 +139,14 @@ class FilterService extends Controller
         if($this->checkParameter(['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
             if(count($ids)>0){
-                Filter::deleteMulti("id in (".implode(',',"'$ids'").')');
+                $ids = "'".implode("','", $ids)."'";
+                Filter::deleteMulti("id in ($ids)"); 
                 RoleAction::refresh();
                 $this->output['status']  = STATUS_OK;
             }
             else{
                 $this->output['status'] = STATUS_BAD_REQUEST;
-            }
-            
+            } 
         }
     }
     function detail(){
