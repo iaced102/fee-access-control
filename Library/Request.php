@@ -95,10 +95,6 @@ class Request {
             curl_setopt($s,CURLOPT_POSTFIELDS,http_build_query($this->postFields));
         }
         
-        $certificate = DIR."/Crypt/cacert.pem";
-        curl_setopt($s, CURLOPT_SSL_VERIFYHOST, $certificate);
-        curl_setopt($s, CURLOPT_SSL_VERIFYPEER, $certificate);
-        
         curl_setopt($s,CURLOPT_CUSTOMREQUEST,$this->method);
         curl_setopt($s,CURLOPT_USERAGENT,$this->userAgent);
         $this->dataResponse = curl_exec($s);
