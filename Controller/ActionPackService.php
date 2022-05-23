@@ -31,7 +31,7 @@ class ActionPackService extends Controller
             $this->parameters['pageSize'] = 500;
         }
         if(!isset($this->parameters['sort'])){
-            $this->parameters['sort'] = [["column"=>"id","type"=>'DESC']];            
+            $this->parameters['sort'] = [["column"=>"createAt","type"=>'DESC']];            
         }
         $listObj = ActionPack::getByFilter($this->parameters);
         $data = [

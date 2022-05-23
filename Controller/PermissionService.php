@@ -63,6 +63,7 @@ class PermissionService extends Controller
             }
             else{
                 $obj =  new PermissionPack();
+                $obj->id= PermissionPack::createUUID();
                 $obj->name = trim($this->parameters['name']);
                 $obj->description = isset($this->parameters['description'])?trim($this->parameters['description']):'';
                 $obj->type = isset($this->parameters['type'])?trim($this->parameters['type']):PermissionPack::TYPE_USER;
@@ -77,6 +78,7 @@ class PermissionService extends Controller
                     $obj->saveActionPack($listActionPacks);
                     RoleAction::refresh();
                 }
+                $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
             }
         }

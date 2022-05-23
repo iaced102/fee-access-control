@@ -411,6 +411,10 @@ class ModelFilterHelper
             $result['search'] = '';
         }
 
+        if (!array_key_exists('searchColumns', $filter)) {
+            $result['searchColumns'] = '*';
+        }
+        
         $result = self::toJoinConditionIfExist($result, $filterableColumns, $selectableColumns);
         $result = self::addParamsToJoinCondition($result);
 
