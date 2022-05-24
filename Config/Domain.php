@@ -9,7 +9,7 @@ define('APP_MANAGEMENT_SERVICE',"https://".$envDomain."apps-management.".$domain
 define('BI_SERVICE',"https://".$envDomain."bi-service.".$domain);
 define('COMMENT_SERVICE',"https://".$envDomain."comment-service.".$domain);
 define('DATA_IO_SERVICE',"https://".$envDomain."data-io.".$domain);
-define('FILE_IO_SERVICE',"https://".$envDomain."file-service.".$domain);
+define('FILE_SERVICE',"https://".$envDomain."file-service.".$domain);
 define('IO_SERVICE',"https://".$envDomain."io.".$domain);
 define('KANBAN_SERVICE',"https://".$envDomain."kanban-service.".$domain);
 define('LOG_SERVICE',"https://".$envDomain."log.".$domain);
