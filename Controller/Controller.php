@@ -140,7 +140,12 @@ class Controller{
                 'error'         => error_get_last(),
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y"),
-                'requestTime'   => $endTime - $this->requestTime
+                'requestTime'   => $endTime - $this->requestTime,
+                'clientIp'      => $_SERVER['REMOTE_ADDR'],
+                'serverIp'      => $_SERVER['SERVER_ADDR'],
+                'uri'           => $_SERVER['REQUEST_URI'],
+                'host'          => $_SERVER['HTTP_HOST'],
+                'method'        => $_SERVER['REQUEST_METHOD'],
             ];
             $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
