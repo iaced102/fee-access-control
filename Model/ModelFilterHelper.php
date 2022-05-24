@@ -130,7 +130,7 @@ class ModelFilterHelper
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
         }else{
-            $cond = Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where));
+            $cond = Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where, 1));
             $where = $cond ? " WHERE $cond" : "";
         }
         
@@ -411,6 +411,10 @@ class ModelFilterHelper
             $result['search'] = '';
         }
 
+        if (!array_key_exists('searchColumns', $filter)) {
+            $result['searchColumns'] = '*';
+        }
+        
         $result = self::toJoinConditionIfExist($result, $filterableColumns, $selectableColumns);
         $result = self::addParamsToJoinCondition($result);
 
