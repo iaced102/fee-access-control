@@ -57,7 +57,7 @@ class FilterService extends Controller
     
     function create(){
         $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'publish', $messageBusData, 'POST');
+        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
         if($this->checkParameter(['name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -84,7 +84,7 @@ class FilterService extends Controller
     
     function update(){
         $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'publish', $messageBusData, 'POST');
+        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
         if($this->checkParameter(['id','name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;

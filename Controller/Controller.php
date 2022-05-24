@@ -46,7 +46,7 @@ class Controller{
                 'date'          => date("d-m-Y")
             ];
             $messageBusData = ['topic'=>'request-input', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
-            Request::request(MESSAGE_BUS_SERVICE.'publish', $messageBusData, 'POST');
+            Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
         }
         if(method_exists($this,$action)){
             $this->$action();
@@ -148,7 +148,7 @@ class Controller{
                 'method'        => $_SERVER['REQUEST_METHOD'],
             ];
             $messageBusData = ['topic'=>'request-output', 'event' => 'log','resource' => json_encode($dataKafka,JSON_UNESCAPED_UNICODE),'env' => Environment::getEnvironment()];
-            Request::request(MESSAGE_BUS_SERVICE.'publish', $messageBusData, 'POST');
+            Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
         }
     }
 }
