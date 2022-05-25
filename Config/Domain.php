@@ -32,4 +32,4 @@ define('DATA_CONNECTOR_SERVICE',"https://".$envDomain."data-connector.".$domain)
 define('MESSAGE_BUS_SERVICE',"https://".$envDomain."message-bus.".$domain);
 define('SYNC_DATA_SERVICE',"https://".$envDomain."sync-data.".$domain);
 define('LUFFY_SERVICE',"https://luffy.".$domain);
-define('KAFKA_NODE',"https://symperkafKa.".$domain);
+define('KAFKA_NODE',"symperkafKa.".$domain);
