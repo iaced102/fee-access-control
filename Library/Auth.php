@@ -153,7 +153,7 @@ class Auth{
                 return $dataLogin['tenant']['id'];
             }
         }
-        return 0;
+        return '';
     }
     public static function getCurrentRole(){
         return self::getTokenInfo('role');
