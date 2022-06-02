@@ -3,6 +3,10 @@
 use Library\Environment;
 $envDomain = Environment::getPrefixEnvironment();
 $domain = Environment::getDomain();
+if($domain == ""){
+    $host = $_SERVER['HTTP_HOST'];
+    $domain = preg_replace('/^[a-z0-9-]+./', '', $host);
+}
 define('ACCESS_CONTROL_SERVICE',"https://".$envDomain."accesscontrol.".$domain);
 define('ACCOUNT_SERVICE',"https://".$envDomain."account.".$domain);
 define('APP_MANAGEMENT_SERVICE',"https://".$envDomain."apps-management.".$domain);
