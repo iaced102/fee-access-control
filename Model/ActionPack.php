@@ -114,17 +114,13 @@ class ActionPack extends SqlObject
 
     function attachFilterToOperation($listFilter, $apId){
         $mapFilterIdToFilterStruct = [];
-        $filterObjs = [];
-        if(count($listFilter) > 0){
-            foreach ($listFilter as $item) {
-                $mapFilterIdToFilterStruct[$item['id']] = $item;
-            }
-    
-            $filterIds = array_keys($mapFilterIdToFilterStruct);
-            $filterIds = "'".implode("','", $filterIds)."'";
-    
-            $filterObjs = Filter::getByTop('',"id IN ($filterIds)");
+        foreach ($listFilter as $item) {
+            $mapFilterIdToFilterStruct[$item['id']] = $item;
         }
+        $filterIds = array_keys($mapFilterIdToFilterStruct);
+        $filterIds = "'".implode("','", $filterIds)."'";
+
+        $filterObjs = Filter::getByTop('',"id IN ($filterIds)");
         // Lấy danh sách filter
         // $mapFilterById = [];
         // foreach ($filterObjs as $obj) {
@@ -173,14 +169,11 @@ class ActionPack extends SqlObject
         }
         $rsl = [];
         foreach ($operationAndFilter as &$item) {
-            $key = $item['objectIdentify'].'_'.$item['action'];
-            if(isset($mapObjIdenAndction[$key])){
-                $operationObj = $mapObjIdenAndction[$key];
-                $rsl[$operationObj->id]  = [
-                    'formulaValue' => $item['formulaValue'],
-                    'formulaStruct' => $item['formulaStruct']
-                ];
-            }
+            $operationObj = $mapObjIdenAndction[$item['objectIdentify'].'_'.$item['action']];
+            $rsl[$operationObj->id]  = [
+                'formulaValue' => $item['formulaValue'],
+                'formulaStruct' => $item['formulaStruct']
+            ];
         }
 
         if(count($usedFilterIds) > 0){
