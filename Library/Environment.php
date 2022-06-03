@@ -17,4 +17,7 @@ class Environment{
             return "";
         }
     }
+    public static function getDomain(){
+        return Auth::getTenantDomain();
+    }
 }
