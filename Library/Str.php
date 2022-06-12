@@ -74,7 +74,6 @@ class Str{
         $newStr = $str;
         $strLength = strlen($str);
 
-        
         for($i = 0; $i < $strLength; $i++){
             if($str[$i] == $wrapper && $str[$i] != "\\$wrapper"){
                 if(count($sections) == 0){
@@ -116,6 +115,11 @@ class Str{
     {
         $startIndexs = [];
         $strPatt = "\b$functionName\s*\\".$openStr;
+
+        $newStr = self::removeStringWrapper($str);
+        $str = $newStr['str'];
+
+
         preg_match_all("/$strPatt/i", $str, $startIndexs, PREG_OFFSET_CAPTURE);
         $matches = $startIndexs[0];
         $count = count($matches);
@@ -131,6 +135,11 @@ class Str{
             $end = strlen($str);
 
             $rsl[] = self::getSingleFunctionCallInString(substr($str, $start, $end - $start), $openStr = '(', $closeSrt = ')');
+            foreach ($rsl as $idx => $value) {
+                foreach ($newStr['placeHolder'] as $pkey => $newValue) {
+                    $rsl[$idx] = str_replace($pkey, $newValue, $rsl[$idx]);
+                }
+            }
             return $rsl;
         }else{
             return [];
