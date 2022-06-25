@@ -51,6 +51,7 @@ class OperationService extends Controller
         }
     
     }
+    
     function saveBatch(){
         if($this->checkParameter(['operations'])){
             $listObj = [];

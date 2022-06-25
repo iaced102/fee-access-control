@@ -151,6 +151,8 @@ class Auth{
         if(!empty($dataLogin)){
             if(isset($dataLogin['tenant'])){
                 return $dataLogin['tenant']['id'];
+            }else if(isset($dataLogin['userDelegate']) && isset($dataLogin['userDelegate']['tenantId'])){
+                return $dataLogin['userDelegate']['tenantId'];
             }
         }
         return '';
