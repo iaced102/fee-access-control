@@ -24,14 +24,17 @@ class FilterInActionPack extends SqlObject
     public static function getTopicName(){
        return 'filter_in_action_pack';
     }
-    public static function create($filterId, $actionPackId, $filter){
+    public static function create($filterId, $actionPackId, $filter, $autoSave = true){
         $obj = new FilterInActionPack();
         $obj->actionPackId = $actionPackId;
         $obj->filterId = $filterId;
         $obj->action = json_encode($filter['action']);
         $obj->filterStruct = isset($filter['filterStruct']) ? $filter['filterStruct'] : "";
         $obj->filterValues = isset($filter['filterValues']) ? $filter['filterValues'] : "";
-        $obj->insert();
+        if($autoSave){
+            $obj->insert();
+        }
+        return $obj;
     }
     public static function getFilterInActionPack($actionPackId){
         $sql = "select * from filter_in_action_pack fa left join filter f on fa.filter_id = f.id where fa.action_pack_id = $actionPackId";

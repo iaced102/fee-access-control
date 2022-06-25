@@ -97,8 +97,11 @@ class ActionPackService extends Controller
     
     }
     function update(){
+        TimeLog::start('publish-data-to-kafka');
         $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
         Request::request(MESSAGE_BUS_API.'publish', $messageBusData, 'POST');
+        TimeLog::end('publish-data-to-kafka', MESSAGE_BUS_API.'publish');
+        
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -120,23 +123,39 @@ class ActionPackService extends Controller
                             $filterAttachToOperation = [];
                             if(isset($this->parameters['listFilter'])){
                                 $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                                TimeLog::start('attachFilterToOperation');
                                 $filterAttachToOperation = $obj->attachFilterToOperation($listFilter, $obj->id);
+                                TimeLog::end('attachFilterToOperation');
+                                
+                                TimeLog::start('saveFilter');
                                 $obj->saveFilter($listFilter);
+                                TimeLog::end('saveFilter');
                             }
 
                             if(isset($this->parameters['listOperations'])){
                                 $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
+                                TimeLog::start('saveOperation');                                
                                 $obj->saveOperation($listOperations, $filterAttachToOperation);
+                                TimeLog::end('saveOperation');
+
                             }
-                            RoleAction::refresh();
+
+                            // TimeLog::start('RoleAction::refresh 1st');                                
+                            // RoleAction::refresh();
+                            // TimeLog::end('RoleAction::refresh 1st');
+
                             $this->output['status'] = STATUS_OK;
                         }
-                        if(isset($this->parameters['listFilter'])){
-                            $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
-                            $obj->saveFilter($listFilter);
-                        }
+                        // if(isset($this->parameters['listFilter'])){
+                        //     $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
+                        //     $obj->saveFilter($listFilter);
+                        // }
+                        TimeLog::start('RoleAction::refresh 2st');                                
                         RoleAction::refresh();
+                        TimeLog::end('RoleAction::refresh 2st');                                
+
                         $this->output['status'] = STATUS_OK;
+                        $this->output['data'] = TimeLog::getAll();
                     }
                     
                 }
