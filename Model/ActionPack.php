@@ -60,7 +60,7 @@ class ActionPack extends SqlObject
         if($this->id!=''){
             $this->removeAllOperation();
             $operationInActionpacks = [];
-            $operationIds = implode(',', array_keys($listOperation));
+            $operationIds = "'".implode("','", array_keys($listOperation))."'";
             $listExistOperations = Operation::getByTop('', "id IN ($operationIds)");
             
             foreach($listExistOperations as $op){
