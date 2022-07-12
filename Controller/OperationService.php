@@ -237,7 +237,8 @@ class OperationService extends Controller
             }
         }
         $conditionStr = implode(' AND ',$condition);
-        $this->output['data'] = ObjectIdentifier::getByPaging($page,$pageSize,'',$conditionStr);
+        $data = ObjectIdentifier::getByPaging($page,$pageSize,'',$conditionStr,false, false, true);
+        $this->output['data'] = $data;
         $this->output['status'] = STATUS_OK;
     }
 }
