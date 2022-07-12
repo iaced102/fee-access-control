@@ -34,34 +34,79 @@ class ActionPack extends SqlObject
     public static function getTopicName(){
        return 'action_pack';
     }
+    // function saveOperation($listOperation, $operationAndFilter = []){
+    //     if($this->id!=''){
+    //         $this->removeAllOperation();
+    //         foreach($listOperation as $operationId=>$filter){
+    //             // if(!empty($filter)){
+    //             //     $filter = explode(",",$filter);
+    //             //     for ($i=0; $i < count($filter); $i++) { 
+    //             //         $this->insertActionPack($operationId, $filter[$i]);
+    //             //     }
+    //             // }else{
+    //             //     $this->insertActionPack($operationId, "");
+    //             // }
+    //             if(isset($operationAndFilter[$operationId])){
+    //                 $data = $operationAndFilter[$operationId];
+    //                 $this->insertActionPack($operationId, $data['formulaStruct'], $data['formulaValue']);
+    //             }else{
+    //                 $this->insertActionPack($operationId, '', '');
+    //             }
+    //         }
+    //     }   
+    // }
+    
     function saveOperation($listOperation, $operationAndFilter = []){
         if($this->id!=''){
             $this->removeAllOperation();
-            foreach($listOperation as $operationId=>$filter){
-                // if(!empty($filter)){
-                //     $filter = explode(",",$filter);
-                //     for ($i=0; $i < count($filter); $i++) { 
-                //         $this->insertActionPack($operationId, $filter[$i]);
-                //     }
-                // }else{
-                //     $this->insertActionPack($operationId, "");
-                // }
+            $operationInActionpacks = [];
+            $operationIds = "'".implode("','", array_keys($listOperation))."'";
+            $listExistOperations = Operation::getByTop('', "id IN ($operationIds)");
+            
+            foreach($listExistOperations as $op){
+                $operationId = $op->id;
+                $newObj = null;
                 if(isset($operationAndFilter[$operationId])){
                     $data = $operationAndFilter[$operationId];
-                    $this->insertActionPack($operationId, $data['formulaStruct'], $data['formulaValue']);
+                    $newObj = $this->getOperationInActionpackObj($operationId, $data['formulaStruct'], $data['formulaValue']);
                 }else{
-                    $this->insertActionPack($operationId, '', '');
+                    $newObj = $this->getOperationInActionpackObj($operationId, '', '');
                 }
+                $operationInActionpacks[] = $newObj;
             }
+            OperationInActionPack::insertBulk($operationInActionpacks);
         }   
     }
+
+    public function getOperationInActionpackObj($operationId, $formulaStruct,$formulaValue){
+        $operationInActionPackObj =  new OperationInActionPack();
+        $operationInActionPackObj->actionPackId = $this->id;
+        $operationInActionPackObj->operationId = $operationId;
+        $operationInActionPackObj->filter = '';
+        $operationInActionPackObj->formulaStruct = $formulaStruct;
+        $operationInActionPackObj->formulaValue  = $formulaValue;
+        return $operationInActionPackObj;
+    }
+    // function saveFilter($listFilter){
+    //     if(!empty($this->id)){
+    //         $this->removeAllFilter();
+    //         for ($i=0; $i < count($listFilter); $i++) { 
+    //             $filter = $listFilter[$i];
+    //             FilterInActionPack::create($filter['id'], $this->id,$filter);
+    //         }
+    //     }
+    // }
+    
+    
     function saveFilter($listFilter){
         if(!empty($this->id)){
             $this->removeAllFilter();
+            $list = [];
             for ($i=0; $i < count($listFilter); $i++) { 
                 $filter = $listFilter[$i];
-                FilterInActionPack::create($filter['id'], $this->id,$filter);
+                $list[] = FilterInActionPack::create($filter['id'], $this->id,$filter, false);
             }
+            FilterInActionPack::insertBulk($list);
         }
     }
 
