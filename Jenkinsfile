@@ -2,7 +2,6 @@ pipeline{
     agent any
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
-        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         SERVICE_ENV = "prod"
     }
     stages{
@@ -14,9 +13,9 @@ pipeline{
                 script {
                     latestTag = sh(returnStdout:  true, script: "git tag --sort=-creatordate | head -n 1").trim()
                     env.BUILD_VERSION = latestTag
-                    sh "docker build -t localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION} ."
-                    sh "docker push localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION}"
-                    sh "docker image rm localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION}"
+                    sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
+                    sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
+                    sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
                 }
             }
         }
@@ -24,8 +23,8 @@ pipeline{
             steps{
                 withCredentials([usernamePassword(credentialsId: 'accesscontrol_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER')]) {
                     sh "chmod +x changeTag.sh"
-                    echo "${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION} ${SERVICE_ENV} ${POSTGRES_USER} ${POSTGRES_PASS}"
-                    sh "./changeTag.sh ${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION} ${SERVICE_ENV} ${POSTGRES_USER} ${POSTGRES_PASS}"
+                    echo "${SERVICE_NAME}:${env.BUILD_VERSION} ${SERVICE_ENV} ${POSTGRES_USER} ${POSTGRES_PASS}"
+                    sh "./changeTag.sh ${SERVICE_NAME}:${env.BUILD_VERSION} ${SERVICE_ENV} ${POSTGRES_USER} ${POSTGRES_PASS}"
                     sshagent(['ssh-remote']) {
                         sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
                         sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
