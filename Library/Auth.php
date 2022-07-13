@@ -146,6 +146,7 @@ class Auth{
         }
         return $dataLogin;
     }
+    
     public static function getTenantId(){
         $dataLogin = self::getDataToken();
         if(!empty($dataLogin)){
@@ -157,6 +158,7 @@ class Auth{
         }
         return '';
     }
+    
     public static function getCurrentRole(){
         return self::getTokenInfo('role');
     }

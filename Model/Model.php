@@ -250,7 +250,7 @@ class Model{
                 foreach($listVar as $key => $value){
                     $columnData = static::getColumnNameInDataBase($key,true);
                     if(is_array($columnData) && $columnData['name'] == 'tenant_id_'){
-                        $tenantInObject = true;
+                        $tenantInObject = true; 
                         if(is_null($value)){
                             $value = Auth::getTenantId();
                         }
