@@ -3,8 +3,7 @@ pipeline{
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
-        DOCKER_TAG = "${GIT_COMMIT.substring(0,7)}"
-        SERVICE_ENV = "test"
+        SERVICE_ENV = "prod"
     }
     stages{
         stage("build"){
@@ -13,9 +12,11 @@ pipeline{
                     sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
                 }
                 script {
-                    sh "docker build -t localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG} ."
-                    sh "docker push localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG}"
-                    sh "docker image rm localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${DOCKER_TAG}"
+                    latestTag = sh(returnStdout:  true, script: "git tag --sort=-creatordate | head -n 1").trim()
+                    env.BUILD_VERSION = latestTag
+                    sh "docker build -t localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION} ."
+                    sh "docker push localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION}"
+                    sh "docker image rm localhost:5000/${BRANCH_NAME}-${SERVICE_NAME}:${env.BUILD_VERSION}"
                 }
             }
         }
@@ -23,13 +24,13 @@ pipeline{
             steps{
                 withCredentials([usernamePassword(credentialsId: 'accesscontrol_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER')]) {
                     sh "chmod +x changeTag.sh"
-                    sh './changeTag.sh $BRANCH_NAME-$SERVICE_NAME:$DOCKER_TAG $SERVICE_ENV $POSTGRES_USER $POSTGRES_PASS'
+                    sh './changeTag.sh $BRANCH_NAME-$SERVICE_NAME:${env.BUILD_VERSION} $SERVICE_ENV $POSTGRES_USER $POSTGRES_PASS'
                     sshagent(['ssh-remote']) {
-                        sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/test/${SERVICE_NAME}"
-                        sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/test/${SERVICE_NAME}"
-                        sh "scp -o StrictHostKeyChecking=no k8s/* root@103.148.57.32:/root/kubernetes/deployment/test/${SERVICE_NAME}"
+                        sh "ssh root@103.148.57.32 rm -rf /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
+                        sh "ssh root@103.148.57.32 mkdir /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
+                        sh "scp -o StrictHostKeyChecking=no k8s/* root@103.148.57.32:/root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
                         sh "ssh root@103.148.57.32 kubectl config set-context --current --namespace=${SERVICE_ENV}"
-                        sh "ssh root@103.148.57.32 kubectl apply -f /root/kubernetes/deployment/test/${SERVICE_NAME}"
+                        sh "ssh root@103.148.57.32 kubectl apply -f /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
                     }
                 }
             }

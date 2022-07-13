@@ -1,7 +1,7 @@
 #!/bin/bash
 env=""
 originEnv=""
-if [ $2 != "" ]
+if [ $2 != "" ] && [ $2 != "prod" ]
 then
     originEnv=$2
     env=$2"_"
