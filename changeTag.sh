@@ -13,3 +13,4 @@ sed "s/{ENVIRONMENT_DOMAIN}/$envDomain/g" k8s/service_ing.yaml > k8s/new_service
 sed "s/{ENVIRONMENT}/$originEnv/g;s/{ENVIRONMENT_}/$env/g;s/{POSTGRES_USER}/$3/g;s/{POSTGRES_PASSWORD}/$4/g" k8s/config_env.yaml > k8s/new_config_env.yaml
 rm -rf k8s/php_deployment.yaml
 rm -rf k8s/config_env.yaml
+rm -rf k8s/service_ing.yaml
