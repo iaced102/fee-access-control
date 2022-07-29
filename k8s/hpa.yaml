@@ -1,7 +1,20 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: accesscontrol-nginx-scaler
+  name: accesscontrol-nginx-memory-scaler
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: nginx-accesscontrol
+  minReplicas: 1
+  maxReplicas: 10
+  # Thực hiện scale CPU hoạt động ở 50% so với CPU mà POD yêu cầu
+  targetMemoryUtilizationPercentage: 70
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: accesscontrol-nginx-cpu-scaler
 spec:
   scaleTargetRef:
     kind: Deployment
@@ -10,14 +23,29 @@ spec:
   maxReplicas: 10
   # Thực hiện scale CPU hoạt động ở 50% so với CPU mà POD yêu cầu
   targetCPUUtilizationPercentage: 70
-  targetMemoryUtilizationPercentage: 70
 
 ---
 
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: accesscontrol-php-scaler
+  name: accesscontrol-php-memory-scaler
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: php-accesscontrol
+  minReplicas: 1
+  maxReplicas: 10
+  # Thực hiện scale CPU hoạt động ở 50% so với CPU mà POD yêu cầu
+  targetMemoryUtilizationPercentage: 70
+
+---
+
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: accesscontrol-php-cpu-scaler
 spec:
   scaleTargetRef:
     kind: Deployment
@@ -26,4 +54,3 @@ spec:
   maxReplicas: 10
   # Thực hiện scale CPU hoạt động ở 50% so với CPU mà POD yêu cầu
   targetCPUUtilizationPercentage: 70
-  targetMemoryUtilizationPercentage: 70
