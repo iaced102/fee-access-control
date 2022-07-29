@@ -1,6 +1,7 @@
 <?php
 namespace Library;
 class Auth{
+    private static $tenantId = null;
     //
     public static function Hash($password){
         return hash_hmac('sha256',$password,PRIVATE_KEY);
@@ -155,6 +156,8 @@ class Auth{
             }else if(isset($dataLogin['userDelegate']) && isset($dataLogin['userDelegate']['tenantId'])){
                 return $dataLogin['userDelegate']['tenantId'];
             }
+        }else{
+            return self::$tenantId;
         }
         return '';
     }
@@ -268,5 +271,8 @@ class Auth{
         return self::getTokenInfo('tenant_domain');
     }
     
-
+    public static function setTenantId($tenantId)
+    {
+        self::$tenantId = $tenantId;
+    }
 }

@@ -28,6 +28,13 @@ spec:
       containers:
       - name: nginx-accesscontrol
         image: registry.symper.vn/nginx:1.2
+        resources:
+          requests:
+            memory: "200Mi"
+            cpu: "250m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
         ports:
         - containerPort: 80
         volumeMounts:
