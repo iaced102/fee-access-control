@@ -1,5 +1,7 @@
 <?php
 namespace Model;
+
+use Library\Auth;
 use SqlObject;
 class FilterInActionPack extends SqlObject
 {
@@ -39,7 +41,13 @@ class FilterInActionPack extends SqlObject
         return $obj;
     }
     public static function getFilterInActionPack($actionPackId){
-        $sql = "select * from filter_in_action_pack fa left join filter f on fa.filter_id = f.id where fa.action_pack_id ='".$actionPackId."'";
+        $tenantId = Auth::getTenantId();
+        // $sql = "select * from filter_in_action_pack fa left join filter f on fa.filter_id = f.id where fa.action_pack_id ='".$actionPackId."'";
+        $sql = "SELECT * FROM (
+                SELECT * FROM filter_in_action_pack WHERE tenant_id_ = $tenantId AND action_pack_id ='$actionPackId'
+            ) fa LEFT JOIN (
+                SELECT * FROM filter WHERE tenant_id_ = $tenantId
+            ) f on fa.filter_id = f.id";
         return Connection::getDataQuerySelect($sql);
     }
 }

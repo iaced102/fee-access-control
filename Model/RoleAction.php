@@ -1,6 +1,7 @@
 <?php
 namespace Model;
 
+use Library\Auth;
 use Library\MessageBus;
 use SqlObject;
 class RoleAction extends SqlObject{
@@ -35,18 +36,26 @@ class RoleAction extends SqlObject{
         parent::__construct($data);
     }
     public static function getTableName(){
-        return 'role_action';
+        return 'role_action_'.Auth::getTenantId();
     }
     public static function getTopicName(){
        return 'role_action';
     }
     public static function refresh(){
-        Connection::exeQuery("REFRESH MATERIALIZED VIEW ".self::getTableName());
-        MessageBus::publish("role_action","update",["has update"]);
+        $viewName = self::getTableName();
+        $checkHasMatview = Connection::exeQueryAndFetchData("SELECT matviewname FROM pg_matviews WHERE matviewname = '$viewName'");
+        if($checkHasMatview == false || empty($checkHasMatview)){
+            self::createView();
+            MessageBus::publish("role_action","created", ["name"  => $viewName]);
+        }else{
+            Connection::exeQuery("REFRESH MATERIALIZED VIEW $viewName");
+            MessageBus::publish("role_action","update",["name"  => $viewName]);
+        }
     }
     public static function createView(){
+        $tenantId = Auth::getTenantId();
         $createViewQuery = "
-        CREATE MATERIALIZED VIEW role_action AS SELECT o.object_identifier,
+        CREATE MATERIALIZED VIEW role_action_$tenantId AS SELECT o.object_identifier,
 
         o.action,
     
@@ -69,7 +78,7 @@ class RoleAction extends SqlObject{
         op.formula_struct AS filter_combination,
     
         app.action_pack_id,
-        0 AS tenant_id_
+        $tenantId AS tenant_id_
     
        FROM ((((operation o
     
@@ -79,6 +88,8 @@ class RoleAction extends SqlObject{
     
          JOIN permission_role pr ON (((app.permission_pack_id = pr.permission_pack_id) AND (pr.tenant_id_ = app.tenant_id_))))
     
-         LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id_ = filter.tenant_id_))))"; 
+         LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id_ = filter.tenant_id_)))) WHERE o.tenant_id_ = $tenantId"; 
+        var_dump($createViewQuery);
+        return Connection::exeQuery($createViewQuery);
     }
 }
