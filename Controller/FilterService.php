@@ -101,8 +101,8 @@ class FilterService extends Controller
                     $obj->objectIdentifier = trim($this->parameters['objectIdentifier']);
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):Filter::STATUS_ENABLE;
                     if($obj->update()){
-                        RoleAction::refresh();
                         $this->output['status'] = STATUS_OK;
+                        RoleAction::closeConnectionAndRefresh($this);
                     }
                     else{
                         $this->output['status'] = STATUS_SERVER_ERROR;
@@ -121,8 +121,8 @@ class FilterService extends Controller
             $obj = Filter::getById($id);
             if($obj!=false){
                 if($obj->delete()){
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;
@@ -141,8 +141,8 @@ class FilterService extends Controller
             if(count($ids)>0){
                 $ids = "'".implode("','", $ids)."'";
                 Filter::deleteMulti("id in ($ids)"); 
-                RoleAction::refresh();
                 $this->output['status']  = STATUS_OK;
+                RoleAction::closeConnectionAndRefresh($this);
             }
             else{
                 $this->output['status'] = STATUS_BAD_REQUEST;

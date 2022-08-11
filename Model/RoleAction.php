@@ -41,7 +41,48 @@ class RoleAction extends SqlObject{
     public static function getTopicName(){
        return 'role_action';
     }
-    public static function refresh(){
+
+    public static function printResultAndContinue($data)
+    {
+        // Buffer all upcoming output...
+        ob_start();
+        // Send your response.
+        $data = is_string($data) ? $data : json_encode($data, JSON_UNESCAPED_UNICODE);
+        echo $data;
+        // Get the size of the output.
+        $size = ob_get_length();
+        // Disable compression (in case content length is compressed).
+        header("Content-Encoding: none");
+        // Set the content length of the response.
+        header("Content-Length: {$size}");
+        // Close the connection.
+        header("Connection: close");
+        // Flush all output.
+        ob_end_flush();
+        ob_flush();
+        flush();
+
+        if (is_callable('fastcgi_finish_request')) {
+            /*
+             * This works in Nginx but the next approach not
+             */
+            session_write_close();
+            fastcgi_finish_request();
+    
+            return;
+        }
+    }
+
+    /**
+     * hàm in ra output của controllerObj, rồi đóng connection rồi mới thực thi tiếp việc refresh view nhằm tiết kiệm thời gian chờ đợi của user
+     */
+    public static function closeConnectionAndRefresh($controllerObj)
+    {
+        self::printResultAndContinue($controllerObj->output);
+        self::refresh();
+    }
+
+    public static function refresh($controllerObj = null){
         $viewName = self::getTableName();
         $checkHasMatview = Connection::exeQueryAndFetchData("SELECT matviewname FROM pg_matviews WHERE matviewname = '$viewName'");
         if($checkHasMatview == false || empty($checkHasMatview)){

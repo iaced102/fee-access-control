@@ -28,8 +28,8 @@ class RoleService extends Controller
             $roleIdentifier = trim($this->parameters['role_identifier']);
             $roleType = isset($this->parameters['role_type'])?trim($this->parameters['role_type']):Role::TYPE_ORGCHART;
             if($this->setPermissionItem($roleIdentifier,$permissionId,$roleType)){
-                RoleAction::refresh();
                 $this->output['status'] = STATUS_OK;
+                RoleAction::closeConnectionAndRefresh($this);
             }
             else{
                 $this->output['status'] = STATUS_SERVER_ERROR;
@@ -61,8 +61,8 @@ class RoleService extends Controller
                         }
                     }
                 }
-                RoleAction::refresh();
                 $this->output['status'] = STATUS_OK;
+                RoleAction::closeConnectionAndRefresh($this);
             }
             else{
                 $this->output['status'] = STATUS_BAD_REQUEST;

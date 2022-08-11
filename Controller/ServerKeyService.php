@@ -112,8 +112,8 @@ class ServerKeyService extends Controller
                 $obj = ServerKey::getById($this->parameters['id']);
                 if($obj!=false){
                     if($obj->delete()){
-                        RoleAction::refresh();
                         $this->output['status'] = STATUS_OK;
+                        RoleAction::closeConnectionAndRefresh($this);
                     }
                     else{
                         $this->output['status'] = STATUS_SERVER_ERROR;

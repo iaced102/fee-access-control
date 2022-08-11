@@ -141,8 +141,8 @@ class OperationService extends Controller
                     $obj->objectIdentifier = trim($this->parameters['objectIdentifier']);
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):Operation::STATUS_ENABLE;
                     if($obj->update()){
-                        RoleAction::refresh();
                         $this->output['status'] = STATUS_OK;
+                        RoleAction::closeConnectionAndRefresh($this);
                     }
                     else{
                         $this->output['status'] = STATUS_SERVER_ERROR;
@@ -163,8 +163,8 @@ class OperationService extends Controller
             if($obj!=false){
                 if($obj->delete()){
                     OperationInActionPack::deleteMulti("operation_id =$id ");
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;
@@ -187,8 +187,8 @@ class OperationService extends Controller
                 $ids = "'".implode("','", $ids)."'";
                 Operation::deleteMulti("id in ($ids)");
                 OperationInActionPack::deleteMulti("operation_id in ($ids)");
-                RoleAction::refresh();
                 $this->output['status']  = STATUS_OK;
+                RoleAction::closeConnectionAndRefresh($this);
             }
             else{
                 $this->output['status'] = STATUS_BAD_REQUEST;

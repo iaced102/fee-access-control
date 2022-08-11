@@ -139,12 +139,13 @@ class ActionPackService extends Controller
                             }
                             $this->output['status'] = STATUS_OK;
                         }
-                        TimeLog::start('RoleAction::refresh 2st');                                
-                        RoleAction::refresh();
-                        TimeLog::end('RoleAction::refresh 2st');                                
-
+                        
                         $this->output['status'] = STATUS_OK;
                         $this->output['data'] = TimeLog::getAll();
+
+                        TimeLog::start('RoleAction::refresh 2st');                                
+                        RoleAction::closeConnectionAndRefresh($this);
+                        TimeLog::end('RoleAction::refresh 2st');
                     }
                     
                 }
@@ -160,8 +161,8 @@ class ActionPackService extends Controller
             $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
                 if($obj->delete()){
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;
@@ -212,8 +213,8 @@ class ActionPackService extends Controller
                         $operationInActionPackObj->operationId = $this->parameters['operationId'];
                         $operationInActionPackObj->save();
                     }
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status']     = STATUS_NOT_FOUND;
@@ -232,8 +233,8 @@ class ActionPackService extends Controller
             if($obj!=false){
                 if(OperationInActionPack::count("action_pack_id='".$this->parameters['id']."' and operation_id='".$this->parameters['operationId']."'")>0){
                     OperationInActionPack::deleteMulti("action_pack_id='".$this->parameters['id']."' and operation_id='".$this->parameters['operationId']."'");
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status']     = STATUS_NOT_FOUND;

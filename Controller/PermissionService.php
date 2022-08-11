@@ -76,10 +76,13 @@ class PermissionService extends Controller
                 if(isset($this->parameters['listActionPacks'])){
                     $listActionPacks = Str::getArrayFromUnclearData($this->parameters['listActionPacks']);
                     $obj->saveActionPack($listActionPacks);
-                    RoleAction::refresh();
                 }
                 $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
+
+                if(isset($this->parameters['listActionPacks'])){
+                    RoleAction::closeConnectionAndRefresh($this);
+                }
             }
         }
     
@@ -106,7 +109,8 @@ class PermissionService extends Controller
                         if(isset($this->parameters['listActionPacks'])){
                             $listActionPacks = Str::getArrayFromUnclearData($this->parameters['listActionPacks']);
                             $obj->saveActionPack($listActionPacks);
-                            RoleAction::refresh();
+                            $this->output['status'] = STATUS_OK;
+                            RoleAction::closeConnectionAndRefresh($this);
                         }
                         $this->output['status'] = STATUS_OK;
                     }
@@ -127,8 +131,8 @@ class PermissionService extends Controller
             $obj = PermissionPack::getById($this->parameters['id']);
             if($obj!=false){
                 if($obj->delete()){
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;
@@ -187,7 +191,8 @@ class PermissionService extends Controller
                         $actionInPermissionPackObj->actionPackId = $this->parameters['actionPackId'];
                         $actionInPermissionPackObj->save();
                         $this->saveUserUpdate($this->parameters['id']);
-                        RoleAction::refresh();
+                        $this->output['status'] = STATUS_OK;
+                        RoleAction::closeConnectionAndRefresh($this);
                     }
                     $this->output['status'] = STATUS_OK;
                 }
@@ -209,8 +214,8 @@ class PermissionService extends Controller
                 if(ActionInPermissionPack::count("permission_pack_id='".($this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'"))>0){
                     ActionInPermissionPack::deleteMulti("permission_pack_id='".$this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'");
                     $this->saveUserUpdate($this->parameters['id']);
-                    RoleAction::refresh();
                     $this->output['status'] = STATUS_OK;
+                    RoleAction::closeConnectionAndRefresh($this);
                 }
                 else{
                     $this->output['status']     = STATUS_NOT_FOUND;
