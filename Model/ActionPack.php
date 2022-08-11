@@ -255,10 +255,12 @@ class ActionPack extends SqlObject
         }
     }
     function removeAllOperation(){
-        Connection::exeQuery("DELETE FROM operation_in_action_pack WHERE action_pack_id='".$this->id."'");
+        $id = $this->id;
+        OperationInActionPack::deleteMulti("action_pack_id='$id'");
     }
     function removeAllFilter(){
-        Connection::exeQuery("DELETE FROM filter_in_action_pack WHERE action_pack_id='".$this->id."'");
+        $id = $this->id;
+        FilterInActionPack::deleteMulti("action_pack_id='$id'");
     }
     public static function checkNameExist($name, $id = false){
         if($id == false){

@@ -51,9 +51,10 @@ class PermissionPack extends SqlObject
                 }
                 
             }
-        }   
+        }
     }
     function removeAllActionPack(){
-        Connection::exeQuery("DELETE FROM action_in_permission_pack WHERE permission_pack_id='.$this->id.'");
+        $id = $this->id;
+        ActionInPermissionPack::deleteMulti("permission_pack_id='$id'");
     }
 }
