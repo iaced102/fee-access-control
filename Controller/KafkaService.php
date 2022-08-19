@@ -22,8 +22,32 @@ class KafkaService extends Controller
         $this->defaultAction = 'list';
         $this->requireLogin = false;
     }
-    function subscribe(){
+
+    public static function getActiveTopics()
+    {
         $listTopic = Operation::getListType();
+        $ignoreTopics = [
+            'document_instance' => true,
+            'workflow_instance' => true,
+            'syql' => true,
+            'report' => true,
+            'report_folder' => true,
+            'job' => true,
+            'operation' => true,
+            'file' => true,
+            'timesheet'
+        ];
+        $rsl = [];
+        foreach ($listTopic as $tp) {
+            if(!isset($ignoreTopics[$tp])){
+                $rsl[] = $tp;
+            }
+        }
+        return $rsl;
+    }
+    
+    function subscribe(){
+        $listTopic = self::getActiveTopics();
         MessageBus::subscribeMultiTopic(
             $listTopic,
             SERVICE_DEFINITION,
