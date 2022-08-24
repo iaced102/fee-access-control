@@ -24,23 +24,20 @@ class Operation extends SqlObject
         'status'            =>  [ 'name' => 'status',               'type' => 'number']
     ];
     public static $listAction = [
-        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['create','edit','submit','import','drop','restore','list_trash','submit_by_workflow']],
+        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['edit','submit','import','drop','restore','list_trash','submit_by_workflow']],
         'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','list_instance','print','list_trash','update_by_workflow','clone']],
-        'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>['list','create','deploy','drop','update','list_instance','start_instance','view']],
+        'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>[ 'list','deploy','drop','update','list_instance','start_instance','list_process','detail','view_instance', 'run_instance', 'stop_instance', 'complete_instance', 'delete_instance', 'delete_related_doc']],
         'workflow_instance'     => ['name'=>'thể hiện quy trình',   'ownerDomain' => 'workflow.symper.vn',              'action'=>['detail','drop']],
         'syql'                  => ['name'=>'công thức',            'ownerDomain' => 'syql.symper.vn',                  'action'=>['create','update','execute']],
-        'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['add','update','info','detail','change_pass','disable','change_avatar','list','set_role']],
+        'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['create','update','detail','change_pass', "delete",'list','set_role',"import", "export"]],
         'report'                => ['name'=>'báo cáo',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop']],
         'report_folder'         => ['name'=>'thư mục báo cáo ',     'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','rename','remove']],
-        'dashboard'              => ['name'=>'dashboard',           'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop', 'export-data']],
+        'dashboard'              => ['name'=>'dashboard',           'ownerDomain' => 'bi.symper.vn',                    'action'=>['update','view','list','drop', 'export-data']],
         'dataflow'              => ['name'=>'dataset',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','drop','list','update','detail']],
-        'orgchart'              => ['name'=>'sơ đồ tổ chức',        'ownerDomain' => 'orgchart.symper.vn',              'action'=>['create','update','drop','list','detail','view_all','view_only_owner','view_only_sub']],
+        'orgchart'              => ['name'=>'sơ đồ tổ chức',        'ownerDomain' => 'orgchart.symper.vn',              'action'=>['update','drop','list','detail']],
         'job'                   => ['name'=>'công việc',            'ownerDomain' => 'orgchart.symper.vn',              'action'=>['set_permission','set_user']],
         'department'            => ['name'=>'phòng ban',            'ownerDomain' => 'orgchart.symper.vn',              'action'=>['set_manager','view_all','view_only_owner','view_only_sub']],
-        'role'                  => ['name'=>'vài trò người dùng',   'ownerDomain' => 'orgchart.symper.vn',              'action'=>['create','update','drop','list','update_permission','add_user']],
         'operation'             => ['name'=>'hành động',            'ownerDomain' => 'accesscontrol.symper.vn',         'action'=>['create','update','remove','list']],
-        'action_pack'           => ['name'=>'nhóm hành động',       'ownerDomain' => 'accesscontrol.symper.vn',          'action'=>['create','update','detail','remove','list','add_operation','remove_operation']],
-        'permission_pack'       => ['name'=>'nhóm quyền hạn',       'ownerDomain' => 'accesscontrol.symper.vn',         'action'=>['create','update','detail','remove','list','add_action_pack','remove_action_pack']],
         'application_definition'=> ['name'=>'Ứng dụng',             'ownerDomain' => 'core.symper.vn',                  'action'=>['view','create','update','remove']],
         'file'                  => ['name'=>'file',                 'ownerDomain' => 'file.symper.vn',                  'action'=>['view','create','update','remove']],
         'timesheet'             => ['name'=>'timesheet',            'ownerDomain' => 'timesheet.symper.vn',             'action'=>['list','view','create','update','remove']],
@@ -49,11 +46,7 @@ class Operation extends SqlObject
             "ownerDomain" => "bi-service.symper.vn",
             "action" => ['view', 'export-data']
         ],
-        "dataset" => [
-            "name" => "Dataset",
-            "ownerDomain" => "bi-service.symper.vn",
-            "action" => ['query']
-        ],
+     
         "document_control" => [
             "name" => "Control",
             "ownerDomain" => "document-management.symper.vn",
@@ -62,12 +55,47 @@ class Operation extends SqlObject
         "document_table" => [
             "name" => "Document table",
             "ownerDomain" => "document-management.symper.vn",
-            "action" => ['hide','old_rows_readonly','old_rows_not_remove',]
+            "action" => ['hide','old_rows_readonly','old_rows_not_remove']
+        ],
+        'action_pack' => [
+            'name'=>'nhóm hành động',       
+            'ownerDomain' => 'accesscontrol.symper.vn',          
+            'action'=>['update', 'detail', 'delete', 'list', 'create']
+        ],
+        "permission_pack" => [
+            "name" => "Permission pack",
+            "ownerDomain" => "accesscontrol.symper.vn",
+            "action" => ['update', 'detail', 'delete', 'list', 'create']
+        ],
+        "system_role" => [
+            "name" => "System role",
+            "ownerDomain" => "orgchart.symper.vn",
+            "action" => ['update', 'detail', 'delete', 'list', 'create']
+        ],
+        "orgchart_role" => [
+            "name" => "Orgchart role",
+            "ownerDomain" => "orgchart.symper.vn",
+            "action" => ['list', 'set_permission']
+        ],
+        "filter" => [
+            "name" => "Filter",
+            "ownerDomain" => "accesscontrol.symper.vn",
+            "action" => ['update', 'detail', 'delete', 'list', 'create']
         ],
         "stateflow_flow" => [
             "name" => "Stateflow flow",
             "ownerDomain" => "kanban-service.symper.vn",
             "action" => ['use']
+        ],
+        "dataset" => [
+            "name" => "Dataset",
+            "ownerDomain" => "bi-service.symper.vn",
+            "action" => ['query']
+        ],
+        "data_connector" => [
+            "name" => "Data connector",
+            "ownerDomain" => "data-connector.symper.vn",
+            "action" => ['update', 'stop', 'detail', 'delete', 'list', 'run', 'startExcuteJob', 'stopExcuteJob']
         ],
     ];
     public function __construct($data=[]){
