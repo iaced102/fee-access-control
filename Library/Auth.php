@@ -1,7 +1,7 @@
 <?php
 namespace Library;
 class Auth{
-    private static $tenantId = null;
+    private static $tenantId = '';
     //
     public static function Hash($password){
         return hash_hmac('sha256',$password,PRIVATE_KEY);
