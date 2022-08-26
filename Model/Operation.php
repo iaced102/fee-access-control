@@ -26,9 +26,9 @@ class Operation extends SqlObject
         'tenantId'          => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public static $listAction = [
-        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['edit','submit','import','drop','restore','list_trash','submit_by_workflow']],
+        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['list','edit','submit','import','drop','restore','list_trash','submit_by_workflow']],
         'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','list_instance','print','list_trash','update_by_workflow','clone']],
-        'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>[ 'list','deploy','drop','update','list_instance','start_instance','list_process','detail','view_instance', 'run_instance', 'stop_instance', 'complete_instance', 'delete_instance', 'delete_related_doc']],
+        'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>[ 'list','deploy','drop','update','list_instance','start_instance','list_process','view','view_instance', 'run_instance', 'stop_instance', 'complete_instance', 'delete_instance', 'delete_related_doc']],
         'workflow_instance'     => ['name'=>'thể hiện quy trình',   'ownerDomain' => 'workflow.symper.vn',              'action'=>['detail','drop']],
         'syql'                  => ['name'=>'công thức',            'ownerDomain' => 'syql.symper.vn',                  'action'=>['create','update','execute']],
         'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['create','update','detail','change_pass', "delete",'list','set_role',"import", "export"]],
