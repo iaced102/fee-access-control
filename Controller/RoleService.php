@@ -42,26 +42,28 @@ class RoleService extends Controller
         if($this->checkParameter(['permissions'])){
             $permissions = json_decode($this->parameters['permissions'],true);
             if(is_array($permissions)){
-                if(isset($this->parameters['replace_all'])&&$this->parameters['replace_all']=='1'){
-                    $this->clearPermissionForRole($permissions);
-                }
-                foreach($permissions as $item){
-                    if(is_array($item)&&isset($item['role_identifier'])&&isset($item['permission_id'])){
-                        $roleIdentifier = trim($item['role_identifier']);
-                        $roleType = isset($item['role_type'])?trim($item['role_type']):Role::TYPE_ORGCHART;
-                        if(is_array($item['permission_id'])){
-                            foreach($item['permission_id'] as $permissionitem){
-                                $permissionitem = $permissionitem;
-                                $this->setPermissionItem($roleIdentifier,$permissionitem,$roleType);
+                $backupItems = $this->clearPermissionForRole($permissions);
+                try {
+                    foreach($permissions as $item){
+                        if(is_array($item)&&isset($item['role_identifier'])&&isset($item['permission_id'])){
+                            $roleIdentifier = trim($item['role_identifier']);
+                            $roleType = isset($item['role_type'])?trim($item['role_type']):Role::TYPE_ORGCHART;
+                            if(is_array($item['permission_id'])){
+                                foreach($item['permission_id'] as $permissionitem){
+                                    $permissionitem = $permissionitem;
+                                    $this->setPermissionItem($roleIdentifier,$permissionitem,$roleType);
+                                }
+                            }
+                            else{
+                                $permissionId = ($item['permission_id']);
+                                $this->setPermissionItem($roleIdentifier,$permissionId,$roleType);
                             }
                         }
-                        else{
-                            $permissionId = ($item['permission_id']);
-                            $this->setPermissionItem($roleIdentifier,$permissionId,$roleType);
-                        }
                     }
+                    $this->output['status'] = STATUS_OK;
+                } catch (\Throwable $th) {
+                    PermissionRole::insertBulk($backupItems);
                 }
-                $this->output['status'] = STATUS_OK;
                 RoleAction::closeConnectionAndRefresh($this);
             }
             else{
@@ -76,7 +78,10 @@ class RoleService extends Controller
             } 
             return '';
         },$permissions));
-        PermissionRole::deleteMulti("role_identifier in ('".implode("','",$listRoleIdentifier)."')");
+        $cond = "role_identifier in ('".implode("','",$listRoleIdentifier)."')";
+        $backupItem = PermissionRole::getByTop('', $cond);
+        PermissionRole::deleteMulti($cond);
+        return $backupItem;
     }
     private function setPermissionItem($roleIdentifier,$permissionId,$roleType= Role::TYPE_ORGCHART){
         if(PermissionPack::count("id='".$permissionId."'")>0){
