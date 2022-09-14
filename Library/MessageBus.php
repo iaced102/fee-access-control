@@ -26,7 +26,8 @@ class MessageBus{
             $payload = [
                 'event' => $event,
                 'data' => $resource,
-                'time' => microtime(true)
+                'time' => microtime(true),
+                'tenant_id' => Auth::getTenantId()
             ];
             $topic->produce(RD_KAFKA_PARTITION_UA, 0, json_encode($payload));
         }

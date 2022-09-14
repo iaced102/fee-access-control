@@ -243,8 +243,10 @@ class AccessControl{
     {
         
         $str = preg_replace("/\r\n|\r|\n/", ' ', $str);
-        $remoteQueries = Str::getAllFunctionsCallInString($str, 'ref');
+        $tmpStr = str_replace("'ref", "__SYMPER_PLACEHOLDER_STRING_REF ref", $str);
+        $remoteQueries = Str::getAllFunctionsCallInString($tmpStr, 'ref');
         foreach ($remoteQueries as $query) {
+            $query = str_replace('__SYMPER_PLACEHOLDER_STRING_REF ', "'", $query);
             $placeHolder = '__'.md5($query).'__';
             $mapPlaceHolder[$placeHolder] = $query;
             $str = str_replace($query, $placeHolder, $str);

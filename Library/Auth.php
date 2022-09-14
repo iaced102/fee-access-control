@@ -1,6 +1,7 @@
 <?php
 namespace Library;
 class Auth{
+    private static $tenantId = '';
     //
     public static function Hash($password){
         return hash_hmac('sha256',$password,PRIVATE_KEY);
@@ -146,15 +147,21 @@ class Auth{
         }
         return $dataLogin;
     }
+    
     public static function getTenantId(){
         $dataLogin = self::getDataToken();
         if(!empty($dataLogin)){
             if(isset($dataLogin['tenant'])){
                 return $dataLogin['tenant']['id'];
+            }else if(isset($dataLogin['userDelegate']) && isset($dataLogin['userDelegate']['tenantId'])){
+                return $dataLogin['userDelegate']['tenantId'];
             }
+        }else{
+            return self::$tenantId;
         }
         return '';
     }
+    
     public static function getCurrentRole(){
         return self::getTokenInfo('role');
     }
@@ -256,5 +263,8 @@ class Auth{
         return self::getTokenInfo('tenant_domain');
     }
     
-
+    public static function setTenantId($tenantId)
+    {
+        self::$tenantId = $tenantId;
+    }
 }

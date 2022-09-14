@@ -31,6 +31,9 @@ class KafkaService extends Controller
             $listTopic,
             SERVICE_DEFINITION,
             function($topic,$item){
+                if(isset($item['tenant_id'])){
+                    Auth::setTenantId($item['tenant_id']);
+                }
                 $this->processObject($topic,$item);
             },
             '/KafkaService/subscribe',

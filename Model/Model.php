@@ -190,6 +190,9 @@ class Model{
                 if(is_array($columnData) && $columnData != false && (!isset($columnData['primary']) || $columnData['primary']==false ||$value!='')){
                     if($columnData['name'] == 'tenant_id_'){
                         $tenantInObject = true; 
+                        if(is_null($value)){
+                            $value = Auth::getTenantId();
+                        }
                     }
                     $columns[] = $columnData['name'];
                     $values[]  = self::getValueForSqlCommand($columnData,$value);
@@ -248,6 +251,9 @@ class Model{
                     $columnData = static::getColumnNameInDataBase($key,true);
                     if(is_array($columnData) && $columnData['name'] == 'tenant_id_'){
                         $tenantInObject = true; 
+                        if(is_null($value)){
+                            $value = Auth::getTenantId();
+                        }
                     }
 
                     if(is_array($columnData) && $columnData != false && (!isset($columnData['primary']) || $columnData['primary']==false|| $value!='')){
