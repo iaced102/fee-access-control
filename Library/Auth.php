@@ -150,16 +150,20 @@ class Auth{
     
     public static function getTenantId(){
         $dataLogin = self::getDataToken();
+        $tenantId = "";
         if(!empty($dataLogin)){
             if(isset($dataLogin['tenant'])){
-                return $dataLogin['tenant']['id'];
+                $tenantId = $dataLogin['tenant']['id'];
             }else if(isset($dataLogin['userDelegate']) && isset($dataLogin['userDelegate']['tenantId'])){
-                return $dataLogin['userDelegate']['tenantId'];
+                $tenantId = $dataLogin['userDelegate']['tenantId'];
             }
         }else{
             return self::$tenantId;
         }
-        return '';
+        if($tenantId == 2){
+            $tenantId = 1;
+        }
+        return $tenantId;
     }
     
     public static function getCurrentRole(){
