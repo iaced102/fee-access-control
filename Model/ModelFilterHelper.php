@@ -331,7 +331,12 @@ class ModelFilterHelper
             $op = $conditionItem['valueFilter']['operation'];
             $conds[] = "\"$colName\" $op $values ";
         }
-        return '('.implode(') AND (', $conds).')';
+
+        if(count($conds) > 0){
+            return '('.implode(') AND (', $conds).')';
+        }else{
+            return '';
+        }
     }
 
     public static function bindValueToWhereItem($op, $colName, $value, $mapColumns, $dataType)
