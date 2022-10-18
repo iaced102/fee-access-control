@@ -243,7 +243,8 @@ class ModelFilterHelper
         $whereItems = [];
         foreach ($filter['filter'] as $filterItem) {
             $str = self::convertConditionToWhereItem($filterItem, $filterableColumns, $relatedColumns);
-            if ($str != '') {
+            $checkStr = str_replace(' ','', $str);
+            if ($checkStr != '' && $checkStr != '()') {
                 $whereItems[] = $str;
             }
         }
