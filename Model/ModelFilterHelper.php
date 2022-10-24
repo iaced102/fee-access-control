@@ -129,8 +129,8 @@ class ModelFilterHelper
 
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
-        }
-        if(!isset($filter['refuseTenant']) || !$filter['refuseTenant']){
+            // Trong hàm getJoinedSQL đã xử lý tenant rồi nên ko cần mergeCondWithTenantFilter nữa
+        } else if(!isset($filter['refuseTenant']) || !$filter['refuseTenant']){
             $cond = Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where, 1));
             $where = $cond ? " WHERE $cond" : "";
         }
