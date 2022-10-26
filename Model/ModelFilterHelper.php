@@ -24,11 +24,13 @@ class ModelFilterHelper
         return $rsl;
     }
 
-    public static function getMultilJoinTable($info)
+    public static function getMultilJoinTable($info, $useTenant)
     {
         // LEFT JOIN users AS tb2 ON tb1.user_last_update = tb2.email
         $rsl = [];
         $tenantId = Auth::getTenantId();
+        $tenantConds = [];
+
         foreach ($info as $item) {
             $joinTable = $item['table'];
             $ttb = $item['table2TmpName'];
@@ -43,18 +45,23 @@ class ModelFilterHelper
 
             $rslItem = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
             if($tenantId !== ''){
-                $rslItem .= " AND tb1.tenant_id_ = $tenantId AND $ttb.tenant_id_ = $tenantId ";
+                $tenantConds[] = " $ttb.tenant_id_ = $tenantId";
             }
             $rsl[] = $rslItem;
         }
-        return implode(' ', $rsl);
+        if($useTenant){
+            return implode(' ', $rsl)." WHERE tb1.tenant_id_ = $tenantId AND ".implode(" AND ", $tenantConds);
+        } else{
+            return implode(' ', $rsl);
+        }
     }
 
     public static function getJoinedSQL($table, $filter, $relatedColumns)
     {
         $joinInfo = $filter['linkTable'];
+        $useTenant = !isset($filter['refuseTenant']) || !$filter['refuseTenant'];
         $items = self::getMaskedItems($joinInfo, $relatedColumns);
-        $moreJoin = self::getMultilJoinTable($joinInfo);
+        $moreJoin = self::getMultilJoinTable($joinInfo, $useTenant);
         $items = array_values($items);
         $items = implode(" , ", $items);
         $sql = "SELECT $items FROM $table AS tb1 $moreJoin";
