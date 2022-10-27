@@ -1,9 +1,9 @@
 <?php
-namespace Controller;
+namespace Library;
 
 use Library\Request;
 
-class ObjectRelation extends Controller{
+class ObjectRelation{
     /**
      * Lưu thông tin về các object và link giữa các object 
      * @param nodes có dạng 
