@@ -33,3 +33,4 @@ define('MESSAGE_BUS_SERVICE',"https://".$envDomain."message-bus.".$domain);
 define('SYNC_DATA_SERVICE',"https://".$envDomain."sync-data.".$domain);
 define('LUFFY_SERVICE',"https://luffy.".$domain);
 define('KAFKA_NODE',"symperkafka.".$domain);
+define('OBJECT_RELATION',"object-relation.".$domain);
