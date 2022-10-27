@@ -1,9 +1,9 @@
 <?php
-namespace Controller;
+namespace Library;
 
 use Library\Request;
 
-class ObjectRelation extends Controller{
+class ObjectRelation{
     /**
      * Lưu thông tin về các object và link giữa các object 
      * @param nodes có dạng 
@@ -30,7 +30,7 @@ class ObjectRelation extends Controller{
      * định dạng như cách định nghĩa objectIdentifier trong access control, vd: document:2186 hay dashboard:123
      */
 
-     
+
     public static function save($nodes, $links, $host)
     {
         $data = [
