@@ -192,6 +192,15 @@ class Auth
         }
         return false;
     }
+    public static function getCurrentBaEmail(){
+        $token = Auth::getBearerToken();
+        if(!empty($token)){
+            $dataLogin = Auth::getJwtData($token);
+            $baEmail = (!empty($dataLogin['email'])) ? $dataLogin['email'] : "";
+            return $baEmail;
+        }
+        return "";
+    }
     public static function getCurrentUserId()
     {
         $dataLogin = self::getDataToken();
