@@ -78,57 +78,44 @@ class FilterService extends Controller
                 $obj->insert();
                 $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
-                self::getObjectRelation($obj->objectIdentifier,$obj->id,$obj->name);
+                self::saveObjectRleation($obj->objectIdentifier,$obj->id,$obj->name);
             }
         }
     
     }
-    function pushData(&$link,$id,$objectIdentifier){
-        $data = [
-            'start' => "filter:$id",
-            'end'   => $objectIdentifier,
-            'type' => 'USE',
-            'host' =>"filter:$id"
-        ];
-        array_push($link,$data);
-    }
-    function createNode(&$nodes,$id,$links,$name){
-        $start = [
-            'name' =>   $name,
-            'id' =>   "filter:$id",
-            'title' =>   $name,
-            'type' =>   'filter',
-            'host' =>  "filter:$id",
-        ];
-        array_push($nodes,$start);
-        foreach($links as $key=>$value){
-            $type = explode(':',$value['end'])[0];
-            $data = [
-                'name' =>   $value['end'],
-                'id' =>   $value['end'],
-                'title' =>   $value['end'],
-                'type' =>   $type,
-                'host' =>  $value['end'],
-            ];
-            array_push($nodes,$data);
-        }
-    }
-    function getObjectRelation($objectIdentifier,$id,$name){
-        $links=[];
-        $nodes =[];
+    function getObjectRleationLinks(&$links,$id,$objectIdentifier){
         if(strpos($objectIdentifier,'dataset')!==false){
-            self::pushData($links,$id,$objectIdentifier);
+            array_push($links,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'USE','host' =>"filter:$id"]);
         } else if (strpos($objectIdentifier,'control')!==false){
             $arr=explode(',',$objectIdentifier);
             foreach($arr as $key => $value){
                 $idDoc='document:'.explode(':',$value)[1];
-                self::pushData($links,$id,$idDoc);
+                array_push($links,['start' => "filter:$id",'end'=> $idDoc,'type' => 'USE','host' =>"filter:$id"]);
             }
         } else if (strpos($objectIdentifier,'document')!==false){
             $idDoc='document:'.explode(':',$objectIdentifier)[1];
-            self::pushData($links,$id,$idDoc);
+            array_push($links,['start' => "filter:$id",'end'=> $idDoc,'type' => 'USE','host' =>"filter:$id"]);
         }
-        self::createNode($nodes,$id,$links,$name);
+    }
+    function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
+        array_push($nodes,['name' => $name,'id' => "filter:$id",'title' => $name,'type' => 'filter','host' => "filter:$id"]);
+        if(strpos($objectIdentifier,'dataset')!==false){
+            array_push($nodes,['name' => $objectIdentifier,'id' => $objectIdentifier,'title' => $objectIdentifier,'type' => 'dataset','host' => $objectIdentifier]);
+        } else if (strpos($objectIdentifier,'control')!==false){
+            $arr=explode(',',$objectIdentifier);
+            foreach($arr as $key => $value){
+                $idDoc='document:'.explode(':',$value)[1];
+                array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' => $idDoc]);            }
+        } else if (strpos($objectIdentifier,'document')!==false){
+            $idDoc='document:'.explode(':',$objectIdentifier)[1];
+            array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' => $idDoc]);
+        }
+    }
+    function saveObjectRleation($objectIdentifier,$id,$name){
+        $links=[];
+        $nodes =[];
+        self::getObjectRleationLinks($links,$id,$objectIdentifier);
+        self::addObjectRleationNodes($nodes,$id,$objectIdentifier,$name);
         ObjectRelation::save($nodes,$links,'');
     }
     function update(){
@@ -150,7 +137,7 @@ class FilterService extends Controller
                     $obj->objectIdentifier = trim($this->parameters['objectIdentifier']);
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):Filter::STATUS_ENABLE;
                     if($obj->update()){
-                        self::getObjectRelation($this->parameters['objectIdentifier'],$this->parameters['id'],trim($this->parameters['name']));
+                        self::saveObjectRleation($this->parameters['objectIdentifier'],$this->parameters['id'],trim($this->parameters['name']));
                         $this->output['status'] = STATUS_OK;
                         RoleAction::closeConnectionAndRefresh($this);
                     }

@@ -54,46 +54,23 @@ class PermissionService extends Controller
             ["name"=>"updateAt","title"=>"updateAt","type"=>"text"],
         ];
     }
-    function pushData(&$rsl,$id,$end){
-        $data = [
-            'start' => "permission:$id",
-            'end'   => $end,
-            'type' => 'USE',
-            'host' =>"permission:$id"
-        ];
-        array_push($rsl,$data);
-    }
-    function createNode(&$nodes,$id,$links,$name){
-        $start = [
-            'name' =>   $name,
-            'id' =>   "perrmission:$id",
-            'title' =>   $name,
-            'type' =>   'perrmission',
-            'host' =>  "perrmission:$id",
-        ];
-        array_push($nodes,$start);
-        foreach($links as $key=>$value){
-            $type = explode(':',$value['end'])[0];
-            $data = [
-                'name' =>   $value['end'],
-                'id' =>   $value['end'],
-                'title' =>   $value['end'],
-                'type' =>   $type,
-                'host' =>  $value['end'],
-            ];
-            array_push($nodes,$data);
+    function getObjectRleationLinks(&$links,$objectIdentifier,$id){
+        foreach($objectIdentifier as $key=>$value){
+            array_push($links,['start' => "permission:$id",'end'=> 'aciton_pack:'.$value,'type' => 'USE','host' =>"permission:$id"]);
         }
     }
-    function getObjectRelation($list,$id, $name){
+    function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
+        array_push($nodes,['name' => $name,'id' => "permission:$id",'title' => $name,'type' => 'permission','host' => "permission:$id"]);
+        foreach($objectIdentifier as $key=>$value){
+            array_push($nodes,['name' => "action_pack:$value",'id' => "action_pack:$value",'title' => "action_pack:$value",'type' => 'action_pack','host' => "action_pack:$value"]);
+        }
+    }
+    function saveObjectRleation($list,$id,$name){
         $links=[];
-        $nodes=[];
-        $list=json_decode($list);
-        foreach($list as $key=>$value){
-            self::pushData($links,$id,'action_pack:'.$value);
-        }
-        self::createNode($nodes,$id,$links,$name);
+        $nodes =[];
+        self::getObjectRleationLinks($links,json_decode($list),$id);
+        self::addObjectRleationNodes($nodes,$id,json_decode($list),$name);
         ObjectRelation::save($nodes,$links,'');
-        return $links;
     }
     function create(){
         $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
@@ -122,7 +99,7 @@ class PermissionService extends Controller
                 $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
                 if(isset($this->parameters['listActionPacks'])){
-                    self::getObjectRelation($this->parameters['listActionPacks'],$obj->id,$obj->name);
+                    self::saveObjectRleation($this->parameters['listActionPacks'],$obj->id,$obj->name);
                     RoleAction::closeConnectionAndRefresh($this);
                 }
             }
@@ -151,7 +128,7 @@ class PermissionService extends Controller
                         if(isset($this->parameters['listActionPacks'])){
                             $listActionPacks = Str::getArrayFromUnclearData($this->parameters['listActionPacks']);
                             $obj->saveActionPack($listActionPacks);
-                            self::getObjectRelation($this->parameters['listActionPacks'],$this->parameters['id'], trim($this->parameters['name']));
+                            self::saveObjectRleation($this->parameters['listActionPacks'],$this->parameters['id'], trim($this->parameters['name']));
                             $this->output['status'] = STATUS_OK;
                             RoleAction::closeConnectionAndRefresh($this);
                         }
