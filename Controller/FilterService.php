@@ -105,10 +105,10 @@ class FilterService extends Controller
             $arr=explode(',',$objectIdentifier);
             foreach($arr as $key => $value){
                 $idDoc='document:'.explode(':',$value)[1];
-                array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' => $idDoc]);            }
+                array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' =>"filter:$id"]);            }
         } else if (strpos($objectIdentifier,'document')!==false){
             $idDoc='document:'.explode(':',$objectIdentifier)[1];
-            array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' => $idDoc]);
+            array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' =>"filter:$id"]);
         }
     }
     function saveObjectRleation($objectIdentifier,$id,$name){

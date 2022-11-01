@@ -128,12 +128,12 @@ class ActionPackService extends Controller
             if (strpos($val->objectIdentifier,':0')===false && strpos($val->objectIdentifier,'department')===false){
                 if(strpos($val->objectIdentifier,'dataset')!==false || strpos($val->objectIdentifier,'dashboard')!==false){
                     $type = strpos($val->objectIdentifier,'dashboard')!==false ? 'dashboard' : 'dataset';
-                    array_push($nodes,['name' => $val->objectIdentifier,'id' => $val->objectIdentifier,'title' => $val->objectIdentifier,'type' => $type,'host' => $val->objectIdentifier]);
+                    array_push($nodes,['name' => $val->objectIdentifier,'id' => $val->objectIdentifier,'title' => $val->objectIdentifier,'type' => $type,'host' =>"action_pack:$id"]);
                 } else {
                     $idObj      = explode(':',$val->objectIdentifier)[1];
                     $obj        = explode(':',$val->objectIdentifier)[0];
                     $objName    = explode('_',$obj)[0];
-                    array_push($nodes,['name' => $objName.':'.$idObj,'id' => $objName.':'.$idObj,'title' => $objName.':'.$idObj,'type' => $objName,'host' => $objName.':'.$idObj]);
+                    array_push($nodes,['name' => $objName.':'.$idObj,'id' => $objName.':'.$idObj,'title' => $objName.':'.$idObj,'type' => $objName,'host' =>"action_pack:$id"]);
                 }
             }
         }

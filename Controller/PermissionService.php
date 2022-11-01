@@ -62,7 +62,7 @@ class PermissionService extends Controller
     function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
         array_push($nodes,['name' => $name,'id' => "permission:$id",'title' => $name,'type' => 'permission','host' => "permission:$id"]);
         foreach($objectIdentifier as $key=>$value){
-            array_push($nodes,['name' => "action_pack:$value",'id' => "action_pack:$value",'title' => "action_pack:$value",'type' => 'action_pack','host' => "action_pack:$value"]);
+            array_push($nodes,['name' => "action_pack:$value",'id' => "action_pack:$value",'title' => "action_pack:$value",'type' => 'action_pack','host' => "permission:$id"]);
         }
     }
     function saveObjectRleation($list,$id,$name){
