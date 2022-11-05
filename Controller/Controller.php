@@ -50,7 +50,7 @@ class Controller
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y")
             ];
-            $messageBusData = ['topic' => 'xxxxxx', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
+            $messageBusData = ['topic' => 'request-input', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_SERVICE . '/publish', $messageBusData, 'POST');
         }
         if (method_exists($this, $action)) {
@@ -158,7 +158,7 @@ class Controller
                 'host'          => $_SERVER['HTTP_HOST'],
                 'method'        => $_SERVER['REQUEST_METHOD'],
             ];
-            $messageBusData = ['topic' => 'xxxxxx', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
+            $messageBusData = ['topic' => 'request-output', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
             Request::request(MESSAGE_BUS_SERVICE . '/publish', $messageBusData, 'POST');
         }
     }
