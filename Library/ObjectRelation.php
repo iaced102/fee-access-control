@@ -52,6 +52,7 @@ class ObjectRelation {
 
     /**
      * Xóa nodes và links từ host được truyền vào
+     * @param string $host chứa 1 hoặc nhiều host, các host cách nhau bằng dấu phẩy  
      */
     public static function deleteNodesAndLinks($host)
     {
