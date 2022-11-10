@@ -48,4 +48,22 @@ class ObjectRelation {
             300
         );
     }
+
+
+    /**
+     * Xóa nodes và links từ host được truyền vào
+     */
+    public static function deleteNodesAndLinks($host)
+    {
+        $token = "Bearer ".Auth::getBearerToken();
+        $res = Request::request(
+            "https://".OBJECT_RELATION."/object-host/$host", 
+            false,
+            'DELETE',
+            $token,
+            'application/x-www-form-urlencoded',
+            false
+        );
+        return $res;
+    }
 }
