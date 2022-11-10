@@ -3,7 +3,7 @@ namespace Library;
 
 use Library\Request;
 
-class ObjectRelation{
+class ObjectRelation {
     /**
      * Lưu thông tin về các object và link giữa các object 
      * @param nodes có dạng 
@@ -30,7 +30,6 @@ class ObjectRelation{
      * định dạng như cách định nghĩa objectIdentifier trong access control, vd: document:2186 hay dashboard:123
      */
 
-
     public static function save($nodes, $links, $host)
     {
         $data = [
@@ -38,12 +37,14 @@ class ObjectRelation{
             'nodes'     => $nodes,
             'host'      => $host
         ];
-        Request::request(
-            OBJECT_RELATION.'/sub-graph', 
+        $token = "Bearer ".Auth::getBearerToken();
+        $res = Request::request(
+            "https://".OBJECT_RELATION.'/sub-graph', 
             $data,
             'POST',
-            false,
+            $token,
             'application/json',
+            false,
             300
         );
     }

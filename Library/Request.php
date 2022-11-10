@@ -66,7 +66,7 @@ class Request {
         $this->userAgent = $userAgent;
     }
 
-    public function send()
+    public function send($contentType = 'application/x-www-form-urlencoded')
     {
         //demo authen
         $s = curl_init();
@@ -82,7 +82,7 @@ class Request {
             $token = $this->token;
         }
         $authorization ="Authorization: Bearer ". $token;
-        curl_setopt($s,CURLOPT_HTTPHEADER,array('Content-Type: application/x-www-form-urlencoded',$authorization));
+        curl_setopt($s,CURLOPT_HTTPHEADER,array("Content-Type: $contentType",$authorization));
         
         curl_setopt($s,CURLOPT_TIMEOUT,$this->timeOut);
         curl_setopt($s,CURLOPT_RETURNTRANSFER,true);
@@ -92,7 +92,11 @@ class Request {
         if($this->post)
         {
             curl_setopt($s,CURLOPT_POST,true);
-            curl_setopt($s,CURLOPT_POSTFIELDS,http_build_query($this->postFields));
+            if($contentType == 'application/json'){
+                curl_setopt($s,CURLOPT_POSTFIELDS,is_string($this->postFields) ? $this->postFields : json_encode($this->postFields, JSON_UNESCAPED_UNICODE));
+            }else{
+                curl_setopt($s,CURLOPT_POSTFIELDS,http_build_query($this->postFields));
+            }
         }
         
         curl_setopt($s,CURLOPT_CUSTOMREQUEST,$this->method);
@@ -112,12 +116,12 @@ class Request {
     }
 
 
-    public static function request($url, $dataPost = false, $method = 'GET',$token = false){
+    public static function request($url, $dataPost = false, $method = 'GET',$token = false,  $contentType = 'application/x-www-form-urlencoded', $returnJson = true, $timeOut = 30000){
         $resultTest = Test::callFunction(Test::FUNC_REQUEST,$url);
         if($resultTest!==Test::FUNC_NO_AVAILABLE){
             return $resultTest;
         }
-        $request = new Request($url);
+        $request = new Request($url, $timeOut);
         if($dataPost != false && $method != "GET"){
             $request->setPost($dataPost);
         }
@@ -129,16 +133,13 @@ class Request {
             $request->setToken($token);
         }
         $request->setMethod($method);
-        $request->send();
+        $request->send($contentType);
         $response = $request->result();
-        // if($method == 'POST' || $method == 'PUT'){
-        //     MessageBus::publish('sdocument-request-logs','request-log',['data'=>$dataPost,'res'=>$response]);
-        // }
-        // var_dump(json_encode($dataPost));
-        // var_dump($response);
-        // die;
-        // trường hợp data trả về không đúng định dạng json
-        return json_decode($response, true);
+        if($returnJson){
+            return json_decode($response, true);
+        }else{
+            return $response;
+        }
 	}
     
 }
