@@ -173,8 +173,10 @@ class SqlObject extends Model{
         if($result != false){
             $rsl = pg_fetch_all($result);
             $result = [];
-            foreach ($rsl as $row) {
-                $result[] = $row['id'];
+            if(is_array($rsl)){
+                foreach ($rsl as $row) {
+                    $result[] = $row['id'];
+                }
             }
             return $result;
         }else{
