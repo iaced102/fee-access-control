@@ -2,6 +2,8 @@
 
 use Model\Model;
 use Library\Auth;
+use Model\Connection;
+
 class SqlObject extends Model{
     public $listForeignKey;
     public static $mappingFromDatabase=[];
@@ -84,5 +86,101 @@ class SqlObject extends Model{
             mt_rand( 0, 0xffff ),
             ip2long(\Library\Auth::getCurrentIP())
         );
+    }
+
+    /**
+     * Chuyển các object từ tenant này sang tenant khác qua id của các object
+     * 
+     * @param int $sourceTenant id tenant xuất phát
+     * @param int $targetTenant id tenant đích cần chuyeenr
+     * @param array $ids chứa id của các object cần chuyển 
+     * 
+     * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
+     */
+    public static function migrateObjectsByIds(int $sourceTenant, int $targetTenant, array $ids)
+    {
+        $parentStr = "'".implode("','", $ids)."'";
+        $primaryCol = static::getPrimaryKey();
+        return static::migrateObjectsByCondition($sourceTenant, $targetTenant, "$primaryCol IN ($parentStr)");
+    }
+
+
+    /**
+     * Chuyển các object từ tenant này sang tenant khác qua id của các parent object
+     * 
+     * @param int $sourceTenant id tenant xuất phát
+     * @param int $targetTenant id tenant đích cần chuyeenr
+     * @param array $referenceColumn tên cột mà parent column refernce đến
+     * @param array $parentId chứa parent id của các object cần chuyển 
+     * 
+     * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
+     */
+    public static function migrateObjectsByParents($sourceTenant, $targetTenant, string $referenceColumn, array $parentIds)
+    {
+        $parentStr = "'".implode("','", $parentIds)."'";
+        $cond = "$referenceColumn IN ($parentStr)";
+        return static::migrateObjectsByCondition($sourceTenant, $targetTenant, $cond);
+    }
+
+
+
+    /**
+     * Chuyển các object từ tenant này sang tenant khác qua điều kiện lọc
+     * 
+     * @param int $sourceTenant id tenant xuất phát
+     * @param int $targetTenant id tenant đích cần chuyeenr
+     * @param string $condition điều kiện cần để lọc ra các object cần clone, không cần điều kiện về tenant do đã được tự thêm
+     * 
+     * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
+     */
+    public static function migrateObjectsByCondition($sourceTenant, $targetTenant, $condition)
+    {
+        $tableName = static::getTableName();
+        $columns = [];
+
+        // Lấy ra các cột trong bảng
+        foreach (static::$mappingFromDatabase as $key => $col) {
+            $tbColName = $col['name'];
+            if($tbColName != 'tenant_id_'){
+                $columns[] = $tbColName;
+            }
+        }
+        $columns = implode(",", $columns);
+        $primaryCol = static::getPrimaryKey();
+        $oppositeTenant = "-$targetTenant";
+
+        $query = [
+            "BEGIN",
+            // Xoá các bản ghi backup cũ
+            "DELETE FROM $tableName WHERE tenant_id_ = '$oppositeTenant' AND ($condition)",
+            
+            // Backup các bản ghi của tenant mới
+            "UPDATE $tableName SET tenant_id_ = '$oppositeTenant' WHERE tenant_id_ = '$targetTenant' AND ($condition)",
+            
+            // Thêm các bản ghi từ tenant cũ vào tenant mới
+            "INSERT INTO $tableName($columns, tenant_id_)
+                SELECT $columns, '$targetTenant' AS tenant_id_ 
+                FROM $tableName 
+                WHERE tenant_id_ = '$sourceTenant' AND ($condition)",
+    
+            "COMMIT",   
+
+            // Trả về id các bản ghi được clone
+            "SELECT DISTINCT $primaryCol AS id FROM $tableName WHERE tenant_id_ = '$sourceTenant' AND ($condition)"
+        ];
+        $result = Connection::exeQuery(implode(";", $query));
+
+        if($result != false){
+            $rsl = pg_fetch_all($result);
+            $result = [];
+            if(is_array($rsl)){
+                foreach ($rsl as $row) {
+                    $result[] = $row['id'];
+                }
+            }
+            return $result;
+        }else{
+            return false;
+        }
     }
 }

@@ -64,3 +64,6 @@ Route::put('filters/{id}','FilterService','update');
 Route::get('filters/{id}','FilterService','detail');
 Route::delete('filters/{id}','FilterService','delete');
 Route::post('filters/delete-many','FilterService','deleteMany');
+Route::post('demotoken', 'Api', 'getDemoToken');
+Route::post('test', 'Api', 'testFunction');
+Route::post('objects/tenant-migrate', 'ObjectTenantMigration', 'migrate');

@@ -17,13 +17,14 @@ class Auth
         $privatePEMKey = openssl_get_privatekey($privatePEMKey, 'Symper@@');
         $signature = '';
         openssl_sign($data, $signature, $privatePEMKey, OPENSSL_ALGO_SHA256);
+        $signature = bin2hex($signature);
         return $signature;
     }
     public static function verifySign($data, $signature)
     {
         $publicPEMKey = file_get_contents(DIR . '/Crypt/public.pem');
         $publicPEMKey = openssl_get_publickey($publicPEMKey);
-        $r = openssl_verify($data, $signature, $publicPEMKey, OPENSSL_ALGO_SHA256);
+        $r = openssl_verify($data, hex2bin($signature), $publicPEMKey, OPENSSL_ALGO_SHA256);
         if ($r == 1) {
             return true;
         } else {
@@ -41,7 +42,7 @@ class Auth
             $payload = $dataFromToken[1];
             $signature = $dataFromToken[2];
             if (self::verifyJwt($header, $payload, $signature)) {
-                $jsonData = self::base64UrlDecode($payload);
+                $jsonData = base64_decode($payload);
                 $data = json_decode($jsonData, true);
                 CacheService::setMemoryCache($token, $data);
                 return $data;
@@ -51,22 +52,13 @@ class Auth
         }
     }
 
-    private static function base64UrlEncode($data)
-    {
-        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
-    }
-    private static function base64UrlDecode($data)
-    {
-        return base64_decode(str_replace(['-', '_', ''], ['+', '/', '='], $data));
-    }
-
     public static function verifyJwt($header, $payload, $signature)
     {
-        $signature = self::base64UrlDecode($signature);
+        $signature = base64_decode($signature);
         $dataToVerify = "$header.$payload";
         return self::verifySign($dataToVerify, $signature);
     }
-    public static function getJwtToken($data, $exp = false)
+    public static function getJwtToken($data, $timeout = false)
     {
         $data = (array)$data;
         $header = self::getJwtHeader();
@@ -77,49 +69,29 @@ class Auth
         }
         $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
         $data['tenant_domain'] = isset($GLOBALS['env']['tenant_domain']) ? $GLOBALS['env']['tenant_domain'] : '';
-        // Token's timeout default is 3600s = 1 hour
-        $data['exp'] = $exp == false ? time() + 3600 : $exp;
-        $data['iat'] = time();
+        // Token's timeout default is 3600s
+        $data['exp'] = $timeout == false ? time() + 3600 : time() + $timeout;
         $payload = self::getJwtPayload($data);
         $signature = self::getJwtSignature($header, $payload);
         $jwtToken = "$header.$payload.$signature";
         return $jwtToken;
     }
-    public static function getJwtRefreshToken($exp = false, $iat = false)
-    {
-        $data = ["u" => Str::createUUID()];
-        $header = self::getJwtHeader();
-        if (isset($data['tenantId']) || isset($data['tenant_id'])) {
-            $data['tenant'] = [
-                'id'    => isset($data['tenantId']) ? $data['tenantId'] : $data['tenant_id']
-            ];
-        }
-        $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
-        // Token's timeout default is 2600000s
-        $data['exp'] = $exp == false ? time() + 2600000 : $exp;
-        if ($iat != false) {
-            $data['iat'] = time();
-        }
-        $payload = self::getJwtPayload($data);
-        $signature = self::getJwtSignature($header, $payload);
-        $jwtToken = "$header.$payload.$signature";
-        return $jwtToken;
-    }
+    
     public static function getJwtHeader()
     {
         $header = [
             'alg'   => "RS256",
             'typ'   => 'JWT',
         ];
-        return self::base64UrlEncode(json_encode($header));
+        return base64_encode(json_encode($header));
     }
     public static function getJwtPayload($data)
     {
-        return self::base64UrlEncode(json_encode($data));
+        return base64_encode(json_encode($data));
     }
     public static function getJwtSignature($header, $payload)
     {
-        return self::base64UrlEncode(self::sign("$header.$payload"));
+        return base64_encode(self::sign("$header.$payload"));
     }
     public static function getAuthorizationHeader()
     {
@@ -161,14 +133,14 @@ class Auth
             }
             $encrypted .= $partialEncrypted;
         }
-        return self::base64UrlEncode($encrypted);
+        return base64_encode($encrypted);
     }
     public static function decryptRSA($data)
     {
         $privatePEMKey  = file_get_contents(DIR . '/Crypt/private.pem');
         $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
         $decrypted      = '';
-        $data           = str_split(self::base64UrlDecode($data), 256); //2048 bit
+        $data           = str_split(base64_decode($data), 256); //2048 bit
         foreach ($data as $chunk) {
             $partial = '';
             $decryptionOK = openssl_private_decrypt($chunk, $partial, $privatePEMKey, OPENSSL_PKCS1_PADDING);
@@ -332,4 +304,15 @@ class Auth
     {
         self::$tenantId = $tenantId;
     }
+
+    public static function getCurrentBaEmail(){
+        $token = Auth::getBearerToken();
+        if(!empty($token)){
+            $dataLogin = Auth::getJwtData($token);
+            $baEmail = (!empty($dataLogin['email'])) ? $dataLogin['email'] : "";
+            return $baEmail;
+        }
+        return "";
+    }
+
 }
