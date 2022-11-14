@@ -160,6 +160,8 @@ class FilterService extends Controller
                 if($obj->delete()){
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
+                    $hostsId=['filter:'.$id];
+                    ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;
@@ -171,6 +173,7 @@ class FilterService extends Controller
                 $this->output['message']    = 'Filter not found';
             }
         }
+        
     }
     function deleteMany(){
         if($this->checkParameter(['ids'])){
@@ -180,6 +183,12 @@ class FilterService extends Controller
                 Filter::deleteMulti("id in ($ids)"); 
                 $this->output['status']  = STATUS_OK;
                 RoleAction::closeConnectionAndRefresh($this);
+                $hostsId=[];
+                $idsArr=explode(',',$ids);
+                for($i=0;$i<count($idsArr);$i++) {
+                    array_push($hostsId,'filter:'.$idsArr[$i]);
+                }
+                ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
             }
             else{
                 $this->output['status'] = STATUS_BAD_REQUEST;

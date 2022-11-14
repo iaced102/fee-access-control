@@ -153,6 +153,8 @@ class PermissionService extends Controller
                 if($obj->delete()){
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
+                    $hostsId=['permission:'.$this->parameters['id']];
+                    ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;

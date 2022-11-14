@@ -146,7 +146,8 @@ class SqlObject extends Model{
             }
         }
         $columns = implode(",", $columns);
-        $primaryCol = static::getPrimaryKey();
+        $primaryCol = static::getColumnNameInDataBase(static::getPrimaryKey());
+
         $oppositeTenant = "-$targetTenant";
 
         $query = [
@@ -168,8 +169,8 @@ class SqlObject extends Model{
             // Trả về id các bản ghi được clone
             "SELECT DISTINCT $primaryCol AS id FROM $tableName WHERE tenant_id_ = '$sourceTenant' AND ($condition)"
         ];
-        $result = Connection::exeQuery(implode(";", $query));
-
+        $query = implode(";", $query);
+        $result = Connection::exeQuery($query);
         if($result != false){
             $rsl = pg_fetch_all($result);
             $result = [];
