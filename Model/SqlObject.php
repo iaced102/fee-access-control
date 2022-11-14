@@ -97,11 +97,11 @@ class SqlObject extends Model{
      * 
      * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
      */
-    public static function cloneObjectsByIds(int $sourceTenant, int $targetTenant, array $ids)
+    public static function migrateObjectsByIds(int $sourceTenant, int $targetTenant, array $ids)
     {
         $parentStr = "'".implode("','", $ids)."'";
         $primaryCol = static::getPrimaryKey();
-        return static::cloneObjectsByCondition($sourceTenant, $targetTenant, "$primaryCol IN ($parentStr)");
+        return static::migrateObjectsByCondition($sourceTenant, $targetTenant, "$primaryCol IN ($parentStr)");
     }
 
 
@@ -115,11 +115,11 @@ class SqlObject extends Model{
      * 
      * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
      */
-    public static function cloneObjectsByParents($sourceTenant, $targetTenant, string $referenceColumn, array $parentIds)
+    public static function migrateObjectsByParents($sourceTenant, $targetTenant, string $referenceColumn, array $parentIds)
     {
         $parentStr = "'".implode("','", $parentIds)."'";
         $cond = "$referenceColumn IN ($parentStr)";
-        return static::cloneObjectsByCondition($sourceTenant, $targetTenant, $cond);
+        return static::migrateObjectsByCondition($sourceTenant, $targetTenant, $cond);
     }
 
 
@@ -133,7 +133,7 @@ class SqlObject extends Model{
      * 
      * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
      */
-    public static function cloneObjectsByCondition($sourceTenant, $targetTenant, $condition)
+    public static function migrateObjectsByCondition($sourceTenant, $targetTenant, $condition)
     {
         $tableName = static::getTableName();
         $columns = [];
