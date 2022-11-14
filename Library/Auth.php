@@ -323,4 +323,15 @@ class Auth
     {
         self::$tenantId = $tenantId;
     }
+
+    public static function getCurrentBaEmail(){
+        $token = Auth::getBearerToken();
+        if(!empty($token)){
+            $dataLogin = Auth::getJwtData($token);
+            $baEmail = (!empty($dataLogin['email'])) ? $dataLogin['email'] : "";
+            return $baEmail;
+        }
+        return "";
+    }
+
 }
