@@ -5,6 +5,8 @@ namespace Library;
 class Auth
 {
     private static $tenantId = '';
+    private static $ignoreTokenInfo = false;
+
     //
     public static function Hash($password)
     {
@@ -33,6 +35,10 @@ class Auth
     }
     public static function getJwtData($token)
     {
+        if (self::$ignoreTokenInfo === true) {
+            return false;
+        }
+
         $dataFromCache = CacheService::getMemoryCache($token);
         if ($dataFromCache != false) {
             return $dataFromCache;
@@ -76,7 +82,7 @@ class Auth
         $jwtToken = "$header.$payload.$signature";
         return $jwtToken;
     }
-    
+
     public static function getJwtHeader()
     {
         $header = [
@@ -153,6 +159,7 @@ class Auth
     }
     public static function getDataToken()
     {
+
         $dataLogin = CacheService::getMemoryCache('JwtDataLoginCache');
         if ($dataLogin == false) {
             $token = Auth::getBearerToken();
@@ -296,9 +303,10 @@ class Auth
         self::$tenantId = $tenantId;
     }
 
-    public static function getCurrentBaEmail(){
+    public static function getCurrentBaEmail()
+    {
         $token = Auth::getBearerToken();
-        if(!empty($token)){
+        if (!empty($token)) {
             $dataLogin = Auth::getJwtData($token);
             $baEmail = (!empty($dataLogin['email'])) ? $dataLogin['email'] : "";
             return $baEmail;
@@ -306,4 +314,13 @@ class Auth
         return "";
     }
 
+    public static function ignoreTokenInfo()
+    {
+        self::$ignoreTokenInfo = true;
+    }
+
+    public static function restoreTokenInfo()
+    {
+        self::$ignoreTokenInfo = false;
+    }
 }
