@@ -84,32 +84,34 @@ class FilterService extends Controller
     
     }
     function getObjectRleationLinks(&$links,$id,$objectIdentifier){
-        if(strpos($objectIdentifier,'dataset')!==false){
-            array_push($links,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'USE','host' =>"filter:$id"]);
-        } else if (strpos($objectIdentifier,'control')!==false){
-            $arr=explode(',',$objectIdentifier);
-            foreach($arr as $key => $value){
-                $idDoc='document:'.explode(':',$value)[1];
-                array_push($links,['start' => "filter:$id",'end'=> $idDoc,'type' => 'USE','host' =>"filter:$id"]);
-            }
-        } else if (strpos($objectIdentifier,'document')!==false){
-            $idDoc='document:'.explode(':',$objectIdentifier)[1];
-            array_push($links,['start' => "filter:$id",'end'=> $idDoc,'type' => 'USE','host' =>"filter:$id"]);
-        }
+        self::getObject($objectIdentifier,'links',$id,$links);
     }
     function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
         array_push($nodes,['name' => $name,'id' => "filter:$id",'title' => $name,'type' => 'filter','host' => "filter:$id"]);
-        if(strpos($objectIdentifier,'dataset')!==false){
-            array_push($nodes,['name' => $objectIdentifier,'id' => $objectIdentifier,'title' => $objectIdentifier,'type' => 'dataset','host' => $objectIdentifier]);
+        self::getObject($objectIdentifier,'nodes',$id,$nodes);
+    }
+    function getObject($objectIdentifier,$type,$id,&$arr){
+        if(strpos($objectIdentifier,'control')===false){
+            $objType = explode(':',$objectIdentifier)[0];
+            if($type == 'nodes'){
+                array_push($arr,['name' => $objectIdentifier,'id' => $objectIdentifier,'title' => $objectIdentifier,'type' => $objType,'host' => $objectIdentifier]);
+            } else {
+                array_push($arr,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'USE','host' =>"filter:$id"]);
+            }
         } else if (strpos($objectIdentifier,'control')!==false){
-            $arr=explode(',',$objectIdentifier);
-            foreach($arr as $key => $value){
-                $idDoc='document:'.explode(':',$value)[1];
-                array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' =>"filter:$id"]);            }
-        } else if (strpos($objectIdentifier,'document')!==false){
-            $idDoc='document:'.explode(':',$objectIdentifier)[1];
-            array_push($nodes,['name' => $idDoc,'id' => $idDoc,'title' => $idDoc,'type' => 'document','host' =>"filter:$id"]);
-        }
+            $array=explode(',',$objectIdentifier);
+            foreach($array as $key => $value){
+                $obj='document_definition:'.explode(':',$value)[1];
+                if($type == 'nodes'){
+                    $data = ['name' => $obj,'id' => $obj,'title' => $obj,'type' => 'document_definition','host' =>$obj];
+                } else {
+                    $data = ['start' => "filter:$id",'end'=> $obj,'type' => 'USE','host' =>"filter:$id"];
+                }
+                if(!in_array($data,$arr)){
+                    array_push($arr,$data);
+                }
+            }
+        } 
     }
     function saveObjectRleation($objectIdentifier,$id,$name){
         $links=[];

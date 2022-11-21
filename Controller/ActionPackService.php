@@ -103,18 +103,8 @@ class ActionPackService extends Controller
         }
         $listOperationId="'".implode("','",$listOperationId)."'";
         $operation = Operation::getByTop('',"id IN ($listOperationId)");
-        foreach($operation as $key=>$val){
-            if (strpos($val->objectIdentifier,':0')===false && strpos($val->objectIdentifier,'department')===false){
-                if(strpos($val->objectIdentifier,'dataset')!==false || strpos($val->objectIdentifier,'dashboard')!==false){
-                    array_push($links,['start' => "action_pack:$id",'end'=> $val->objectIdentifier,'type' => 'USE','host' =>"action_pack:$id"]);
-                } else {
-                    $idObj      = explode(':',$val->objectIdentifier)[1];
-                    $obj        = explode(':',$val->objectIdentifier)[0];
-                    $objName    = explode('_',$obj)[0];
-                    array_push($links,['start' => "action_pack:$id",'end'=> $objName.':'.$idObj,'type' => 'USE','host' =>"action_pack:$id"]);
-                }
-            }
-        }
+        self::getObject($operation,'links',$id,$links);
+
     }
     function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
         array_push($nodes,['name' => $name,'id' => "action_pack:$id",'title' => $name,'type' => 'action_pack','host' => "action_pack:$id"]);
@@ -124,17 +114,25 @@ class ActionPackService extends Controller
         }
         $listOperationId="'".implode("','",$listOperationId)."'";
         $operation = Operation::getByTop('',"id IN ($listOperationId)");
+        self::getObject($operation,'nodes',$id,$nodes);
+    }
+    function getObject($operation,$type,$id,&$arr){
         foreach($operation as $key=>$val){
             if (strpos($val->objectIdentifier,':0')===false && strpos($val->objectIdentifier,'department')===false){
-                if(strpos($val->objectIdentifier,'dataset')!==false || strpos($val->objectIdentifier,'dashboard')!==false){
-                    $type = strpos($val->objectIdentifier,'dashboard')!==false ? 'dashboard' : 'dataset';
-                    array_push($nodes,['name' => $val->objectIdentifier,'id' => $val->objectIdentifier,'title' => $val->objectIdentifier,'type' => $type,'host' =>"action_pack:$id"]);
-                } else {
-                    $idObj      = explode(':',$val->objectIdentifier)[1];
-                    $obj        = explode(':',$val->objectIdentifier)[0];
-                    $objName    = explode('_',$obj)[0];
-                    array_push($nodes,['name' => $objName.':'.$idObj,'id' => $objName.':'.$idObj,'title' => $objName.':'.$idObj,'type' => $objName,'host' =>"action_pack:$id"]);
-                }
+                    $name = $val->objectIdentifier;
+                    $typeObj = $val->objectType;;
+                    if($val->objectType=='stateflow_flow'){
+                        $name = 'kanban:'.$val->objectName;
+                        $typeObj = 'kanban';
+                    }
+                    if($type == 'nodes'){
+                        $data = ['name' => $name,'id' => $name,'title' => $name,'type' => $typeObj,'host' =>$name];
+                    } else {
+                        $data = ['start' => "action_pack:$id",'end'=> $name,'type' => 'USE','host' =>"action_pack:$id"];
+                    }
+                    if(!in_array($data,$arr)){
+                        array_push($arr,$data);
+                    }
             }
         }
     }

@@ -56,13 +56,25 @@ class PermissionService extends Controller
     }
     function getObjectRleationLinks(&$links,$objectIdentifier,$id){
         foreach($objectIdentifier as $key=>$value){
-            array_push($links,['start' => "permission:$id",'end'=> 'aciton_pack:'.$value,'type' => 'USE','host' =>"permission:$id"]);
+            array_push($links,['start' => "permission_pack:$id",'end'=> 'aciton_pack:'.$value,'type' => 'USE','host' =>"permission_pack:$id"]);
         }
     }
     function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
-        array_push($nodes,['name' => $name,'id' => "permission:$id",'title' => $name,'type' => 'permission','host' => "permission:$id"]);
+        array_push($nodes,  [
+                                'name' => $name,
+                                'id' => "permission_pack:$id",
+                                'title' => $name,
+                                'type' => 'permission_pack',
+                                'host' => "permission_pack:$id"
+                            ]);
         foreach($objectIdentifier as $key=>$value){
-            array_push($nodes,['name' => "action_pack:$value",'id' => "action_pack:$value",'title' => "action_pack:$value",'type' => 'action_pack','host' => "permission:$id"]);
+            array_push($nodes,  [ 
+                                    'name' => "action_pack:$value",
+                                    'id' => "action_pack:$value",
+                                    'title' => "action_pack:$value",
+                                    'type' => 'action_pack',
+                                    'host' => "action_pack:$id"
+                                ]);
         }
     }
     function saveObjectRleation($list,$id,$name){
