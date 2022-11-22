@@ -9,6 +9,7 @@ use Library\Str;
 use Model\ActionPack;
 use Model\Operation;
 use Model\OperationInActionPack;
+use Library\ObjectRelation;
 use Model\PermissionRole;
 use Model\RoleAction;
 use Model\Users;
@@ -87,12 +88,60 @@ class ActionPackService extends Controller
                         $listFilter = Str::getArrayFromUnclearData($this->parameters['listFilter']);
                         $obj->saveFilter($listFilter, $obj->id);
                     }
+                    self::saveObjectRleation($this->parameters['listOperations'],$obj->id,$obj->name);
                     $this->output['data'] = $obj;
                     $this->output['status'] = STATUS_OK;
                 }
             }
         }
     
+    }
+    function getObjectRleationLinks(&$links,$objectIdentifier,$id){
+        $listOperationId=[];
+        foreach($objectIdentifier as $key=>$value){
+            array_push($listOperationId,$key);
+        }
+        $listOperationId="'".implode("','",$listOperationId)."'";
+        $operation = Operation::getByTop('',"id IN ($listOperationId)");
+        self::getObject($operation,'links',$id,$links);
+
+    }
+    function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
+        array_push($nodes,['name' => $name,'id' => "action_pack:$id",'title' => $name,'type' => 'action_pack','host' => "action_pack:$id"]);
+        $listOperationId=[];
+        foreach($objectIdentifier as $key=>$value){
+            array_push($listOperationId,$key);
+        }
+        $listOperationId="'".implode("','",$listOperationId)."'";
+        $operation = Operation::getByTop('',"id IN ($listOperationId)");
+        self::getObject($operation,'nodes',$id,$nodes);
+    }
+    function getObject($operation,$type,$id,&$arr){
+        foreach($operation as $key=>$val){
+            if (strpos($val->objectIdentifier,':0')===false && strpos($val->objectIdentifier,'department')===false){
+                    $name = $val->objectIdentifier;
+                    $typeObj = $val->objectType;;
+                    if($val->objectType=='stateflow_flow'){
+                        $name = 'kanban:'.$val->objectName;
+                        $typeObj = 'kanban';
+                    }
+                    if($type == 'nodes'){
+                        $data = ['name' => $name,'id' => $name,'title' => $name,'type' => $typeObj,'host' =>$name];
+                    } else {
+                        $data = ['start' => "action_pack:$id",'end'=> $name,'type' => 'USE','host' =>"action_pack:$id"];
+                    }
+                    if(!in_array($data,$arr)){
+                        array_push($arr,$data);
+                    }
+            }
+        }
+    }
+    function saveObjectRleation($list,$id,$name){
+        $links=[];
+        $nodes =[];
+        self::getObjectRleationLinks($links,json_decode($list),$id);
+        self::addObjectRleationNodes($nodes,$id,json_decode($list),$name);
+        ObjectRelation::save($nodes,$links,'');
     }
     function update(){
         TimeLog::start('publish-data-to-kafka');
@@ -139,6 +188,7 @@ class ActionPackService extends Controller
                             }
                             $this->output['status'] = STATUS_OK;
                         }
+                        self::saveObjectRleation($this->parameters['listOperations'],$this->parameters['id'],trim($this->parameters['name']));
                         
                         $this->output['status'] = STATUS_OK;
                         $this->output['data'] = TimeLog::getAll();
@@ -163,6 +213,8 @@ class ActionPackService extends Controller
                 if($obj->delete()){
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
+                    $hostsId=['action_pack:'.$this->parameters['id']];
+                    ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;

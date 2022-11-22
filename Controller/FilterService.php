@@ -6,6 +6,7 @@ use Library\Environment;
 use Library\Message;
 use Library\Request;
 use Library\Str;
+use Library\ObjectRelation;
 use Model\ObjectIdentifier;
 use Model\Filter;
 use Model\RoleAction;
@@ -77,11 +78,48 @@ class FilterService extends Controller
                 $obj->insert();
                 $this->output['data'] = $obj;
                 $this->output['status'] = STATUS_OK;
+                self::saveObjectRleation($obj->objectIdentifier,$obj->id,$obj->name);
             }
         }
     
     }
-    
+    function getObjectRleationLinks(&$links,$id,$objectIdentifier){
+        self::getObject($objectIdentifier,'links',$id,$links);
+    }
+    function addObjectRleationNodes(&$nodes,$id,$objectIdentifier,$name){
+        array_push($nodes,['name' => $name,'id' => "filter:$id",'title' => $name,'type' => 'filter','host' => "filter:$id"]);
+        self::getObject($objectIdentifier,'nodes',$id,$nodes);
+    }
+    function getObject($objectIdentifier,$type,$id,&$arr){
+        if(strpos($objectIdentifier,'control')===false){
+            $objType = explode(':',$objectIdentifier)[0];
+            if($type == 'nodes'){
+                array_push($arr,['name' => $objectIdentifier,'id' => $objectIdentifier,'title' => $objectIdentifier,'type' => $objType,'host' => $objectIdentifier]);
+            } else {
+                array_push($arr,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'USE','host' =>"filter:$id"]);
+            }
+        } else if (strpos($objectIdentifier,'control')!==false){
+            $array=explode(',',$objectIdentifier);
+            foreach($array as $key => $value){
+                $obj='document_definition:'.explode(':',$value)[1];
+                if($type == 'nodes'){
+                    $data = ['name' => $obj,'id' => $obj,'title' => $obj,'type' => 'document_definition','host' =>$obj];
+                } else {
+                    $data = ['start' => "filter:$id",'end'=> $obj,'type' => 'USE','host' =>"filter:$id"];
+                }
+                if(!in_array($data,$arr)){
+                    array_push($arr,$data);
+                }
+            }
+        } 
+    }
+    function saveObjectRleation($objectIdentifier,$id,$name){
+        $links=[];
+        $nodes =[];
+        self::getObjectRleationLinks($links,$id,$objectIdentifier);
+        self::addObjectRleationNodes($nodes,$id,$objectIdentifier,$name);
+        ObjectRelation::save($nodes,$links,'');
+    }
     function update(){
         $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
         Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
@@ -101,6 +139,7 @@ class FilterService extends Controller
                     $obj->objectIdentifier = trim($this->parameters['objectIdentifier']);
                     $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):Filter::STATUS_ENABLE;
                     if($obj->update()){
+                        self::saveObjectRleation($this->parameters['objectIdentifier'],$this->parameters['id'],trim($this->parameters['name']));
                         $this->output['status'] = STATUS_OK;
                         RoleAction::closeConnectionAndRefresh($this);
                     }
@@ -123,6 +162,8 @@ class FilterService extends Controller
                 if($obj->delete()){
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
+                    $hostsId=['filter:'.$id];
+                    ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
                 }
                 else{
                     $this->output['status'] = STATUS_SERVER_ERROR;
@@ -134,6 +175,7 @@ class FilterService extends Controller
                 $this->output['message']    = 'Filter not found';
             }
         }
+        
     }
     function deleteMany(){
         if($this->checkParameter(['ids'])){
@@ -143,6 +185,12 @@ class FilterService extends Controller
                 Filter::deleteMulti("id in ($ids)"); 
                 $this->output['status']  = STATUS_OK;
                 RoleAction::closeConnectionAndRefresh($this);
+                $hostsId=[];
+                $idsArr=explode(',',$ids);
+                for($i=0;$i<count($idsArr);$i++) {
+                    array_push($hostsId,'filter:'.$idsArr[$i]);
+                }
+                ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
             }
             else{
                 $this->output['status'] = STATUS_BAD_REQUEST;

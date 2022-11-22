@@ -24,11 +24,13 @@ class ModelFilterHelper
         return $rsl;
     }
 
-    public static function getMultilJoinTable($info)
+    public static function getMultilJoinTable($info, $useTenant)
     {
         // LEFT JOIN users AS tb2 ON tb1.user_last_update = tb2.email
         $rsl = [];
         $tenantId = Auth::getTenantId();
+        $tenantConds = [];
+
         foreach ($info as $item) {
             $joinTable = $item['table'];
             $ttb = $item['table2TmpName'];
@@ -43,18 +45,23 @@ class ModelFilterHelper
 
             $rslItem = "LEFT JOIN $joinTable AS $ttb ON tb1.$col1 = $ttb.$col2";
             if($tenantId !== ''){
-                $rslItem .= " AND tb1.tenant_id_ = $tenantId AND $ttb.tenant_id_ = $tenantId ";
+                $tenantConds[] = " $ttb.tenant_id_ = $tenantId";
             }
             $rsl[] = $rslItem;
         }
-        return implode(' ', $rsl);
+        if($useTenant){
+            return implode(' ', $rsl)." WHERE tb1.tenant_id_ = $tenantId AND ".implode(" AND ", $tenantConds);
+        } else{
+            return implode(' ', $rsl);
+        }
     }
 
     public static function getJoinedSQL($table, $filter, $relatedColumns)
     {
         $joinInfo = $filter['linkTable'];
+        $useTenant = !isset($filter['refuseTenant']) || !$filter['refuseTenant'];
         $items = self::getMaskedItems($joinInfo, $relatedColumns);
-        $moreJoin = self::getMultilJoinTable($joinInfo);
+        $moreJoin = self::getMultilJoinTable($joinInfo, $useTenant);
         $items = array_values($items);
         $items = implode(" , ", $items);
         $sql = "SELECT $items FROM $table AS tb1 $moreJoin";
@@ -129,7 +136,8 @@ class ModelFilterHelper
 
         if (count($filter['linkTable']) > 0) {
             $table = self::getJoinedSQL($table, $filter, $relatedColumns);
-        }else{
+            // Trong hàm getJoinedSQL đã xử lý tenant rồi nên ko cần mergeCondWithTenantFilter nữa
+        } else if(!isset($filter['refuseTenant']) || !$filter['refuseTenant']){
             $cond = Model::mergeCondWithTenantFilter(preg_replace('/WHERE /i', '', $where, 1));
             $where = $cond ? " WHERE $cond" : "";
         }
@@ -243,7 +251,8 @@ class ModelFilterHelper
         $whereItems = [];
         foreach ($filter['filter'] as $filterItem) {
             $str = self::convertConditionToWhereItem($filterItem, $filterableColumns, $relatedColumns);
-            if ($str != '') {
+            $checkStr = str_replace(' ','', $str);
+            if ($checkStr != '' && $checkStr != '()') {
                 $whereItems[] = $str;
             }
         }
@@ -327,7 +336,12 @@ class ModelFilterHelper
             $op = $conditionItem['valueFilter']['operation'];
             $conds[] = "\"$colName\" $op $values ";
         }
-        return implode(' AND ', $conds);
+
+        if(count($conds) > 0){
+            return '('.implode(') AND (', $conds).')';
+        }else{
+            return '';
+        }
     }
 
     public static function bindValueToWhereItem($op, $colName, $value, $mapColumns, $dataType)
