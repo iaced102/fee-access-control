@@ -37,16 +37,7 @@ class ObjectRelation {
             'nodes'     => $nodes,
             'host'      => $host
         ];
-        $token = "Bearer ".Auth::getBearerToken();
-        $res = Request::request(
-            "https://".OBJECT_RELATION.'/sub-graph', 
-            $data,
-            'POST',
-            $token,
-            'application/json',
-            false,
-            300
-        );
+        MessageBus::publish("object-relation-data", "save", $data);
     }
 
 

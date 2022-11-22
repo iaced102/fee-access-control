@@ -112,13 +112,17 @@ class SqlObject extends Model{
      * @param int $targetTenant id tenant đích cần chuyeenr
      * @param array $referenceColumn tên cột mà parent column refernce đến
      * @param array $parentId chứa parent id của các object cần chuyển 
+     * @param string $extraCondition điều kiện thêm để lọc cùng với parentIds
      * 
      * @return array|false trả về mảng id của các object của model này đã được clone, trả về false nếu quá trình clone thất bại
      */
-    public static function migrateObjectsByParents($sourceTenant, $targetTenant, string $referenceColumn, array $parentIds)
+    public static function migrateObjectsByParents($sourceTenant, $targetTenant, string $referenceColumn, array $parentIds, string $extraCondition = "")
     {
         $parentStr = "'".implode("','", $parentIds)."'";
         $cond = "$referenceColumn IN ($parentStr)";
+        if($extraCondition != ""){
+            $cond .= " AND $extraCondition";
+        }
         return static::migrateObjectsByCondition($sourceTenant, $targetTenant, $cond);
     }
 
