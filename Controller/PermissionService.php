@@ -73,7 +73,7 @@ class PermissionService extends Controller
                                     'id' => "action_pack:$value",
                                     'title' => "action_pack:$value",
                                     'type' => 'action_pack',
-                                    'host' => "action_pack:$id"
+                                    'host' => "action_pack:$value"
                                 ]);
         }
     }
