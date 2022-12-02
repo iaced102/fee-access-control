@@ -118,7 +118,7 @@ class FilterService extends Controller
         $nodes =[];
         self::getObjectRleationLinks($links,$id,$objectIdentifier);
         self::addObjectRleationNodes($nodes,$id,$objectIdentifier,$name);
-        ObjectRelation::save($nodes,$links,'');
+        ObjectRelation::save($nodes,$links,"filter:$id");
     }
     function update(){
         $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
