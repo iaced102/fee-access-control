@@ -141,7 +141,7 @@ class ActionPackService extends Controller
         }
         self::getObjectRleationLinks($links,$listObject,$id);
         self::addObjectRleationNodes($nodes,$id,$listObject,$name);
-        ObjectRelation::save($nodes,$links,'');
+        ObjectRelation::save($nodes,$links,"action_pack:$id");
     }
     function update(){
         TimeLog::start('publish-data-to-kafka');

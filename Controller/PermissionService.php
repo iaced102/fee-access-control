@@ -82,7 +82,7 @@ class PermissionService extends Controller
         $nodes =[];
         self::getObjectRleationLinks($links,json_decode($list),$id);
         self::addObjectRleationNodes($nodes,$id,json_decode($list),$name);
-        ObjectRelation::save($nodes,$links,'');
+        ObjectRelation::save($nodes,$links,"permission_pack:$id");
     }
     function create(){
         $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
