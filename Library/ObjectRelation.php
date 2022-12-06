@@ -45,11 +45,14 @@ class ObjectRelation {
      * Xóa nodes và links từ host được truyền vào
      * @param string $host chứa 1 hoặc nhiều host, các host cách nhau bằng dấu phẩy  
      */
-    public static function deleteNodesAndLinks($host)
+    public static function deleteNodesAndLinks($host, $deleteByCohost = false)
     {
+        $url = "https://".OBJECT_RELATION."/object-host/$host";
+        if($deleteByCohost){
+            $url = "https://".OBJECT_RELATION."/object-cohost/$host";
+        }
         $token = "Bearer ".Auth::getBearerToken();
-        $res = Request::request(
-            "https://".OBJECT_RELATION."/object-host/$host", 
+        $res = Request::request($url, 
             false,
             'DELETE',
             $token,
