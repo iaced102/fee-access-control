@@ -81,7 +81,13 @@ class Request {
         if(!empty($this->token)){
             $token = $this->token;
         }
+
+        $token = trim($token);
         $authorization ="Authorization: Bearer ". $token;
+        if(strpos($token, "Bearer ") === 0){
+            $authorization ="Authorization: ". $token;
+        }
+        
         curl_setopt($s,CURLOPT_HTTPHEADER,array("Content-Type: $contentType",$authorization));
         
         curl_setopt($s,CURLOPT_TIMEOUT,$this->timeOut);

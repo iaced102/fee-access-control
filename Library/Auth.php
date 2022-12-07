@@ -160,6 +160,10 @@ class Auth
     public static function getDataToken()
     {
 
+        if (self::$ignoreTokenInfo === true) {
+            return null;
+        }
+
         $dataLogin = CacheService::getMemoryCache('JwtDataLoginCache');
         if ($dataLogin == false) {
             $token = Auth::getBearerToken();
