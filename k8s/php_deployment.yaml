@@ -24,9 +24,6 @@ spec:
         - containerPort: 9000
         image: registry.symper.vn/{SYMPER_IMAGE}
         resources:
-          requests:
-            memory: "200Mi"
-            cpu: "250m"
           limits:
             memory: "500Mi"
             cpu: "500m"
@@ -37,7 +34,17 @@ spec:
         volumeMounts:
         - name: config-env
           mountPath: /src
+        - name: authorization-key
+          mountPath: /var/www/account.symper.vn/Crypt
+          readOnly: true
       volumes:
       - name: config-env
         configMap:
           name: php-env-config-accesscontrol
+      - name: authorization-key
+        projected:
+          sources:
+          - secret:
+              name: old-authorization-public-key
+          - secret:
+              name: old-authorization-private-key

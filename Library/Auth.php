@@ -6,6 +6,7 @@ class Auth
 {
     private static $tenantId = '';
     private static $ignoreTokenInfo = false;
+    private static $oldAuth = true;
 
     //
     public static function Hash($password)
@@ -15,18 +16,30 @@ class Auth
 
     public static function sign($data)
     {
-        $privatePEMKey = file_get_contents(DIR . '/Crypt/private.pem');
+        if (self::$oldAuth) {
+            $privatePEMKey = file_get_contents(DIR . '/Crypt/private.pem');
+        } else {
+            $privatePEMKey = file_get_contents(DIR . '/Crypt/private1.pem');
+        }
         $privatePEMKey = openssl_get_privatekey($privatePEMKey, 'Symper@@');
         $signature = '';
         openssl_sign($data, $signature, $privatePEMKey, OPENSSL_ALGO_SHA256);
-        $signature = bin2hex($signature);
+        if (self::$oldAuth) {
+            $signature = bin2hex($signature);
+        }
         return $signature;
     }
     public static function verifySign($data, $signature)
     {
-        $publicPEMKey = file_get_contents(DIR . '/Crypt/public.pem');
-        $publicPEMKey = openssl_get_publickey($publicPEMKey);
-        $r = openssl_verify($data, hex2bin($signature), $publicPEMKey, OPENSSL_ALGO_SHA256);
+        if (self::$oldAuth) {
+            $publicPEMKey = file_get_contents(DIR . '/Crypt/public.pem');
+            $publicPEMKey = openssl_get_publickey($publicPEMKey);
+            $r = openssl_verify($data, hex2bin($signature), $publicPEMKey, OPENSSL_ALGO_SHA256);
+        } else {
+            $publicPEMKey = file_get_contents(DIR . '/Crypt/public1.pem');
+            $publicPEMKey = openssl_get_publickey($publicPEMKey);
+            $r = openssl_verify($data, $signature, $publicPEMKey, OPENSSL_ALGO_SHA256);
+        }
         if ($r == 1) {
             return true;
         } else {
@@ -48,7 +61,11 @@ class Auth
             $payload = $dataFromToken[1];
             $signature = $dataFromToken[2];
             if (self::verifyJwt($header, $payload, $signature)) {
-                $jsonData = base64_decode($payload);
+                if (self::$oldAuth) {
+                    $jsonData = base64_decode($payload);
+                } else {
+                    $jsonData = self::base64UrlDecode($payload);
+                }
                 $data = json_decode($jsonData, true);
                 CacheService::setMemoryCache($token, $data);
                 return $data;
@@ -57,14 +74,25 @@ class Auth
             }
         }
     }
-
+    private static function base64UrlEncode($data)
+    {
+        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+    }
+    private static function base64UrlDecode($data)
+    {
+        return base64_decode(str_replace(['-', '_', ''], ['+', '/', '='], $data));
+    }
     public static function verifyJwt($header, $payload, $signature)
     {
-        $signature = base64_decode($signature);
+        if (self::$oldAuth) {
+            $signature = base64_decode($signature);
+        } else {
+            $signature = self::base64UrlDecode($signature);
+        }
         $dataToVerify = "$header.$payload";
         return self::verifySign($dataToVerify, $signature);
     }
-    public static function getJwtToken($data, $timeout = false)
+    public static function getJwtToken($data, $exp = false)
     {
         $data = (array)$data;
         $header = self::getJwtHeader();
@@ -76,28 +104,60 @@ class Auth
         $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
         $data['tenant_domain'] = isset($GLOBALS['env']['tenant_domain']) ? $GLOBALS['env']['tenant_domain'] : '';
         // Token's timeout default is 3600s
-        $data['exp'] = $timeout == false ? time() + 3600 : time() + $timeout;
+        $data['exp'] = $exp == false ? time() + 3600 : time() + $exp;
+        $data['iat'] = time();
         $payload = self::getJwtPayload($data);
         $signature = self::getJwtSignature($header, $payload);
         $jwtToken = "$header.$payload.$signature";
         return $jwtToken;
     }
-
+    public static function getJwtRefreshToken($exp = false, $iat = false)
+    {
+        $data = ["u" => Str::createUUID()];
+        $header = self::getJwtHeader();
+        if (isset($data['tenantId']) || isset($data['tenant_id'])) {
+            $data['tenant'] = [
+                'id'    => isset($data['tenantId']) ? $data['tenantId'] : $data['tenant_id']
+            ];
+        }
+        $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
+        // Token's timeout default is 2600000s
+        $data['exp'] = $exp == false ? time() + 2600000 : $exp;
+        if ($iat != false) {
+            $data['iat'] = time();
+        }
+        $payload = self::getJwtPayload($data);
+        $signature = self::getJwtSignature($header, $payload);
+        $jwtToken = "$header.$payload.$signature";
+        return $jwtToken;
+    }
     public static function getJwtHeader()
     {
         $header = [
             'alg'   => "RS256",
             'typ'   => 'JWT',
         ];
-        return base64_encode(json_encode($header));
+        if (self::$oldAuth) {
+            return base64_encode(json_encode($header));
+        } else {
+            return self::base64UrlEncode(json_encode($header));
+        }
     }
     public static function getJwtPayload($data)
     {
-        return base64_encode(json_encode($data));
+        if (self::$oldAuth) {
+            return base64_encode(json_encode($data));
+        } else {
+            return self::base64UrlEncode(json_encode($data));
+        }
     }
     public static function getJwtSignature($header, $payload)
     {
-        return base64_encode(self::sign("$header.$payload"));
+        if (self::$oldAuth) {
+            return base64_encode(self::sign("$header.$payload"));
+        } else {
+            return self::base64UrlEncode(self::sign("$header.$payload")) . "new_symper_authen_!";
+        }
     }
     public static function getAuthorizationHeader()
     {
@@ -113,6 +173,9 @@ class Auth
                 $headers = trim($requestHeaders['Authorization']);
             }
         }
+        if (strpos($headers, "new_symper_authen_!")) {
+            $headers = str_replace("new_symper_authen_!", "", $headers);
+        }
         return $headers == 'Bearer false' ? null : $headers;
     }
     public static function getBearerToken()
@@ -127,7 +190,11 @@ class Auth
     }
     public static function encryptRSA($plainData)
     {
-        $publicPEMKey   = file_get_contents(DIR . '/Crypt/public.pem');
+        if (self::$oldAuth) {
+            $publicPEMKey   = file_get_contents(DIR . '/Crypt/public.pem');
+        } else {
+            $publicPEMKey   = file_get_contents(DIR . '/Crypt/public1.pem');
+        }
         $publicPEMKey   = openssl_get_publickey($publicPEMKey);
         $encrypted      = '';
         $plainData      = str_split($plainData, 200);
@@ -139,14 +206,24 @@ class Auth
             }
             $encrypted .= $partialEncrypted;
         }
-        return base64_encode($encrypted);
+        if (self::$oldAuth) {
+            return base64_encode($encrypted);
+        } else {
+            return self::base64UrlEncode($encrypted);
+        }
     }
     public static function decryptRSA($data)
     {
-        $privatePEMKey  = file_get_contents(DIR . '/Crypt/private.pem');
-        $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
         $decrypted      = '';
-        $data           = str_split(base64_decode($data), 256); //2048 bit
+        if (self::$oldAuth) {
+            $privatePEMKey  = file_get_contents(DIR . '/Crypt/private.pem');
+            $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
+            $data  = str_split(base64_decode($data), 256); //2048 bit
+        } else {
+            $privatePEMKey  = file_get_contents(DIR . '/Crypt/private1.pem');
+            $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
+            $data  = str_split(self::base64UrlDecode($data), 256); //2048 bit
+        }
         foreach ($data as $chunk) {
             $partial = '';
             $decryptionOK = openssl_private_decrypt($chunk, $partial, $privatePEMKey, OPENSSL_PKCS1_PADDING);
@@ -178,16 +255,20 @@ class Auth
     public static function getTenantId()
     {
         $dataLogin = self::getDataToken();
+        $tenantId = "";
         if (!empty($dataLogin)) {
             if (isset($dataLogin['tenant'])) {
-                return $dataLogin['tenant']['id'];
+                $tenantId = $dataLogin['tenant']['id'];
             } else if (isset($dataLogin['userDelegate']) && isset($dataLogin['userDelegate']['tenantId'])) {
-                return $dataLogin['userDelegate']['tenantId'];
+                $tenantId = $dataLogin['userDelegate']['tenantId'];
             }
         } else {
             return self::$tenantId;
         }
-        return '';
+        if ($tenantId == 2) {
+            $tenantId = 1;
+        }
+        return $tenantId;
     }
 
     public static function getCurrentRole()
@@ -205,14 +286,44 @@ class Auth
         }
         return false;
     }
-    public static function getCurrentBaEmail(){
-        $token = Auth::getBearerToken();
-        if(!empty($token)){
-            $dataLogin = Auth::getJwtData($token);
-            $baEmail = (!empty($dataLogin['email'])) ? $dataLogin['email'] : "";
-            return $baEmail;
+
+
+    /**
+     * Hàm kiểm tra tính hơp lệ của password
+     *
+     * @param String $password
+     * @return String
+     */
+    public static function validatePassword($password)
+    {
+        $message = false;
+        if (!empty($password)) {
+            if (strlen($password) < 8) {
+                $message = "Yêu cầu mật khẩu lớn hơn 8 kí tự!";
+            } elseif (!preg_match("#[0-9]+#", $password)) {
+                $message = "Mật khẩu phải có ít nhất 1 số!";
+            } elseif (!preg_match("#[A-Z]+#", $password)) {
+                $message = "Mật khẩu phải chứa ít nhất 1 chữ hoa!";
+            } elseif (!preg_match("#[a-z]+#", $password)) {
+                $message = "Mật khẩu phải chứa ít nhất 1 chữ thường!";
+            }
+        } else {
+            $message = "Mật khẩu không được bỏ trống";
         }
-        return "";
+        return $message;
+    }
+    /**
+     * Hàm kiểm tra tính hơp lệ của password
+     *
+     * @param String $password
+     * @return Bool
+     */
+    public static function isValidatePassword($password)
+    {
+        if (self::validatePassword($password) !== false) {
+            return false;
+        }
+        return true;
     }
     public static function getCurrentUserId()
     {
@@ -227,6 +338,7 @@ class Auth
         }
         return false;
     }
+
     public static function getCurrentSupporterId()
     {
         $token = Auth::getBearerToken();
@@ -263,6 +375,7 @@ class Auth
     {
         return $_SERVER['HTTP_USER_AGENT'];
     }
+
     private static function getTokenInfo($key)
     {
         $dataLogin = self::getDataToken();
@@ -316,6 +429,17 @@ class Auth
         self::$tenantId = $tenantId;
     }
 
+    public static function getCurrentBaEmail()
+    {
+        $token = Auth::getBearerToken();
+        if (!empty($token)) {
+            $dataLogin = Auth::getJwtData($token);
+            $baEmail = (!empty($dataLogin['email'])) ? $dataLogin['email'] : "";
+            return $baEmail;
+        }
+        return "";
+    }
+
     public static function ignoreTokenInfo()
     {
         self::$ignoreTokenInfo = true;
@@ -324,5 +448,13 @@ class Auth
     public static function restoreTokenInfo()
     {
         self::$ignoreTokenInfo = false;
+    }
+    public static function setNewAuth()
+    {
+        self::$oldAuth = false;
+    }
+    public static function checkNewAuth()
+    {
+        return !self::$oldAuth;
     }
 }
