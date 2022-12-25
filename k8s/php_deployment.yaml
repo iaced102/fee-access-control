@@ -45,6 +45,6 @@ spec:
         projected:
           sources:
           - secret:
-              name: old-authorization-public-key
+              name: authorization-public-key
           - secret:
-              name: old-authorization-private-key
+              name: old-authorization-public-key
