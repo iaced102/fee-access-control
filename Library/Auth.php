@@ -175,6 +175,7 @@ class Auth
         }
         if (strpos($headers, "new_symper_authen_!")) {
             $headers = str_replace("new_symper_authen_!", "", $headers);
+            self::setNewAuth();
         }
         return $headers == 'Bearer false' ? null : $headers;
     }
