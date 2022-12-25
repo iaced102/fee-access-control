@@ -24,6 +24,9 @@ spec:
         - containerPort: 9000
         image: registry.symper.vn/{SYMPER_IMAGE}
         resources:
+          requests:
+            memory: "10Mi"
+            cpu: "10m"
           limits:
             memory: "500Mi"
             cpu: "500m"
