@@ -35,7 +35,7 @@ spec:
         - name: config-env
           mountPath: /src
         - name: authorization-key
-          mountPath: /var/www/account.symper.vn/Crypt
+          mountPath: /var/www/accesscontrol.symper.vn/Crypt
           readOnly: true
       volumes:
       - name: config-env
