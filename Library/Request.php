@@ -87,7 +87,9 @@ class Request {
         if(strpos($token, "Bearer ") === 0){
             $authorization ="Authorization: ". $token;
         }
-        
+        if (Auth::checkNewAuth()) {
+            $authorization = $authorization . "new_symper_authen_!";
+        }
         curl_setopt($s,CURLOPT_HTTPHEADER,array("Content-Type: $contentType",$authorization));
         
         curl_setopt($s,CURLOPT_TIMEOUT,$this->timeOut);
