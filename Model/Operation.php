@@ -46,12 +46,12 @@ class Operation extends SqlObject
         "document_table" => [
             "name" => "Control",
             "ownerDomain" => "document-management.symper.vn",
-            "action" => ['hide','readonly', 'remove', 'not_edit_old_rows', 'old_rows_readonly','old_rows_not_remove']
+            "action" => ['hide','readonly', 'not_edit_old_rows', 'old_rows_readonly','old_rows_not_remove']
         ],
         "document_control" => [
             "name" => "Document table",
             "ownerDomain" => "document-management.symper.vn",
-            "action" => ['hide','old_rows_readonly','old_rows_not_remove']
+            "action" => ['hide','old_rows_readonly','readonly']
         ],
         'action_pack' => [
             'name'=>'nhóm hành động',       
