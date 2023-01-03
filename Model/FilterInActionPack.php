@@ -12,7 +12,7 @@ class FilterInActionPack extends SqlObject
         $filterValues,
         $tenantId;
     public static $mappingFromDatabase = [
-        'filterId'            =>  [ 'name' => 'filter_id',              'type' => 'string'],
+        'filterId'            =>  [ 'name' => 'filter_id',              'type' => 'string','primary'=>true],
         'actionPackId'        =>  [ 'name' => 'action_pack_id',         'type' => 'string'],
         'action'              =>  [ 'name' => 'action',                 'type' => 'string'],
         'filterStruct'        =>  [ 'name' => 'filter_struct',                 'type' => 'string'],
