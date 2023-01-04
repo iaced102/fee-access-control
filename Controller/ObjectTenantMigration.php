@@ -123,7 +123,7 @@ class ObjectTenantMigration extends Controller{
         }
     }
     public function checkRsl($rsl){
-        if ($rsl == false){
+        if ($rsl === false){
             $this->output = [
                 'status'    => STATUS_SERVER_ERROR,
                 'message'   => Message::getStatusResponse(STATUS_SERVER_ERROR),
