@@ -56,6 +56,13 @@ pipeline{
                 DB_HOST = "103.56.157.180"
             }
             stages {
+                stage("test") {
+                    steps {
+                        script {
+                            sh "echo 'Test empty'"
+                        }
+                    }
+                }
                 // stage("build"){
                 //     steps{
                 //         withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
