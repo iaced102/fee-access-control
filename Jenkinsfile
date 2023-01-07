@@ -20,14 +20,14 @@ pipeline{
             }
             stages {
                 stage("deploy to k8s") {
-                    when {
-                        expression {
-                            "${Author_Name}"?.startsWith("release")
-                        }
-                    }
+                    // when {
+                    //     expression {
+                    //         "${Author_Name}"?.startsWith("release")
+                    //     }
+                    // }
                     steps{
                         withCredentials([
-                            usernamePassword(credentialsId: 'dev_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER')
+                            usernamePassword(credentialsId: 'dev_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER'),
                             usernamePassword(credentialsId: 'qc_test_user_pass', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME')
                         ]) {
                             sh "chmod +x changeTag.sh"
