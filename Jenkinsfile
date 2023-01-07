@@ -49,7 +49,7 @@ pipeline{
         
         stage ("production") {
             when {
-                branch = "master"
+                branch "master"
             }
             environment {
                 SERVICE_ENV = "prod"
