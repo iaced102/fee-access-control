@@ -49,5 +49,3 @@ spec:
           sources:
           - secret:
               name: authorization-public-key
-          - secret:
-              name: old-authorization-public-key
