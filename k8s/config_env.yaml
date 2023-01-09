@@ -10,7 +10,7 @@ data:
     "environment":"{ENVIRONMENT}",
     "db":{
       "postgresql":{
-          "host":"{DB_HOST}",
+          "host":"{POSTGRES_HOST}",
           "dbname":"{ENVIRONMENT_}accesscontrol_symper_vn",
           "username":"{POSTGRES_USER}",
           "password":"{POSTGRES_PASSWORD}"
