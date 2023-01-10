@@ -53,7 +53,7 @@ pipeline{
             }
             environment {
                 SERVICE_ENV = "prod"
-                DB_HOST = "103.56.157.180"
+                POSTGRES_HOST = "103.56.157.180"
             }
             stages {
                 stage("test") {
