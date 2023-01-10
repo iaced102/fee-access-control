@@ -5,7 +5,7 @@ metadata:
     name: nginx-accesscontrol
 spec:
     selector:
-      app: nginx-accesscontrol
+      app: php-accesscontrol
       tier: backend
     ports:
     - name: http
