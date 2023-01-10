@@ -25,8 +25,8 @@ spec:
             path: accesscontrol.symper.vn.conf
       imagePullSecrets:
       - name: regcred
-      containers:
       serviceAccountName: symper
+      containers:
       - name: nginx-accesscontrol
         image: registry.symper.vn/nginx:1.2
         resources:
