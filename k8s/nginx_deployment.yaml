@@ -1,43 +1,43 @@
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: nginx-accesscontrol
-#   labels:
-#     tier: backend
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: nginx-accesscontrol
-#       tier: backend
-#   template:
-#     metadata:
-#       labels:
-#         app: nginx-accesscontrol
-#         tier: backend
-#     spec:
-#       volumes:
-#       - name: config
-#         configMap:
-#           name: nginx-config-accesscontrol
-#           items:
-#           - key: config
-#             path: accesscontrol.symper.vn.conf
-#       imagePullSecrets:
-#       - name: regcred
-#       serviceAccountName: symper
-#       containers:
-#       - name: nginx-accesscontrol
-#         image: registry.symper.vn/nginx:1.2
-#         resources:
-#           requests:
-#             memory: "10Mi"
-#             cpu: "10m"
-#           limits:
-#             memory: "500Mi"
-#             cpu: "500m"
-#         ports:
-#         - containerPort: 80
-#         volumeMounts:
-#         - name: config
-#           mountPath: /etc/nginx/conf.d
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-accesscontrol
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-accesscontrol
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: nginx-accesscontrol
+        tier: backend
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-config-accesscontrol
+          items:
+          - key: config
+            path: accesscontrol.symper.vn.conf
+      imagePullSecrets:
+      - name: regcred
+      serviceAccountName: symper
+      containers:
+      - name: nginx-accesscontrol
+        image: registry.symper.vn/nginx:1.2
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "10m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
