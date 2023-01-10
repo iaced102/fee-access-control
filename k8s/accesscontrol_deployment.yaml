@@ -41,6 +41,20 @@ spec:
         - name: authorization-key
           mountPath: /var/www/accesscontrol.symper.vn/Crypt
           readOnly: true
+      - name: nginx-accesscontrol
+        image: registry.symper.vn/nginx:1.2
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "10m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
       volumes:
       - name: config-env
         configMap:
@@ -50,3 +64,9 @@ spec:
           sources:
           - secret:
               name: authorization-public-key
+      - name: config
+        configMap:
+          name: nginx-config-accesscontrol
+          items:
+          - key: config
+            path: accesscontrol.symper.vn.conf
