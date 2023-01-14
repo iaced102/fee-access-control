@@ -13,6 +13,7 @@ use Library\Auth;
 use Library\Environment;
 use Library\Redirect;
 use Library\Message;
+use Library\MessageBus;
 use Library\Request;
 use Library\Str;
 use SqlObject;
@@ -50,8 +51,7 @@ class Controller
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y")
             ];
-            $messageBusData = ['topic' => 'request-input', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
-            Request::request(MESSAGE_BUS_SERVICE . '/publish', $messageBusData, 'POST');
+            MessageBus::publish('request-input','log', json_encode($dataKafka, JSON_UNESCAPED_UNICODE));
         }
         if (method_exists($this, $action)) {
             $this->$action();
@@ -144,9 +144,14 @@ class Controller
         }
         print json_encode($this->output);
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
+            $dataJsonStr = json_encode($this->output, JSON_UNESCAPED_UNICODE);
+            // Nếu kích thước 900 Kbs thì cắt chuỗi chỉ lấy 1 phần đầu
+            if(strlen($dataJsonStr) >  900000){
+                $dataJsonStr = substr($dataJsonStr,0,10000);
+            }
             $endTime = microtime(true);
             $dataKafka = [
-                'output'        => $this->output,
+                'output'        => $dataJsonStr,
                 'processUuid'   => $this->processUuid,
                 'error'         => error_get_last(),
                 'timeStamp'     => Str::currentTimeString(),
@@ -158,8 +163,7 @@ class Controller
                 'host'          => $_SERVER['HTTP_HOST'],
                 'method'        => $_SERVER['REQUEST_METHOD'],
             ];
-            $messageBusData = ['topic' => 'request-output', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
-            Request::request(MESSAGE_BUS_SERVICE . '/publish', $messageBusData, 'POST');
+            MessageBus::publish('request-output','log', json_encode($dataKafka, JSON_UNESCAPED_UNICODE));
         }
     }
 }
