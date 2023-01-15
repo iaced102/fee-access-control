@@ -1,26 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: php-accesscontrol
+  name: {APP_NAME}-deployment-{TARGET_ROLE}
   labels:
     tier: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: php-accesscontrol
+      app: {APP_NAME}
       tier: backend
   template:
     metadata:
       labels:
-        app: php-accesscontrol
+        app: {APP_NAME}
         tier: backend
+        role: {TARGET_ROLE}
     spec:
       imagePullSecrets:
       - name: regcred
       serviceAccountName: symper
       containers:
-      - name: php-accesscontrol
+      - name: {APP_NAME}
         ports:
         - containerPort: 9000
         image: registry.symper.vn/{SYMPER_IMAGE}

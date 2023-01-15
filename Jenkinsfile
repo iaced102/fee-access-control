@@ -17,8 +17,45 @@ pipeline{
             environment {
                 SERVICE_ENV = "test"
                 POSTGRES_HOST = "14.225.0.166"
+                DOCKER_TAG = "2.6.22"
             }
             stages {
+                // stage("build"){
+                //     steps{
+                //         withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
+                //             sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
+                //         }
+                //         script {
+                //             env.BUILD_VERSION = 'alpha'
+                //             sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
+                //             sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
+                //             sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
+                //         }
+                //     }
+                // }
+                stage("checkin deployment state") {
+                    steps{
+                        withCredentials([
+                            usernamePassword(credentialsId: 'qc_test_user_pass', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME')
+                        ]) {
+                            script {
+                                sshagent(['qc_test_ssh_key']) {
+                                    try{
+                                        env.CURRENT_ROLE=sh (returnStdout: true, 
+                                                            script: "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S kubectl get services --field-selector metadata.name=\"$APP_NAME\" -o jsonpath={.items[0].spec.selector.role}'").trim()
+                                    } catch (Exception e) {
+                                        echo "$env.CURRENT_ROLE" }
+                                }
+                                sh "echo role ${env.CURRENT_ROLE}"
+                                if("$env.CURRENT_ROLE" == "green") {
+                                    env.TARGET_ROLE = "blue"
+                                } else {
+                                    env.TARGET_ROLE = "green"
+                                }
+                            }
+                        }
+                    }
+                }
                 stage("deploy to k8s") {
                     // when {
                     //     expression {
@@ -30,16 +67,13 @@ pipeline{
                             usernamePassword(credentialsId: 'dev_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER'),
                             usernamePassword(credentialsId: 'qc_test_user_pass', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME')
                         ]) {
-                            sh "chmod +x changeTag.sh"
-                            sh './changeTag.sh $SERVICE_NAME:2.6.22 $SERVICE_ENV $POSTGRES_USER $POSTGRES_PASS $POSTGRES_HOST'
+                            sh "chmod +x shellscripts/*"
                             sshagent(['qc_test_ssh_key']) {
-                                sh "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S rm -rf /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}'"
-                                sh "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S  mkdir -p /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}'"
-                                sh "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'mkdir -p /tmp/${SERVICE_ENV}/${SERVICE_NAME}'"
-                                sh "scp -o StrictHostKeyChecking=no k8s/* $USER_NAME@14.225.36.157:/tmp/${SERVICE_ENV}/${SERVICE_NAME}"
-                                sh "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S  mv /tmp/${SERVICE_ENV}/${SERVICE_NAME}/* /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}'"
-                                sh "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S  kubectl config set-context --current --namespace=${SERVICE_ENV}'"
-                                sh "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S  kubectl apply -f /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}'"
+                                sh '''
+                                    echo $TARGET_ROLE
+                                '''
+                                sh "./shellscripts/updateManifests.sh"
+                                sh "./shellscripts/deployService.sh"
                             }
                         }
                     }
