@@ -4,6 +4,7 @@ pipeline{
         SERVICE_NAME = "accesscontrol.symper.vn"
         // SERVICE_ENV = "prod"
         KAFKA_SUBCRIBE = true
+        APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
         Author_ID=sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
         Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
     }
