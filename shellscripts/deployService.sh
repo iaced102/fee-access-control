@@ -21,5 +21,5 @@ then
     # ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S ls -al /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}/patch_php_service.yaml"
     # ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl apply -f /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}/patch_php_service.yaml"
     ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl patch service $APP_NAME -p '{\"spec\": {\"selector\": {\"role\": \"$TARGET_ROLE\"}}}'"
-    ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl delete deployment $APP_NAME-deployment-$CURRENT_ROLE"
+    ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl delete deployment $APP_NAME-deployment-$CURRENT_ROLE --ignore-not-found=true"
 fi
