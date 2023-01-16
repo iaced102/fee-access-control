@@ -8,9 +8,11 @@ ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo
 ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S  kubectl config set-context --current --namespace=${SERVICE_ENV}"
 ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S  kubectl apply -f /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
 
-STATUS=$(ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl rollout status deployment/$APP_NAME-deployment-$TARGET_ROLE")
-
-if ["$STATUS" == 0] then
+ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl rollout status deployment/$APP_NAME-deployment-$TARGET_ROLE"
+STATUS=$?
+echo "status: $STATUS"
+if [ "$STATUS" == 0 ] 
+then
     echo "Deployment succeed!"
     # ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S kubectl patch service $APP_NAME -p \'\'{\"spec\": {\"selector\": {\"role\": \"$TARGET_ROLE\"}}}\'\'"
     # ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S sed \"s/$CURRENT_ROLE/$TARGET_ROLE/g\" /tmp/${SERVICE_ENV}/${SERVICE_NAME}/new_php_service.yaml > /tmp/${SERVICE_ENV}/${SERVICE_NAME}/patch_php_service.yaml"
