@@ -2,6 +2,7 @@
 
 ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S rm -rf /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
 ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S mkdir -p /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
+ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "rm -rf /tmp/${SERVICE_ENV}/${SERVICE_NAME}"
 ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "mkdir -p /tmp/${SERVICE_ENV}/${SERVICE_NAME}"
 scp -o StrictHostKeyChecking=no k8s/* $USER_NAME@14.225.36.157:/tmp/${SERVICE_ENV}/${SERVICE_NAME}
 ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 "echo $USER_PASS | sudo -S  cp /tmp/${SERVICE_ENV}/${SERVICE_NAME}/* /root/kubernetes/deployment/${SERVICE_ENV}/${SERVICE_NAME}"
