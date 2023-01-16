@@ -2,7 +2,6 @@ pipeline{
     agent any
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
-        // SERVICE_ENV = "prod"
         KAFKA_SUBCRIBE = true
         APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
         Author_ID=sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
@@ -17,23 +16,26 @@ pipeline{
             }
             environment {
                 SERVICE_ENV = "test"
+                // BUILD_VERSION = "2.6.22"
+                SSH_HOST = "14.225.36.157"
                 POSTGRES_HOST = "14.225.0.166"
-                DOCKER_TAG = "2.6.22"
+                POSTGRES_DB = "accesscontrol_symper_vn"
+                CLICKHOUSE_HOST = "14.225.0.166"
             }
             stages {
-                // stage("build"){
-                //     steps{
-                //         withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
-                //             sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
-                //         }
-                //         script {
-                //             env.BUILD_VERSION = 'alpha'
-                //             sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
-                //             sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
-                //             sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
-                //         }
-                //     }
-                // }
+                stage("build"){
+                    steps{
+                        withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'DOCKER_REGISTRY_PWD', usernameVariable: 'DOCKER_REGISTRY_USER')]) {
+                            sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
+                        }
+                        script {
+                            env.BUILD_VERSION = 'alpha'
+                            sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
+                            sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
+                            sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
+                        }
+                    }
+                }
                 stage("checkin deployment state") {
                     steps{
                         withCredentials([
@@ -43,12 +45,13 @@ pipeline{
                                 sshagent(['qc_test_ssh_key']) {
                                     try{
                                         env.CURRENT_ROLE=sh (returnStdout: true, 
-                                                            script: "ssh -o StrictHostKeyChecking=no $USER_NAME@14.225.36.157 'echo $USER_PASS | sudo -S kubectl get services --field-selector metadata.name=\"$APP_NAME\" -o jsonpath={.items[0].spec.selector.role}'").trim()
+                                                            script: "ssh -o StrictHostKeyChecking=no $USER_NAME@$SSH_HOST 'echo $USER_PASS | sudo -S kubectl get services --field-selector metadata.name=\"$APP_NAME\" -o jsonpath={.items[0].spec.selector.role}'").trim()
                                     } catch (Exception e) {
-                                        echo "$env.CURRENT_ROLE" }
+                                        echo "$e" }
                                 }
                                 sh "echo role ${env.CURRENT_ROLE}"
-                                if("$env.CURRENT_ROLE" == "green") {
+                                if("$env.CURRENT_ROLE" == "" || "$env.CURRENT_ROLE" == "green") {
+                                    env.CURRENT_ROLE = "green"
                                     env.TARGET_ROLE = "blue"
                                 } else {
                                     env.TARGET_ROLE = "green"
@@ -75,6 +78,17 @@ pipeline{
                                 '''
                                 sh "./shellscripts/updateManifests.sh"
                                 sh "./shellscripts/deployService.sh"
+                            }
+                        }
+                    }
+                }
+                stage("triggerkafka") {
+                    steps {
+                        script {
+                            if ("${KAFKA_SUBCRIBE}".toBoolean() == true) {
+                                sh 'curl -s -I -X GET https://${SERVICE_ENV}-${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
+                            } else{
+                                echo 'None Kafka subscriber'
                             }
                         }
                     }

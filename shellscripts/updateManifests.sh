@@ -10,21 +10,22 @@ then
     envDomain=$SERVICE_ENV"-"
 fi
 
-sed -i -e "s/{SYMPER_IMAGE}/${SERVICE_NAME}:${DOCKER_TAG}/g" \
-       -e "s/{APP_NAME}/$APP_NAME/g" \
-       -e "s/{CURRENT_ROLE}/$CURRENT_ROLE/g" \
-       -e "s/{TARGET_ROLE}/$TARGET_ROLE/g" k8s/accesscontrol_deployment.yaml
-
-sed -i -e "s/{APP_NAME}/$APP_NAME/g" \
-       -e "s/{CURRENT_ROLE}/$CURRENT_ROLE/g" k8s/php_service.yaml
-
-sed -i -e "s/{ENVIRONMENT_DOMAIN}/$envDomain/g" \
-       -e "s/{APP_NAME}/$APP_NAME/g" \
-       -e "s/{CURRENT_ROLE}/$CURRENT_ROLE/g" \
-       -e "s/{TARGET_ROLE}/$TARGET_ROLE/g" k8s/service_ing.yaml
-
 sed -i -e "s/{ENVIRONMENT}/$originEnv/g" \
        -e "s/{ENVIRONMENT_}/$env/g" \
+       -e "s/{APP_NAME}/$APP_NAME/g" \
        -e "s/{POSTGRES_USER}/$POSTGRES_USER/g" \
-       -e "s/{POSTGRES_PASSWORD}/$POSTGRES_PASSWORD/g" \
-       -e "s/{POSTGRES_HOST}/$POSTGRES_HOST/g" k8s/config_env.yaml
+       -e "s/{POSTGRES_PASS}/$POSTGRES_PASSWORD/g" \
+       -e "s/{POSTGRES_DB}/${POSTGRES_DB}/g" \
+       -e "s/{POSTGRES_HOST}/$POSTGRES_HOST/g" k8s/app_configmap.yaml
+
+sed -i -e "s/{SERVICE_NAME}/$SERVICE_NAME/g" \
+       -e "s/{APP_NAME}/$APP_NAME/g" k8s/nginx_configmap.yaml  
+
+sed -i -e "s/{SYMPER_IMAGE}/${SERVICE_NAME}:${BUILD_VERSION}/g" \
+       -e "s/{APP_NAME}/$APP_NAME/g" \
+       -e "s/{SERVICE_NAME}/$SERVICE_NAME/g" \
+       -e "s/{TARGET_ROLE}/$TARGET_ROLE/g" k8s/app_deployment.yaml
+
+sed -i -e "s/{APP_NAME}/$APP_NAME/g" \
+       -e "s/{CURRENT_ROLE}/$CURRENT_ROLE/g" \
+       -e "s/{HOST_DOMAIN}/${envDomain}${SERVICE_NAME}/g" k8s/service_ingress.yaml

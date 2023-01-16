@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {APP_NAME}-deployment-{TARGET_ROLE}
+  name: {APP_NAME}-{TARGET_ROLE}
   labels:
     tier: backend
 spec:
@@ -10,6 +10,7 @@ spec:
     matchLabels:
       app: {APP_NAME}
       tier: backend
+      role: {TARGET_ROLE}
   template:
     metadata:
       labels:
@@ -25,25 +26,19 @@ spec:
         ports:
         - containerPort: 9000
         image: registry.symper.vn/{SYMPER_IMAGE}
-        resources:
-          requests:
-            memory: "10Mi"
-            cpu: "10m"
-          limits:
-            memory: "500Mi"
-            cpu: "500m"
+        env:
+          - name: TZ
+            value: Asia/Ho_Chi_Minh
         lifecycle:
             postStart:
               exec:
-                command: [ "/bin/sh","-c","cp /src/env.json /var/www/accesscontrol.symper.vn" ]
+                command: [ "/bin/sh","-c","cp /src/env.json /var/www/{SERVICE_NAME}" ]
         volumeMounts:
         - name: config-env
           mountPath: /src
         - name: authorization-key
-          mountPath: /var/www/accesscontrol.symper.vn/Crypt
+          mountPath: /var/www/{SERVICE_NAME}/Crypt
           readOnly: true
-      - name: nginx-accesscontrol
-        image: registry.symper.vn/nginx:1.2
         resources:
           requests:
             memory: "10Mi"
@@ -51,23 +46,34 @@ spec:
           limits:
             memory: "500Mi"
             cpu: "500m"
+      - name: nginx-{APP_NAME}
+        image: registry.symper.vn/nginx:1.4
         ports:
         - containerPort: 80
         volumeMounts:
         - name: config
           mountPath: /etc/nginx/conf.d
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "10m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
       volumes:
       - name: config-env
         configMap:
-          name: php-env-config-accesscontrol
+          name: app-config-{APP_NAME}
       - name: authorization-key
         projected:
           sources:
           - secret:
               name: authorization-public-key
+          - secret:
+              name: old-authorization-public-key
       - name: config
         configMap:
-          name: nginx-config-accesscontrol
+          name: nginx-config-{APP_NAME}
           items:
           - key: config
-            path: accesscontrol.symper.vn.conf
+            path: {SERVICE_NAME}.conf

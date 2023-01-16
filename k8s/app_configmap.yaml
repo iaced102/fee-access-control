@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: php-env-config-accesscontrol
+  name: app-config-{APP_NAME}
   labels:
     tier: backend
 data:
@@ -11,8 +11,8 @@ data:
     "db":{
       "postgresql":{
           "host":"{POSTGRES_HOST}",
-          "dbname":"{ENVIRONMENT_}accesscontrol_symper_vn",
+          "dbname":"{POSTGRES_DB}",
           "username":"{POSTGRES_USER}",
-          "password":"{POSTGRES_PASSWORD}"
+          "password":"{POSTGRES_PASS}"
       }
     }}
