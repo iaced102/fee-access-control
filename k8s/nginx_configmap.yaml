@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-config-accesscontrol
+  name: nginx-config-{APP_NAME}
   labels:
     tier: backend
 data:
@@ -10,7 +10,7 @@ data:
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log;
-      root /var/www/accesscontrol.symper.vn;
+      root /var/www/{SERVICE_NAME};
       
       location / {
          try_files $uri /index.php$is_args$args;
