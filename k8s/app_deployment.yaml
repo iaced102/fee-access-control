@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {APP_NAME}-{TARGET_ROLE}
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {APP_NAME}
+      tier: backend
+      role: {TARGET_ROLE}
+  template:
+    metadata:
+      labels:
+        app: {APP_NAME}
+        tier: backend
+        role: {TARGET_ROLE}
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      serviceAccountName: symper
+      containers:
+      - name: {APP_NAME}
+        ports:
+        - containerPort: 9000
+        image: registry.symper.vn/{SYMPER_IMAGE}
+        env:
+          - name: TZ
+            value: Asia/Ho_Chi_Minh
+        lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh","-c","cp /src/env.json /var/www/{SERVICE_NAME}" ]
+        volumeMounts:
+        - name: config-env
+          mountPath: /src
+        - name: authorization-key
+          mountPath: /var/www/{SERVICE_NAME}/Crypt
+          readOnly: true
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "10m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+      - name: nginx-{APP_NAME}
+        image: registry.symper.vn/nginx:1.4
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "10m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+      volumes:
+      - name: config-env
+        configMap:
+          name: app-config-{APP_NAME}
+      - name: authorization-key
+        projected:
+          sources:
+          - secret:
+              name: authorization-public-key
+          - secret:
+              name: old-authorization-public-key
+      - name: config
+        configMap:
+          name: nginx-config-{APP_NAME}
+          items:
+          - key: config
+            path: {SERVICE_NAME}.conf
