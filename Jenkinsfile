@@ -5,6 +5,7 @@ pipeline{
         KAFKA_SUBCRIBE = false
         APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
         Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+        BRANCH_NAME = "${GIT_BRANCH.split('/').size() > 1 ? GIT_BRANCH.split('/')[1..-1].join('/') : GIT_BRANCH}"
     }
     stages{
         stage ("quality control") {
@@ -96,9 +97,9 @@ pipeline{
         }
 
         stage ("production") {
-            // when {
-            //     branch "tags"
-            // }
+            when {
+                branch "tags/*"
+            }
             environment {
                 SERVICE_ENV = "prod"
                 POSTGRES_HOST = "10.20.166.193"
