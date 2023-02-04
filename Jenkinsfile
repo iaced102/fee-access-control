@@ -2,7 +2,7 @@ pipeline{
     agent any
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
-        KAFKA_SUBCRIBE = false
+        KAFKA_SUBCRIBE = true
         APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
         Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
         BRANCH_NAME = "${GIT_BRANCH.split('/').size() > 1 ? GIT_BRANCH.split('/')[1..-1].join('/') : GIT_BRANCH}"
