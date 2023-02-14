@@ -5,18 +5,20 @@ metadata:
   labels:
     tier: backend
 data:
-  env.json : | 
+  env.json: |
     {
-    "environment":"{ENVIRONMENT}",
-    "db":{
-      "postgresql":{
-          "host":"{POSTGRES_HOST}",
-          "dbname":"{POSTGRES_DB}",
-          "username":"{POSTGRES_USER}",
-          "password":"{POSTGRES_PASS}"
+      "environment":"{ENVIRONMENT}",
+      "db":{
+        "postgresql":{
+            "host":"{POSTGRES_HOST}",
+            "dbname":"{POSTGRES_DB}",
+            "username":"{POSTGRES_USER}",
+            "password":"{POSTGRES_PASS}"
+        },
+        "cache": {
+            "host": "{CACHE_HOST}",
+            "password": "{CACHE_PASSWORD}"
+        }
       },
-      "cache": {
-          "host": "{CACHE_HOST}",
-          "password": "{CACHE_PASSWORD}"
-      }
-    }}
+      "kafka":"k1.symper.vn"
+    }
