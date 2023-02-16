@@ -18,7 +18,8 @@ sed -i -e "s/{ENVIRONMENT}/$originEnv/g" \
        -e "s/{CACHE_HOST}/$CACHE_HOST/g" \
        -e "s/{CACHE_PASSWORD}/$CACHE_PASSWORD/g" \
        -e "s/{POSTGRES_DB}/${POSTGRES_DB}/g" \
-       -e "s/{POSTGRES_HOST}/$POSTGRES_HOST/g" k8s/app_configmap.yaml
+       -e "s/{POSTGRES_HOST}/$POSTGRES_HOST/g" \
+       -e "s/{KAFKA_PREFIX}/$KAFKA_PREFIX/g" \ k8s/app_configmap.yaml
 
 sed -i -e "s/{SERVICE_NAME}/$SERVICE_NAME/g" \
        -e "s/{APP_NAME}/$APP_NAME/g" k8s/nginx_configmap.yaml  
