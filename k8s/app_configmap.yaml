@@ -20,5 +20,5 @@ data:
             "password": "{CACHE_PASSWORD}"
         }
       },
-      "kafka":"k1.symper.vn"
+      "kafka":"{KAFKA_PREFIX}"
     }

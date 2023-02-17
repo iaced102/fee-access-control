@@ -20,6 +20,7 @@ pipeline{
                 POSTGRES_DB = "accesscontrol_symper_vn"
                 CLICKHOUSE_HOST = "10.20.166.52"
                 CACHE_HOST= "redis"
+                KAFKA_PREFIX = "k1.symper.vn"
             }
             stages {
                 stage("build"){
@@ -107,6 +108,7 @@ pipeline{
                 POSTGRES_DB = "accesscontrol_symper_vn"
                 CLICKHOUSE_HOST = "10.20.166.166"
                 CACHE_HOST= "redis-server.redis-server.svc.cluster.local"
+                KAFKA_PREFIX = "k1.symper.vn"
             }
             stages {
                 stage("test") {
