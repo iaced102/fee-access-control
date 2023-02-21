@@ -25,23 +25,21 @@ class Controller
     public $output = array();
     public $requireLogin = true;
     public $parameters = [];
-    private $processUuid;
-    private $requestTime;
+    private $logData;
     public function __construct()
     {
-        $this->processUuid = SqlObject::createUUID();
+        $this->logData = [];
     }
     public function run()
     {
-        $this->requestTime = microtime(true);
         $this->checkRequireLogin();
         $action = $this->currentAction != '' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
-            $dataKafka = [
+            $this->logData = [
                 'parameters'    => $this->parameters,
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
-                'processUuid'   => $this->processUuid,
+                'requestTime'   => microtime(true),
                 'uri'           => $_SERVER['REQUEST_URI'],
                 'host'          => $_SERVER['HTTP_HOST'],
                 'queryString'   => $_SERVER['QUERY_STRING'],
@@ -51,7 +49,6 @@ class Controller
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y")
             ];
-            MessageBus::publish('request-input','log', json_encode($dataKafka, JSON_UNESCAPED_UNICODE));
         }
         if (method_exists($this, $action)) {
             $this->$action();
@@ -144,26 +141,12 @@ class Controller
         }
         print json_encode($this->output);
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
-            $dataJsonStr = json_encode($this->output, JSON_UNESCAPED_UNICODE);
-            // Nếu kích thước 900 Kbs thì cắt chuỗi chỉ lấy 1 phần đầu
-            if(strlen($dataJsonStr) >  900000){
-                $dataJsonStr = substr($dataJsonStr,0,10000);
-            }
-            $endTime = microtime(true);
-            $dataKafka = [
-                'output'        => $dataJsonStr,
-                'processUuid'   => $this->processUuid,
-                'error'         => error_get_last(),
-                'timeStamp'     => Str::currentTimeString(),
-                'date'          => date("d-m-Y"),
-                'requestTime'   => $endTime - $this->requestTime,
-                'clientIp'      => $_SERVER['REMOTE_ADDR'],
-                'serverIp'      => $_SERVER['SERVER_ADDR'],
-                'uri'           => $_SERVER['REQUEST_URI'],
-                'host'          => $_SERVER['HTTP_HOST'],
-                'method'        => $_SERVER['REQUEST_METHOD'],
-            ];
-            MessageBus::publish('request-output','log', json_encode($dataKafka, JSON_UNESCAPED_UNICODE));
+            $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
+            $this->logData["output"] = json_encode($this->output, JSON_UNESCAPED_UNICODE);
+            $this->logData["error"] = error_get_last();
+            $fp = fopen(__DIR__."/../log/request-".date("d-m-Y").".log", "a");
+            fwrite($fp, "\r\n".json_encode($this->logData, JSON_UNESCAPED_UNICODE));  
+            fclose($fp);  
         }
     }
 }
