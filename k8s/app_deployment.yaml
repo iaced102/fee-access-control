@@ -32,12 +32,12 @@ spec:
         lifecycle:
             postStart:
               exec:
-                command: [ "/bin/sh","-c","cp /src/env.json /var/www/{SERVICE_NAME}" ]
+                command: [ "/bin/sh","-c","cp /src/env.json /var/www/app" ]
         volumeMounts:
         - name: config-env
           mountPath: /src
         - name: authorization-key
-          mountPath: /var/www/{SERVICE_NAME}/Crypt
+          mountPath: /var/www/app/Crypt
           readOnly: true
         resources:
           requests:
