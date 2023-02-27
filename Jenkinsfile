@@ -30,7 +30,7 @@ pipeline{
                         }
                         script {
                             env.BUILD_VERSION = 'alpha'
-                            sh "docker build -—no-cache -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
+                            sh "docker build --no-cache -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
                             sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
                             sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
                         }
