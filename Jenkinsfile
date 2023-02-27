@@ -19,7 +19,7 @@ pipeline{
                 POSTGRES_HOST = "10.20.166.52"
                 POSTGRES_DB = "accesscontrol_symper_vn"
                 CLICKHOUSE_HOST = "10.20.166.52"
-                CACHE_HOST= "redis"
+                CACHE_HOST= "redis-server.redis-server.svc.cluster.local"
                 KAFKA_PREFIX = "k1.symper.vn"
             }
             stages {
@@ -30,7 +30,7 @@ pipeline{
                         }
                         script {
                             env.BUILD_VERSION = 'alpha'
-                            sh "docker build --no-cache -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
+                            sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
                             sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
                             sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
                         }
