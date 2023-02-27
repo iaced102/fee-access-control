@@ -29,7 +29,7 @@ pipeline{
                             sh 'echo $DOCKER_REGISTRY_PWD | docker login -u $DOCKER_REGISTRY_USER --password-stdin localhost:5000'
                         }
                         script {
-                            env.BUILD_VERSION = 'alpha'
+                            env.BUILD_VERSION = 'latest'
                             sh "docker build -t localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION} ."
                             sh "docker push localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
                             sh "docker image rm localhost:5000/${SERVICE_NAME}:${env.BUILD_VERSION}"
