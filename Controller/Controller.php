@@ -144,9 +144,7 @@ class Controller
             $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
             $this->logData["output"] = json_encode($this->output, JSON_UNESCAPED_UNICODE);
             $this->logData["error"] = error_get_last();
-            $fp = fopen(__DIR__."/../log/request-".date("d-m-Y").".log", "a");
-            fwrite($fp, "\r\n".json_encode($this->logData, JSON_UNESCAPED_UNICODE));  
-            fclose($fp);  
+            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", "\r\n" . json_encode($this->logData, JSON_UNESCAPED_UNICODE), FILE_APPEND);
         }
     }
 }
