@@ -107,7 +107,7 @@ class ObjectTenantMigration extends Controller{
             //clone object identifier
             $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
             self::checkRsl($rsl);
-        } else if ($objectType == 'permission') {
+        } else if ($objectType == 'permission_pack') {
 
             //clone permission
             $permissionId = PermissionPack::migrateObjectsByIds($source, $target, $ids);
