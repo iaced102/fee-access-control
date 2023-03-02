@@ -50,7 +50,8 @@ class ModelFilterHelper
             $rsl[] = $rslItem;
         }
         if($useTenant){
-            return implode(' ', $rsl)." WHERE tb1.tenant_id_ = $tenantId AND ".implode(" AND ", $tenantConds);
+            // return implode(' ', $rsl)." WHERE tb1.tenant_id_ = $tenantId AND ".implode(" AND ", $tenantConds);
+            return implode(' ', $rsl)." WHERE tb1.tenant_id_ = $tenantId ";
         } else{
             return implode(' ', $rsl);
         }
