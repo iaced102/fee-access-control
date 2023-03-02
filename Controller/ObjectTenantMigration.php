@@ -20,6 +20,40 @@ class ObjectTenantMigration extends Controller{
     }
 
     /**
+     * @param array $listObj mảng của các object, có dạng:
+     * [
+     *      [
+     *          'id' => '',
+     *          'name' => '', // optional
+     *          'title' => '',
+     *          'objectType' => '', // optional
+     *      ]
+     * ]
+     */
+    public function saveObjectIdentify($objType,$listObj,$target){
+        $arr = [];
+        if(count($listObj)>0){
+            foreach($listObj as $k=>$v){
+                $obj = ['objectIdentifier'=>$objType.':'.$v->id,
+                    'title'=>$v->title,
+                    'name'=>$objType=='document_definition'? $v->name:'',
+                    'type'=>$objType,
+                    'objectType'=>isset($v->objectType)?$v->objectType:'',
+                    'tenantId'=>$target
+                ];
+                array_push($arr,$obj);
+            }
+            $dataPost = [
+                'listObj'=>$arr
+            ];
+            $token = "Bearer ".Auth::getBearerToken();
+            $response =Request::request(ACCESS_CONTROL_SERVICE.'/object-identify',$dataPost,'POST',$token, 'application/json', false);
+            $response = json_decode($response);
+            return $response;
+        }
+    }
+
+    /**
      * Thực hiện migrate dữ liệu của các object trong hệ thống từ tenant này sang tenant khác
      */
     public function migrate()
