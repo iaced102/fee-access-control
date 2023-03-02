@@ -43,7 +43,6 @@ class ObjectTenantMigration extends Controller{
             ];
             $token = "Bearer ".Auth::getBearerToken();
             $response =Request::request(ACCESS_CONTROL_SERVICE.'/object-identify',$dataPost,'POST',$token, 'application/json', false);
-            $response = json_decode($response);
             return $response;
         }
     }
