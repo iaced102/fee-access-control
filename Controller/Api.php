@@ -8,7 +8,6 @@ use Model\Users;
 
 class Api extends Controller
 {
-    //
     function __construct()
     {
         parent::__construct();

@@ -62,7 +62,6 @@ class MessageBus{
             $conf->set('group.id', $consumerId);
             $offsetType = RD_KAFKA_OFFSET_STORED;
             
-            $topicConf->set('auto.commit.interval.ms', 100);
             $topicConf->set('offset.store.method', 'broker');
             $topicConf->set('auto.offset.reset', 'smallest');;
         }
