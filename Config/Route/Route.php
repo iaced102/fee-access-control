@@ -67,4 +67,4 @@ Route::post('filters/delete-many','FilterService','deleteMany');
 Route::post('demotoken', 'Api', 'getDemoToken');
 Route::post('test', 'Api', 'testFunction');
 Route::post('objects/tenant-migrate', 'ObjectTenantMigration', 'migrate');
-Route::post('object-identify', 'ObjectIdentifyService', 'create');
+Route::post('object-identify', 'ObjectIdentifyService', 'save');
