@@ -39,6 +39,8 @@ spec:
         - name: authorization-key
           mountPath: /var/www/app/Crypt
           readOnly: true
+        - name: logging
+          mountPath: /var/www/app/log        
         resources:
           requests:
             memory: "10Mi"
@@ -77,3 +79,6 @@ spec:
           items:
           - key: config
             path: {SERVICE_NAME}.conf
+      - name: logging
+        hostPath:
+          path: /var/log/symper/{APP_NAME}
