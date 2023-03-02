@@ -133,18 +133,22 @@ class Controller
     private function returnOutput()
     {
         header('Content-Type: application/json');
-        if (!isset($this->output['status'])) {
-            $this->output['status'] = STATUS_OK;
+        if (!is_array($this->output)) {
+            print $this->output;
+        } else {
+            if (!isset($this->output['status'])) {
+                $this->output['status'] = STATUS_OK;
+            }
+            if ((!isset($this->output['message'])) || $this->output['message'] == '') {
+                $this->output['message'] = Message::getStatusResponse($this->output['status']);
+            }
+            print json_encode($this->output);
         }
-        if ((!isset($this->output['message'])) || $this->output['message'] == '') {
-            $this->output['message'] = Message::getStatusResponse($this->output['status']);
-        }
-        print json_encode($this->output);
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
             $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
             $this->logData["output"] = json_encode($this->output, JSON_UNESCAPED_UNICODE);
             $this->logData["error"] = error_get_last();
-            $this->logData["statusCode"] = $this->output['status'];
+            $this->logData["statusCode"] = !is_array($this->output) ? 200 : $this->output['status'];
             file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", "\r\n" . json_encode($this->logData, JSON_UNESCAPED_UNICODE), FILE_APPEND);
         }
     }
