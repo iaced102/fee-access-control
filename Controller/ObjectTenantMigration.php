@@ -38,8 +38,8 @@ class ObjectTenantMigration extends Controller{
         if(count($listObj)>0){
             foreach($listObj as $k=>$v){
                 $obj = ['objectIdentifier'=>$objType.':'.$v->id,
-                    'title'=>$v->title,
-                    'name'=>$objType=='document_definition'? $v->name:'',
+                    'title'=>isset($v->title) ? $v->title : $v->name,
+                    'name'=>isset($v->name) ? $v->name : $v->title,
                     'type'=>$objType,
                     'objectType'=>isset($v->objectType)?$v->objectType:'',
                     'tenantId'=>$target
@@ -98,10 +98,7 @@ class ObjectTenantMigration extends Controller{
             self::checkRsl($rsl);
 
             $list = Filter::getByTop('',"id in ('$idsFilter')",'','id,name');
-            foreach($list as $k=>$v){
-                $v->title = $v->name;
-                unset($v->name);
-            }
+            
             $rsl = self::saveObjectIdentify('filter',$list,$target);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);
@@ -156,10 +153,7 @@ class ObjectTenantMigration extends Controller{
 
             $idActionPack=implode("','",$idActionPack);
             $list = ActionPack::getByTop('',"id in ('$idActionPack')",'','id,name');
-            foreach($list as $k=>$v){
-                $v->title = $v->name;
-                unset($v->name);
-            }
+            
             $rsl = self::saveObjectIdentify('action_pack',$list,$target);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);
@@ -180,10 +174,7 @@ class ObjectTenantMigration extends Controller{
 
             $permissionId=implode("','",$permissionId);
             $list = PermissionPack::getByTop('',"id in ('$permissionId')",'','id,name');
-            foreach($list as $k=>$v){
-                $v->title = $v->name;
-                unset($v->name);
-            }
+            
             $rsl = self::saveObjectIdentify('permission_pack',$list,$target);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);

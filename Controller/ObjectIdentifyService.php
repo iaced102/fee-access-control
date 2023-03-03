@@ -53,7 +53,7 @@ class ObjectIdentifyService extends Controller
                     array_push($insertData,"('$objectIdentifier','$name','$type','$objectType','$title','$tenantId')");
                 }
                 $insertData=implode(",\n",$insertData);
-                $insertQuery = "INSERT INTO object_identifier (object_identifier,name,object_type,title,type,tenant_id_) VALUES $insertData";
+                $insertQuery = "INSERT INTO object_identifier (object_identifier,name,type,object_type,title,tenant_id_) VALUES $insertData";
                 array_push($query,$insertQuery);
 
                 array_push($query,'COMMIT');
