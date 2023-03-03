@@ -10,6 +10,9 @@ use Model\PermissionPack;
 use Model\FilterInActionPack;
 use Model\PermissionRole;
 use Library\Message;
+use Library\Auth;
+use Library\Request;
+use Controller\ObjectIdentifyService;
 
 class ObjectTenantMigration extends Controller{
     function __construct()
@@ -79,9 +82,9 @@ class ObjectTenantMigration extends Controller{
             self::checkRsl($rsl);
 
             //get id object identifier
-            $ids = "'".implode("','", $rsl)."'";
+            $idsFilter = "'".implode("','", $rsl)."'";
             $idObj = [];
-            $listFilter = Filter::getByTop('',"id  IN (".$ids.")");
+            $listFilter = Filter::getByTop('',"id  IN (".$idsFilter.")");
             if (count($listFilter) > 0){
                 foreach($listFilter as $key => $value){
                     $arr = explode(',', $value->objectIdentifier);
@@ -93,6 +96,16 @@ class ObjectTenantMigration extends Controller{
             //clone object identifier
             $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
             self::checkRsl($rsl);
+
+            $list = Filter::getByTop('',"id in ('$idsFilter')",'','id,name');
+            foreach($list as $k=>$v){
+                $v->title = $v->name;
+                unset($v->name);
+            }
+            $rsl = self::saveObjectIdentify('filter',$list,$target);
+            $this->output['message_migrate_object_identify'] = $rsl;
+            $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+            $this->output["status"]=STATUS_OK;
         }else if ($objectType == 'action_pack') {
 
             //clone action pack
@@ -140,6 +153,17 @@ class ObjectTenantMigration extends Controller{
             //clone object identifier
             $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
             self::checkRsl($rsl);
+
+            $idActionPack=implode("','",$idActionPack);
+            $list = ActionPack::getByTop('',"id in ('$idActionPack')",'','id,name');
+            foreach($list as $k=>$v){
+                $v->title = $v->name;
+                unset($v->name);
+            }
+            $rsl = self::saveObjectIdentify('action_pack',$list,$target);
+            $this->output['message_migrate_object_identify'] = $rsl;
+            $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+            $this->output["status"]=STATUS_OK;
         } else if ($objectType == 'permission_pack') {
 
             //clone permission
@@ -153,6 +177,17 @@ class ObjectTenantMigration extends Controller{
             //clone permission role
             $rsl = PermissionRole::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
             self::checkRsl($rsl);
+
+            $permissionId=implode("','",$permissionId);
+            $list = PermissionPack::getByTop('',"id in ('$permissionId')",'','id,name');
+            foreach($list as $k=>$v){
+                $v->title = $v->name;
+                unset($v->name);
+            }
+            $rsl = self::saveObjectIdentify('permission_pack',$list,$target);
+            $this->output['message_migrate_object_identify'] = $rsl;
+            $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+            $this->output["status"]=STATUS_OK;
         }
     }
     public function checkRsl($rsl){
