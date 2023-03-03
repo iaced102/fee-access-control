@@ -33,21 +33,16 @@ class ObjectTenantMigration extends Controller{
      *      ]
      * ]
      */
-    public function saveObjectIdentify($objType,$listObj,$target){
+    public function saveObjectIdentify($objType,$listId,$target,$source){
         $arr = [];
-        if(count($listObj)>0){
-            foreach($listObj as $k=>$v){
-                $obj = ['objectIdentifier'=>$objType.':'.$v->id,
-                    'title'=>isset($v->title) ? $v->title : $v->name,
-                    'name'=>isset($v->name) ? $v->name : $v->title,
-                    'type'=>$objType,
-                    'objectType'=>isset($v->objectType)?$v->objectType:'',
-                    'tenantId'=>$target
-                ];
-                array_push($arr,$obj);
+        if(count($listId)>0){
+            foreach($listId as $k=>$v){
+                array_push($arr,$objType.':'.$v);
             }
             $dataPost = [
-                'listObj'=>$arr
+                'listObj'=>$arr,
+                'target'=>$target,
+                'source'=>$source
             ];
             $token = "Bearer ".Auth::getBearerToken();
             $response =Request::request(ACCESS_CONTROL_SERVICE.'/object-identify',$dataPost,'POST',$token, 'application/json', false);
@@ -97,9 +92,7 @@ class ObjectTenantMigration extends Controller{
             $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
             self::checkRsl($rsl);
 
-            $list = Filter::getByTop('',"id in ('$idsFilter')",'','id,name');
-            
-            $rsl = self::saveObjectIdentify('filter',$list,$target);
+            $rsl = self::saveObjectIdentify('filter',$idsFilter,$target,$source);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);
             $this->output["status"]=STATUS_OK;
@@ -151,10 +144,8 @@ class ObjectTenantMigration extends Controller{
             $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
             self::checkRsl($rsl);
 
-            $idActionPack=implode("','",$idActionPack);
-            $list = ActionPack::getByTop('',"id in ('$idActionPack')",'','id,name');
-            
-            $rsl = self::saveObjectIdentify('action_pack',$list,$target);
+
+            $rsl = self::saveObjectIdentify('action_pack',$idActionPack,$target,$source);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);
             $this->output["status"]=STATUS_OK;
@@ -172,10 +163,7 @@ class ObjectTenantMigration extends Controller{
             $rsl = PermissionRole::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
             self::checkRsl($rsl);
 
-            $permissionId=implode("','",$permissionId);
-            $list = PermissionPack::getByTop('',"id in ('$permissionId')",'','id,name');
-            
-            $rsl = self::saveObjectIdentify('permission_pack',$list,$target);
+            $rsl = self::saveObjectIdentify('permission_pack',$permissionId,$target,$source);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);
             $this->output["status"]=STATUS_OK;
