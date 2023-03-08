@@ -1,7 +1,5 @@
 <?php
 
-use Library\Environment;
-
 define('ACCESS_CONTROL_SERVICE', $GLOBALS['domains']['ACCESS_CONTROL_SERVICE']);
 define('ACCOUNT_SERVICE', $GLOBALS['domains']['ACCOUNT_SERVICE']);
 define('APP_MANAGEMENT_SERVICE', $GLOBALS['domains']['APP_MANAGEMENT_SERVICE']);
