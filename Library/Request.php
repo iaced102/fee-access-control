@@ -3,7 +3,7 @@ namespace Library;
 class Request {
     protected $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36';
     protected $url;
-    protected $timeout;
+    protected $timeOut;
     protected $post;
     protected $postFields;
     protected $getData;
@@ -149,4 +149,3 @@ class Request {
 	}
     
 }
-?>
