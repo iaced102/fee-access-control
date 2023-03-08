@@ -39,8 +39,11 @@ data:
         "UI_SERVICE": "http://ui.{SERVICE_ENV}.svc.cluster.local",
         "WORKFLOW_EXTEND_SERVICE": "http://workflow-extend.{SERVICE_ENV}.svc.cluster.local",
         "WORKFLOW_MODELER_SERVICE": "http://workflow-modeler.{SERVICE_ENV}.svc.cluster.local",
-        "MESSAGE_BUS_SERVICE": "http://message-bus.{SERVICE_ENV}.svc.cluster.local",
         "DATA_CONNECTOR_SERVICE": "http://data-connector.{SERVICE_ENV}.svc.cluster.local",
-        "OBJECT_RELATION": "http://object-relation.{SERVICE_ENV}.svc.cluster.local"
+        "OBJECT_RELATION": "http://object-relation.{SERVICE_ENV}.svc.cluster.local",
+        "LOG_SERVICE": "http://log.{SERVICE_ENV}.svc.cluster.local",
+        "SEARCH_SERVICE": "http://search.{SERVICE_ENV}.svc.cluster.local",
+        "WORKFLOW_SERVICE": "http://tomcat-workflow.{SERVICE_ENV}.svc.cluster.local",
+        "LUFFY_SERVICE": "https://luffy.symper.vn"
       }
     }

@@ -103,7 +103,7 @@ pipeline{
             }
             environment {
                 SERVICE_ENV = "prod"
-                POSTGRES_HOST = "10.20.166.193"
+                POSTGRES_HOST = "10.20.166.193,10.20.166.235"
                 SSH_HOST = "10.20.166.246"
                 POSTGRES_DB = "accesscontrol_symper_vn"
                 CLICKHOUSE_HOST = "10.20.166.166"
