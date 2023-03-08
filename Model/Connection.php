@@ -20,6 +20,7 @@ class Connection
         } else {
             $server = $GLOBALS['env']['db']['postgresql']['host'];
             $server = explode(",", $server);
+            $server = $server[array_rand($server)];
         }
         $database = $database == false ? $GLOBALS['env']['db']['postgresql']['dbname'] : $database;
         $userName = $userName == false ? $GLOBALS['env']['db']['postgresql']['username'] : $userName;
