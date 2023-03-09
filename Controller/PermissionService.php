@@ -13,6 +13,7 @@ use Model\RoleAction;
 use Model\PermissionPack;
 use Model\PermissionRole;
 use Model\Users;
+use Library\MessageBus;
 
 class PermissionService extends Controller
 {
@@ -90,8 +91,7 @@ class PermissionService extends Controller
         ObjectRelation::save($nodes,$links,"permission_pack:$id");
     }
     function create(){
-        $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(PermissionPack::getTopicName(),"create",json_encode($this->parameters));
         if($this->checkParameter(['name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -125,8 +125,7 @@ class PermissionService extends Controller
     }
    
     function update(){
-        $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(PermissionPack::getTopicName(),"update",json_encode($this->parameters));
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -218,8 +217,7 @@ class PermissionService extends Controller
         }
     }
     function addActionPack(){
-        $messageBusData = ['topic'=>ActionInPermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(ActionInPermissionPack::getTopicName(),"create",json_encode($this->parameters));
         if($this->checkParameter(['id','actionPackId'])){
             $obj = PermissionPack::getById($this->parameters['id']);
             if($obj!=false){
