@@ -14,6 +14,7 @@ use Model\FilterInActionPack;
 use Model\PermissionRole;
 use Model\Users;
 use Model\SqlObject;
+use Library\MessageBus;
 
 class FilterService extends Controller
 {
@@ -57,8 +58,7 @@ class FilterService extends Controller
     }
     
     function create(){
-        $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(Filter::getTopicName(),"update",json_encode($this->parameters));
         if($this->checkParameter(['name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -121,8 +121,7 @@ class FilterService extends Controller
         ObjectRelation::save($nodes,$links,"filter:$id");
     }
     function update(){
-        $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(Filter::getTopicName(),"update",json_encode($this->parameters));
         if($this->checkParameter(['id','name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
