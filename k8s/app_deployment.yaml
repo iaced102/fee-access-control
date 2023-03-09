@@ -40,7 +40,7 @@ spec:
           mountPath: /var/www/app/Crypt
           readOnly: true
         - name: logging
-          mountPath: /var/www/app/log
+          mountPath: /var/www/app/log        
         resources:
           requests:
             memory: "10Mi"
