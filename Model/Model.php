@@ -80,7 +80,7 @@ class Model{
     *   description: dinh update function get thành private, không được phép sử dụng hàm get trực tiếp từ bên ngoài,
     *   bắt buộc filter theo tanentid trước khi query.
     */
-    private static function get($command,$returnObject=true,$returnArrayKeyAsField=false){
+    public static function get($command,$returnObject=true,$returnArrayKeyAsField=false){
         $className = get_called_class();
         $resultData  = Connection::getDataQuerySelect($command);
         if($returnObject){
