@@ -46,7 +46,7 @@ class Connection
         $result = pg_query($connection, $command);
         return $result;
     }
-    private static function exeQueryAndFetchData($command)
+    public static function exeQueryAndFetchData($command)
     {
         $resultTest = Test::callFunction(Test::FUNC_QUERY_DB, $command);
         if ($resultTest !== Test::FUNC_NO_AVAILABLE) {
