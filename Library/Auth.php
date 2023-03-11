@@ -7,6 +7,7 @@ class Auth
     private static $tenantId = '';
     private static $ignoreTokenInfo = false;
     private static $oldAuth = true;
+    private static $representative = "";
 
     //
     public static function Hash($password)
@@ -42,9 +43,8 @@ class Auth
         }
         if ($r == 1) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
     public static function getJwtData($token)
     {
@@ -92,7 +92,7 @@ class Auth
         $dataToVerify = "$header.$payload";
         return self::verifySign($dataToVerify, $signature);
     }
-    public static function getJwtToken($data, $exp = false)
+    public static function getJwtToken($data, $exp = false, $isFingerPrint = true)
     {
         $data = (array)$data;
         $header = self::getJwtHeader();
@@ -104,10 +104,31 @@ class Auth
         $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
         $data['tenant_domain'] = isset($GLOBALS['env']['tenant_domain']) ? $GLOBALS['env']['tenant_domain'] : '';
         // Token's timeout default is 3600s
-        $data['exp'] = $exp == false ? time() + 3600 : time() + $exp;
+        if (self::checkNewAuth()) {
+            if (isset($data["id"]) && $data["id"] == 18) {
+                $GLOBALS["isKha"] = true;
+                $data['exp'] = time() + 300;
+            } else {
+                $data['exp'] = $exp == false ? time() + 3600 : time() + $exp;
+            }
+        } else {
+            $data['exp'] = "0";
+        }
+
         $data['iat'] = time();
         $payload = self::getJwtPayload($data);
-        $signature = self::getJwtSignature($header, $payload);
+        $signature = self::getJwtSignature($header, $payload, $isFingerPrint);
+        $jwtToken = "$header.$payload.$signature";
+        return $jwtToken;
+    }
+
+    public static function getSignBydata($data)
+    {
+        $data = (array)$data;
+        $header = self::getJwtHeader();
+        $payload = self::getJwtPayload($data);
+        $signature = self::getJwtSignature($header, $payload, false);
+        $signature = str_replace("new_symper_authen_!", "", $signature);
         $jwtToken = "$header.$payload.$signature";
         return $jwtToken;
     }
@@ -122,7 +143,12 @@ class Auth
         }
         $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
         // Token's timeout default is 2600000s
-        $data['exp'] = $exp == false ? time() + 2600000 : $exp;
+        if (isset($GLOBALS["isKha"]) && $GLOBALS["isKha"]) {
+            $data['exp'] = time() + 600;
+            $data['isKha'] = 1;
+        } else {
+            $data['exp'] = $exp == false ? time() + 2600000 : $exp;
+        }
         if ($iat != false) {
             $data['iat'] = time();
         }
@@ -151,12 +177,21 @@ class Auth
             return self::base64UrlEncode(json_encode($data));
         }
     }
-    public static function getJwtSignature($header, $payload)
+    public static function getJwtSignature($header, $payload, $isFingerPrint = true)
     {
         if (self::$oldAuth) {
             return base64_encode(self::sign("$header.$payload"));
         } else {
-            return self::base64UrlEncode(self::sign("$header.$payload")) . "new_symper_authen_!";
+            if ($isFingerPrint) {
+                if (empty($GLOBALS['randomHash'])) {
+                    $GLOBALS['randomStr'] = Str::createUUID();
+                    $GLOBALS['randomHash'] = self::Hash($GLOBALS['randomStr'] . self::getCurrentUserAgent());
+                }
+                $GLOBALS['fingerPrintCookie'] = $GLOBALS['randomStr'];
+                return $GLOBALS['randomHash'] . "::" . self::base64UrlEncode(self::sign("$header.$payload")) . "new_symper_authen_!";
+            } else {
+                return self::base64UrlEncode(self::sign("$header.$payload")) . "new_symper_authen_!";
+            }
         }
     }
     public static function getAuthorizationHeader()
@@ -177,7 +212,30 @@ class Auth
             $headers = str_replace("new_symper_authen_!", "", $headers);
             self::setNewAuth();
         }
-        return $headers == 'Bearer false' ? null : $headers;
+        if (self::$representative == "") {
+            self::getRepresentativeToken($headers);
+            if (self::$representative == "") {
+                return $headers == 'Bearer false' ? null : $headers;
+            }
+        }
+        return self::$representative;
+    }
+    public static function getRepresentativeToken($headers)
+    {
+        $representativeKey = self::getRepresentativeKey();
+        if ($representativeKey != false) {
+            if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
+                $newHeader = $matches[1];
+            }
+            $res = Request::request("https://dev-account.symper.vn/auth/representative", ["hashKey" => $representativeKey], 'POST', $newHeader);
+            if (!empty($res) && !empty($res['data'])) {
+
+                $newToken = str_replace("new_symper_authen_!", "", $res['data']);
+
+                self::$representative = 'Bearer ' . $newToken;
+            }
+        }
+        return self::$representative;
     }
     public static function getBearerToken()
     {
@@ -453,5 +511,17 @@ class Auth
     public static function checkNewAuth()
     {
         return !self::$oldAuth;
+    }
+    private static function getRepresentativeKey()
+    {
+        $key = false;
+        if (isset($_SERVER['S-Representative'])) {
+            $key = trim($_SERVER["S-Representative"]);
+        } else if (isset($_SERVER['HTTP_S_REPRESENTATIVE'])) {
+            $key = trim($_SERVER["HTTP_S_REPRESENTATIVE"]);
+        }
+        unset($_SERVER["S-Representative"]);
+        unset($_SERVER["HTTP_S_REPRESENTATIVE"]);
+        return $key;
     }
 }
