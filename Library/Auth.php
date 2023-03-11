@@ -227,7 +227,7 @@ class Auth
             if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
                 $newHeader = $matches[1];
             }
-            $res = Request::request("https://dev-account.symper.vn/auth/representative", ["hashKey" => $representativeKey], 'POST', $newHeader);
+            $res = Request::request(ACCOUNT_SERVICE . "/auth/representative", ["hashKey" => $representativeKey], 'POST', $newHeader);
             if (!empty($res) && !empty($res['data'])) {
 
                 $newToken = str_replace("new_symper_authen_!", "", $res['data']);
