@@ -6,6 +6,8 @@ class Auth
 {
     private static $tenantId = '';
     private static $ignoreTokenInfo = false;
+    private static $oldAuth = true;
+    private static $representative = "";
 
     //
     public static function Hash($password)
@@ -15,23 +17,34 @@ class Auth
 
     public static function sign($data)
     {
-        $privatePEMKey = file_get_contents(DIR . '/Crypt/private.pem');
+        if (self::$oldAuth) {
+            $privatePEMKey = file_get_contents(DIR . '/Crypt/private.pem');
+        } else {
+            $privatePEMKey = file_get_contents(DIR . '/Crypt/private1.pem');
+        }
         $privatePEMKey = openssl_get_privatekey($privatePEMKey, 'Symper@@');
         $signature = '';
         openssl_sign($data, $signature, $privatePEMKey, OPENSSL_ALGO_SHA256);
-        $signature = bin2hex($signature);
+        if (self::$oldAuth) {
+            $signature = bin2hex($signature);
+        }
         return $signature;
     }
     public static function verifySign($data, $signature)
     {
-        $publicPEMKey = file_get_contents(DIR . '/Crypt/public.pem');
-        $publicPEMKey = openssl_get_publickey($publicPEMKey);
-        $r = openssl_verify($data, hex2bin($signature), $publicPEMKey, OPENSSL_ALGO_SHA256);
+        if (self::$oldAuth) {
+            $publicPEMKey = file_get_contents(DIR . '/Crypt/public.pem');
+            $publicPEMKey = openssl_get_publickey($publicPEMKey);
+            $r = openssl_verify($data, hex2bin($signature), $publicPEMKey, OPENSSL_ALGO_SHA256);
+        } else {
+            $publicPEMKey = file_get_contents(DIR . '/Crypt/public1.pem');
+            $publicPEMKey = openssl_get_publickey($publicPEMKey);
+            $r = openssl_verify($data, $signature, $publicPEMKey, OPENSSL_ALGO_SHA256);
+        }
         if ($r == 1) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
     public static function getJwtData($token)
     {
@@ -48,7 +61,11 @@ class Auth
             $payload = $dataFromToken[1];
             $signature = $dataFromToken[2];
             if (self::verifyJwt($header, $payload, $signature)) {
-                $jsonData = base64_decode($payload);
+                if (self::$oldAuth) {
+                    $jsonData = base64_decode($payload);
+                } else {
+                    $jsonData = self::base64UrlDecode($payload);
+                }
                 $data = json_decode($jsonData, true);
                 CacheService::setMemoryCache($token, $data);
                 return $data;
@@ -57,14 +74,25 @@ class Auth
             }
         }
     }
-
+    private static function base64UrlEncode($data)
+    {
+        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+    }
+    private static function base64UrlDecode($data)
+    {
+        return base64_decode(str_replace(['-', '_', ''], ['+', '/', '='], $data));
+    }
     public static function verifyJwt($header, $payload, $signature)
     {
-        $signature = base64_decode($signature);
+        if (self::$oldAuth) {
+            $signature = base64_decode($signature);
+        } else {
+            $signature = self::base64UrlDecode($signature);
+        }
         $dataToVerify = "$header.$payload";
         return self::verifySign($dataToVerify, $signature);
     }
-    public static function getJwtToken($data, $timeout = false)
+    public static function getJwtToken($data, $exp = false, $isFingerPrint = true)
     {
         $data = (array)$data;
         $header = self::getJwtHeader();
@@ -76,28 +104,95 @@ class Auth
         $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
         $data['tenant_domain'] = isset($GLOBALS['env']['tenant_domain']) ? $GLOBALS['env']['tenant_domain'] : '';
         // Token's timeout default is 3600s
-        $data['exp'] = $timeout == false ? time() + 3600 : time() + $timeout;
+        if (self::checkNewAuth()) {
+            if (isset($data["id"]) && $data["id"] == 18) {
+                $GLOBALS["isKha"] = true;
+                $data['exp'] = time() + 300;
+            } else {
+                $data['exp'] = $exp == false ? time() + 3600 : time() + $exp;
+            }
+        } else {
+            $data['exp'] = "0";
+        }
+
+        $data['iat'] = time();
+        $payload = self::getJwtPayload($data);
+        $signature = self::getJwtSignature($header, $payload, $isFingerPrint);
+        $jwtToken = "$header.$payload.$signature";
+        return $jwtToken;
+    }
+
+    public static function getSignBydata($data)
+    {
+        $data = (array)$data;
+        $header = self::getJwtHeader();
+        $payload = self::getJwtPayload($data);
+        $signature = self::getJwtSignature($header, $payload, false);
+        $signature = str_replace("new_symper_authen_!", "", $signature);
+        $jwtToken = "$header.$payload.$signature";
+        return $jwtToken;
+    }
+    public static function getJwtRefreshToken($exp = false, $iat = false)
+    {
+        $data = ["u" => Str::createUUID()];
+        $header = self::getJwtHeader();
+        if (isset($data['tenantId']) || isset($data['tenant_id'])) {
+            $data['tenant'] = [
+                'id'    => isset($data['tenantId']) ? $data['tenantId'] : $data['tenant_id']
+            ];
+        }
+        $data['is_cloud'] = isset($GLOBALS['env']['is_cloud']) ? $GLOBALS['env']['is_cloud'] : true;
+        // Token's timeout default is 2600000s
+        if (isset($GLOBALS["isKha"]) && $GLOBALS["isKha"]) {
+            $data['exp'] = time() + 600;
+            $data['isKha'] = 1;
+        } else {
+            $data['exp'] = $exp == false ? time() + 2600000 : $exp;
+        }
+        if ($iat != false) {
+            $data['iat'] = time();
+        }
         $payload = self::getJwtPayload($data);
         $signature = self::getJwtSignature($header, $payload);
         $jwtToken = "$header.$payload.$signature";
         return $jwtToken;
     }
-
     public static function getJwtHeader()
     {
         $header = [
             'alg'   => "RS256",
             'typ'   => 'JWT',
         ];
-        return base64_encode(json_encode($header));
+        if (self::$oldAuth) {
+            return base64_encode(json_encode($header));
+        } else {
+            return self::base64UrlEncode(json_encode($header));
+        }
     }
     public static function getJwtPayload($data)
     {
-        return base64_encode(json_encode($data));
+        if (self::$oldAuth) {
+            return base64_encode(json_encode($data));
+        } else {
+            return self::base64UrlEncode(json_encode($data));
+        }
     }
-    public static function getJwtSignature($header, $payload)
+    public static function getJwtSignature($header, $payload, $isFingerPrint = true)
     {
-        return base64_encode(self::sign("$header.$payload"));
+        if (self::$oldAuth) {
+            return base64_encode(self::sign("$header.$payload"));
+        } else {
+            if ($isFingerPrint) {
+                if (empty($GLOBALS['randomHash'])) {
+                    $GLOBALS['randomStr'] = Str::createUUID();
+                    $GLOBALS['randomHash'] = self::Hash($GLOBALS['randomStr'] . self::getCurrentUserAgent());
+                }
+                $GLOBALS['fingerPrintCookie'] = $GLOBALS['randomStr'];
+                return $GLOBALS['randomHash'] . "::" . self::base64UrlEncode(self::sign("$header.$payload")) . "new_symper_authen_!";
+            } else {
+                return self::base64UrlEncode(self::sign("$header.$payload")) . "new_symper_authen_!";
+            }
+        }
     }
     public static function getAuthorizationHeader()
     {
@@ -113,7 +208,34 @@ class Auth
                 $headers = trim($requestHeaders['Authorization']);
             }
         }
-        return $headers == 'Bearer false' ? null : $headers;
+        if (strpos($headers, "new_symper_authen_!")) {
+            $headers = str_replace("new_symper_authen_!", "", $headers);
+            self::setNewAuth();
+        }
+        if (self::$representative == "") {
+            self::getRepresentativeToken($headers);
+            if (self::$representative == "") {
+                return $headers == 'Bearer false' ? null : $headers;
+            }
+        }
+        return self::$representative;
+    }
+    public static function getRepresentativeToken($headers)
+    {
+        $representativeKey = self::getRepresentativeKey();
+        if ($representativeKey != false) {
+            if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
+                $newHeader = $matches[1];
+            }
+            $res = Request::request("https://dev-account.symper.vn/auth/representative", ["hashKey" => $representativeKey], 'POST', $newHeader);
+            if (!empty($res) && !empty($res['data'])) {
+
+                $newToken = str_replace("new_symper_authen_!", "", $res['data']);
+
+                self::$representative = 'Bearer ' . $newToken;
+            }
+        }
+        return self::$representative;
     }
     public static function getBearerToken()
     {
@@ -127,7 +249,11 @@ class Auth
     }
     public static function encryptRSA($plainData)
     {
-        $publicPEMKey   = file_get_contents(DIR . '/Crypt/public.pem');
+        if (self::$oldAuth) {
+            $publicPEMKey   = file_get_contents(DIR . '/Crypt/public.pem');
+        } else {
+            $publicPEMKey   = file_get_contents(DIR . '/Crypt/public1.pem');
+        }
         $publicPEMKey   = openssl_get_publickey($publicPEMKey);
         $encrypted      = '';
         $plainData      = str_split($plainData, 200);
@@ -139,14 +265,24 @@ class Auth
             }
             $encrypted .= $partialEncrypted;
         }
-        return base64_encode($encrypted);
+        if (self::$oldAuth) {
+            return base64_encode($encrypted);
+        } else {
+            return self::base64UrlEncode($encrypted);
+        }
     }
     public static function decryptRSA($data)
     {
-        $privatePEMKey  = file_get_contents(DIR . '/Crypt/private.pem');
-        $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
         $decrypted      = '';
-        $data           = str_split(base64_decode($data), 256); //2048 bit
+        if (self::$oldAuth) {
+            $privatePEMKey  = file_get_contents(DIR . '/Crypt/private.pem');
+            $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
+            $data  = str_split(base64_decode($data), 256); //2048 bit
+        } else {
+            $privatePEMKey  = file_get_contents(DIR . '/Crypt/private1.pem');
+            $privatePEMKey  = openssl_get_privatekey($privatePEMKey, 'Symper@@');
+            $data  = str_split(self::base64UrlDecode($data), 256); //2048 bit
+        }
         foreach ($data as $chunk) {
             $partial = '';
             $decryptionOK = openssl_private_decrypt($chunk, $partial, $privatePEMKey, OPENSSL_PKCS1_PADDING);
@@ -326,5 +462,25 @@ class Auth
     public static function restoreTokenInfo()
     {
         self::$ignoreTokenInfo = false;
+    }
+    public static function setNewAuth()
+    {
+        self::$oldAuth = false;
+    }
+    public static function checkNewAuth()
+    {
+        return !self::$oldAuth;
+    }
+    private static function getRepresentativeKey()
+    {
+        $key = false;
+        if (isset($_SERVER['S-Representative'])) {
+            $key = trim($_SERVER["S-Representative"]);
+        } else if (isset($_SERVER['HTTP_S_REPRESENTATIVE'])) {
+            $key = trim($_SERVER["HTTP_S_REPRESENTATIVE"]);
+        }
+        unset($_SERVER["S-Representative"]);
+        unset($_SERVER["HTTP_S_REPRESENTATIVE"]);
+        return $key;
     }
 }
