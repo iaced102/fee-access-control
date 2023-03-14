@@ -242,4 +242,22 @@ class OperationService extends Controller
         $this->output['data'] = $data;
         $this->output['status'] = STATUS_OK;
     }
+    function getOperationByObjectAndRole(){
+        if($this->checkParameter(['objectType','role'])){
+            $objectType = $this->parameters['objectType'];
+            $role = $this->parameters['role'];
+            $operations = RoleAction::getByTop('',"role_identifier = '$role' AND object_type = '$objectType'");
+            $this->output=[
+                'status'=>STATUS_OK,
+                'message'=>'OK',
+                'data'=>$operations
+            ];
+        } else {
+            $this->output=[
+                'status'=>STATUS_BAD_REQUEST,
+                'message'=>'missing objectType or role',
+            ];
+        }
+
+    }
 }

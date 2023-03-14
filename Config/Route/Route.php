@@ -44,6 +44,7 @@ Route::post('operations/delete-many','OperationService','deleteMany');
 Route::get('operations/actions','OperationService','getListType');
 Route::post('operations/objects','OperationService','getListObjectIdentifier');
 Route::get('operations/{type}/actions','OperationService','getActionByObjectType');
+Route::get('operations/{objectType}/{role}','OperationService','getOperationByObjectAndRole');
 
 Route::get('env/object-types','Env','listObjectType',[],false,false,true);
 Route::get('test','Api','testGet');
