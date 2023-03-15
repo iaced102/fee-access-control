@@ -95,7 +95,7 @@ class Operation extends SqlObject
         ],
         "sharing_object" => [
             "name" => "View sharing object",
-            "ownerDomain" => "document-management.symper.vn",
+            "ownerDomain" => "tenant-sharing.symper.vn",
             "action" => ['view_sharing_object']
         ],
     ];
