@@ -219,7 +219,7 @@ class OperationService extends Controller
         $this->output['data']= Operation::$listAction;
         $this->output['status'] =  STATUS_OK;
     }
-    function getListObjectIdentifier(){
+    function getListObjIden(){
         $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
         $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
         $condition = [];
@@ -242,6 +242,17 @@ class OperationService extends Controller
         $this->output['data'] = $data;
         $this->output['status'] = STATUS_OK;
     }
+    
+    function getListObjectIdentifierMultiTenant(){
+        Auth::ignoreTokenInfo();
+        self::getListObjIden();
+    }
+
+    function getListObjectIdentifier(){
+        self::getListObjIden();
+    }
+
+
     function getOperationByObjectAndRole(){
         if($this->checkParameter(['objectType','role'])){
             $objectType = $this->parameters['objectType'];

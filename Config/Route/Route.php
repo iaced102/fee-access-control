@@ -38,6 +38,7 @@ Route::get('action_packs/{id}','ActionPackService','detail');
 Route::post('action_packs/delete-many','ActionPackService','deleteMany');
 
 Route::get('operations','OperationService','list');
+Route::get('operations/all-objects','OperationService','getListObjectIdentifierMultiTenant');
 Route::post('operations','OperationService','create');
 Route::post('operations/save-batch','OperationService','saveBatch');
 Route::post('operations/delete-many','OperationService','deleteMany');
