@@ -215,7 +215,7 @@ class SqlObject extends Model
         $result = [];
         if ($returnClonedId) {
             $rsl = pg_fetch_all($runQueryResult);
-            if (is_array($rsl)) {
+            if(is_array($rsl)){
                 foreach ($rsl as $row) {
                     $result[] = $row['id'];
                 }
