@@ -164,23 +164,17 @@ class PermissionService extends Controller
     }
     function delete(){
         if($this->checkParameter(['id'])){
-            $obj = PermissionPack::getById($this->parameters['id']);
-            if($obj!=false){
-                if($obj->delete()){
-                    $this->output['status'] = STATUS_OK;
-                    RoleAction::closeConnectionAndRefresh($this);
-                    $hostsId=['permission_pack:'.$this->parameters['id']];
-                    ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
-                }
-                else{
-                    $this->output['status'] = STATUS_SERVER_ERROR;
-                }
-                
+            $ids = $this->parameters['id'];
+            $idsArr = explode(',',$ids);
+            $ids =implode("','",$idsArr);
+            PermissionPack::updateMulti(" status = 0"," id IN ('$ids')");
+            $this->output['status'] = STATUS_OK;
+            $hostsId=[];
+            foreach($idsArr as $k => $v){
+                array_push($hostsId,'permission_pack:'.$v);
             }
-            else{
-                $this->output['status']     = STATUS_NOT_FOUND;
-                $this->output['message']    = 'operation not found';
-            }
+            ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
+            RoleAction::closeConnectionAndRefresh($this);
         }
     }
     function detail(){
