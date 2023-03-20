@@ -35,8 +35,8 @@ class RoleAction extends SqlObject{
     public function __construct($data=[]){
         parent::__construct($data);
     }
-    public static function getTableName(){
-        return 'role_action_'.Auth::getTenantId();
+    public static function getTableName($tenantId = ''){
+        return $tenantId == '' ? 'role_action_'.Auth::getTenantId() : "role_action_$tenantId";
     }
     public static function getTopicName(){
        return 'role_action';
@@ -82,10 +82,15 @@ class RoleAction extends SqlObject{
         self::refresh();
     }
 
+    public static function checkViewExist($viewName)
+    {
+        $rsl = Connection::exeQueryAndFetchData("SELECT matviewname FROM pg_matviews WHERE matviewname = '$viewName'");
+        return $rsl != false && !empty($rsl);
+    }
+
     public static function refresh($controllerObj = null){
         $viewName = self::getTableName();
-        $checkHasMatview = Connection::exeQueryAndFetchData("SELECT matviewname FROM pg_matviews WHERE matviewname = '$viewName'");
-        if($checkHasMatview == false || empty($checkHasMatview)){
+        if(!self::checkViewExist($viewName)){
             self::createView();
             MessageBus::publish("role_action","created", ["name"  => $viewName]);
         }else{
@@ -93,8 +98,20 @@ class RoleAction extends SqlObject{
             MessageBus::publish("role_action","update",["name"  => $viewName]);
         }
     }
-    public static function createView(){
-        $tenantId = Auth::getTenantId();
+
+    public static function makeNewViewForTenant($tenantId = '')
+    {
+        $viewName = self::getTableName($tenantId);
+        if(!self::checkViewExist($viewName)){
+            self::createView($tenantId);
+        }
+    }
+
+    public static function createView($tenantId = ''){
+        if ($tenantId == '') {
+            $tenantId = Auth::getTenantId();
+        }
+
         $createViewQuery = "
         CREATE MATERIALIZED VIEW role_action_$tenantId AS SELECT o.object_identifier,
 
@@ -130,7 +147,6 @@ class RoleAction extends SqlObject{
          JOIN permission_role pr ON (((app.permission_pack_id = pr.permission_pack_id) AND (pr.tenant_id_ = app.tenant_id_))))
     
          LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id_ = filter.tenant_id_)))) WHERE o.tenant_id_ = $tenantId"; 
-        var_dump($createViewQuery);
         return Connection::exeQuery($createViewQuery);
     }
 }

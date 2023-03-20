@@ -67,3 +67,4 @@ Route::post('filters/delete-many','FilterService','deleteMany');
 Route::post('demotoken', 'Api', 'getDemoToken');
 Route::post('test', 'Api', 'testFunction');
 Route::post('objects/tenant-migrate', 'ObjectTenantMigration', 'migrate');
+Route::post('role-action/make-new-view', 'RoleActionService', 'makeNewViewForTenant');
