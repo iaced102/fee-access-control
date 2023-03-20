@@ -108,8 +108,8 @@ class SqlObject extends Model
      */
     public static function migrateObjectsByIds(int $sourceTenant, int $targetTenant, array $ids, $backup = true, $returnClonedId = true)
     {
-        $parentStr = "'" . implode("','", $ids) . "'";
-        $primaryCol = static::getPrimaryKey();
+        $parentStr = "'".implode("','", $ids)."'";
+        $primaryCol = static::getColumnNameInDataBase(static::getPrimaryKey());
         return static::migrateObjectsByCondition($sourceTenant, $targetTenant, "$primaryCol IN ($parentStr)", $backup, $returnClonedId);
     }
 
@@ -207,7 +207,6 @@ class SqlObject extends Model
             $query[] = "SELECT DISTINCT $primaryCol AS id FROM $tableName WHERE tenant_id_ = '$sourceTenant' AND ($condition)";
         }
 
-
         $runQueryResult = Connection::exeQuery(implode(";", $query));
         if ($runQueryResult == false) {
             return false;
@@ -216,7 +215,7 @@ class SqlObject extends Model
         $result = [];
         if ($returnClonedId) {
             $rsl = pg_fetch_all($runQueryResult);
-            if (is_array($rsl)) {
+            if(is_array($rsl)){
                 foreach ($rsl as $row) {
                     $result[] = $row['id'];
                 }
