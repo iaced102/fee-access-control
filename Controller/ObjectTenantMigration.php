@@ -73,11 +73,11 @@ class ObjectTenantMigration extends Controller{
 
         if($objectType == 'filter'){
             //clone filter
-            $listFilter = Filter::migrateObjectsByIds($source, $target, $ids);
-            self::checkRsl($listFilter);
+            $arrIdFilter = Filter::migrateObjectsByIds($source, $target, $ids);
+            self::checkRsl($arrIdFilter);
 
             //get id object identifier
-            $idsFilter = "'".implode("','", $listFilter)."'";
+            $idsFilter = "'".implode("','", $arrIdFilter)."'";
             $idObj = [];
             $listFilter = Filter::getByTop('',"id  IN (".$idsFilter.")");
             if (count($listFilter) > 0){
@@ -87,12 +87,11 @@ class ObjectTenantMigration extends Controller{
                 }
             }
             $idObj = array_unique($idObj);
-
             //clone object identifier
             $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
             self::checkRsl($rsl);
-
-            $rsl = self::saveObjectIdentify('filter',$listFilter,$target,$source);
+            
+            $rsl = self::saveObjectIdentify('filter',$arrIdFilter,$target,$source);
             $this->output['message_migrate_object_identify'] = $rsl;
             $this->output["message"]=Message::getStatusResponse(STATUS_OK);
             $this->output["status"]=STATUS_OK;
