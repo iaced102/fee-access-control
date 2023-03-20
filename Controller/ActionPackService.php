@@ -10,6 +10,7 @@ use Model\ActionPack;
 use Model\Operation;
 use Model\OperationInActionPack;
 use Library\ObjectRelation;
+use Library\MessageBus;
 use Model\PermissionRole;
 use Model\RoleAction;
 use Model\Users;
@@ -59,8 +60,7 @@ class ActionPackService extends Controller
         ];
     }
     function create(){
-        $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(ActionPack::getTopicName(),"create",json_encode($this->parameters));
         if($this->checkParameter(['name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -144,10 +144,7 @@ class ActionPackService extends Controller
         ObjectRelation::save($nodes,$links,"action_pack:$id");
     }
     function update(){
-        TimeLog::start('publish-data-to-kafka');
-        $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'publish', $messageBusData, 'POST');
-        TimeLog::end('publish-data-to-kafka', MESSAGE_BUS_SERVICE.'publish');
+        MessageBus::publish(ActionPack::getTopicName(),"update",json_encode($this->parameters));
         
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){

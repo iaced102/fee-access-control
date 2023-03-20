@@ -12,6 +12,7 @@ fi
 
 sed -i -e "s/{ENVIRONMENT}/$originEnv/g" \
        -e "s/{ENVIRONMENT_}/$env/g" \
+       -e "s/{SERVICE_ENV}/$SERVICE_ENV/g" \
        -e "s/{APP_NAME}/$APP_NAME/g" \
        -e "s/{POSTGRES_USER}/$POSTGRES_USER/g" \
        -e "s/{POSTGRES_PASS}/$POSTGRES_PASS/g" \

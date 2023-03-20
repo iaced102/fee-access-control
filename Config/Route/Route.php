@@ -38,12 +38,14 @@ Route::get('action_packs/{id}','ActionPackService','detail');
 Route::post('action_packs/delete-many','ActionPackService','deleteMany');
 
 Route::get('operations','OperationService','list');
+Route::get('operations/all-objects','OperationService','getListObjectIdentifierMultiTenant');
 Route::post('operations','OperationService','create');
 Route::post('operations/save-batch','OperationService','saveBatch');
 Route::post('operations/delete-many','OperationService','deleteMany');
 Route::get('operations/actions','OperationService','getListType');
 Route::post('operations/objects','OperationService','getListObjectIdentifier');
 Route::get('operations/{type}/actions','OperationService','getActionByObjectType');
+Route::get('operations/{objectType}/{role}','OperationService','getOperationByObjectAndRole');
 
 Route::get('env/object-types','Env','listObjectType',[],false,false,true);
 Route::get('test','Api','testGet');
@@ -68,3 +70,4 @@ Route::post('demotoken', 'Api', 'getDemoToken');
 Route::post('test', 'Api', 'testFunction');
 Route::post('objects/tenant-migrate', 'ObjectTenantMigration', 'migrate');
 Route::post('object-identify', 'ObjectIdentifyService', 'save');
+Route::post('role-action/make-new-view', 'RoleActionService', 'makeNewViewForTenant');
