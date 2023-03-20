@@ -219,7 +219,7 @@ class OperationService extends Controller
         $this->output['data']= Operation::$listAction;
         $this->output['status'] =  STATUS_OK;
     }
-    function getListObjectIdentifier(){
+    function getListObjIden(){
         $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
         $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
         $condition = [];
@@ -241,5 +241,34 @@ class OperationService extends Controller
         $data = ObjectIdentifier::getByPaging($page,$pageSize,'',$conditionStr,false, false, true);
         $this->output['data'] = $data;
         $this->output['status'] = STATUS_OK;
+    }
+    
+    function getListObjectIdentifierMultiTenant(){
+        Auth::ignoreTokenInfo();
+        self::getListObjIden();
+    }
+
+    function getListObjectIdentifier(){
+        self::getListObjIden();
+    }
+
+
+    function getOperationByObjectAndRole(){
+        if($this->checkParameter(['objectType','role'])){
+            $objectType = $this->parameters['objectType'];
+            $role = $this->parameters['role'];
+            $operations = RoleAction::getByTop('',"role_identifier = '$role' AND object_type = '$objectType'");
+            $this->output=[
+                'status'=>STATUS_OK,
+                'message'=>'OK',
+                'data'=>$operations
+            ];
+        } else {
+            $this->output=[
+                'status'=>STATUS_BAD_REQUEST,
+                'message'=>'missing objectType or role',
+            ];
+        }
+
     }
 }

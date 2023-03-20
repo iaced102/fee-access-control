@@ -26,7 +26,7 @@ class Operation extends SqlObject
         'tenantId'          => [ 'name' => 'tenant_id_',            'type' => 'number'],
     ];
     public static $listAction = [
-        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['list','edit','submit','import','drop','restore','list_trash','submit_by_workflow']],
+        'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['list','edit','submit','import','drop','restore','list_trash','submit_by_workflow','share_cross_tenant']],
         'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','restore','detail','list_instance','print','list_trash','update_by_workflow','clone','share_tree_config','share_filter','share_conditonal_format']],
         'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>[ 'list','deploy','drop','update','list_instance','start_instance','list_process','view','view_instance', 'run_instance', 'stop_instance', 'complete_instance', 'delete_instance', 'delete_related_doc']],
         'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['create','update','detail','change_pass', "delete",'list','set_role',"import", "export"]],
@@ -92,6 +92,11 @@ class Operation extends SqlObject
             "name" => "Data connector",
             "ownerDomain" => "data-connector.symper.vn",
             "action" => ['update', 'stop', 'detail', 'delete', 'list', 'run', 'startExcuteJob', 'stopExcuteJob']
+        ],
+        "sharing_object" => [
+            "name" => "View sharing object",
+            "ownerDomain" => "tenant-sharing.symper.vn",
+            "action" => ['view_sharing_object']
         ],
     ];
     public function __construct($data=[]){
