@@ -10,13 +10,9 @@
 namespace Controller;
 
 use Library\Auth;
-use Library\Environment;
 use Library\Redirect;
 use Library\Message;
-use Library\MessageBus;
-use Library\Request;
 use Library\Str;
-use SqlObject;
 
 class Controller
 {
@@ -36,7 +32,7 @@ class Controller
         $action = $this->currentAction != '' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
             $this->logData = [
-                'parameters'    => $this->parameters,
+                'parameters'    => json_encode($this->parameters, JSON_UNESCAPED_UNICODE),
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
                 'requestTime'   => microtime(true),
