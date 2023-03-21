@@ -1,13 +1,16 @@
 <?php
+
 namespace Model;
 
 use Library\Auth;
 use Library\MessageBus;
 use SqlObject;
-class RoleAction extends SqlObject{
-    
-   
-    public 
+
+class RoleAction extends SqlObject
+{
+
+
+    public
         $objectIdentifier,
         $action,
         $objectType,
@@ -20,26 +23,29 @@ class RoleAction extends SqlObject{
         $actionPackId,
         $tenantId;
     public static $mappingFromDatabase = [
-        'objectIdentifier'  =>  [ 'name' => 'object_identifier',    'type' => 'string'],
-        'action'            =>  [ 'name' => 'action',               'type' => 'string'],
-        'objectType'        =>  [ 'name' => 'object_type',          'type' => 'string'],
-        'name'              =>  [ 'name' => 'name',                 'type' => 'string'],
-        'roleIdentifier'    =>  [ 'name' => 'role_identifier',      'type' => 'string'],
-        'filter'            =>  [ 'name' => 'filter_formula',               'type' => 'string'],
-        'filterNew'         =>  [ 'name' => 'filter_formula_new',               'type' => 'string'],
-        'status'            =>  [ 'name' => 'filter_status',        'type' => 'string'],
-        'actionPackId'      =>  [ 'name' => 'action_pack_id',        'type' => 'string'],
-        'filterCombination' =>  [ 'name' => 'filter_combination',        'type' => 'string'],
-        'tenantId'          =>  [ 'name' => 'tenant_id_', 'type' => 'number'],
+        'objectIdentifier'  =>  ['name' => 'object_identifier',    'type' => 'string'],
+        'action'            =>  ['name' => 'action',               'type' => 'string'],
+        'objectType'        =>  ['name' => 'object_type',          'type' => 'string'],
+        'name'              =>  ['name' => 'name',                 'type' => 'string'],
+        'roleIdentifier'    =>  ['name' => 'role_identifier',      'type' => 'string'],
+        'filter'            =>  ['name' => 'filter_formula',               'type' => 'string'],
+        'filterNew'         =>  ['name' => 'filter_formula_new',               'type' => 'string'],
+        'status'            =>  ['name' => 'filter_status',        'type' => 'string'],
+        'actionPackId'      =>  ['name' => 'action_pack_id',        'type' => 'string'],
+        'filterCombination' =>  ['name' => 'filter_combination',        'type' => 'string'],
+        'tenantId'          =>  ['name' => 'tenant_id_', 'type' => 'number'],
     ];
-    public function __construct($data=[]){
+    public function __construct($data = [])
+    {
         parent::__construct($data);
     }
-    public static function getTableName($tenantId = ''){
-        return $tenantId == '' ? 'role_action_'.Auth::getTenantId() : "role_action_$tenantId";
+    public static function getTableName($tenantId = '')
+    {
+        return $tenantId == '' ? 'role_action_' . Auth::getTenantId() : "role_action_$tenantId";
     }
-    public static function getTopicName(){
-       return 'role_action';
+    public static function getTopicName()
+    {
+        return 'role_action';
     }
 
     public static function printResultAndContinue($data)
@@ -68,7 +74,7 @@ class RoleAction extends SqlObject{
              */
             session_write_close();
             fastcgi_finish_request();
-    
+
             return;
         }
     }
@@ -88,26 +94,38 @@ class RoleAction extends SqlObject{
         return $rsl != false && !empty($rsl);
     }
 
-    public static function refresh($controllerObj = null){
-        $viewName = self::getTableName();
-        if(!self::checkViewExist($viewName)){
-            self::createView();
-            MessageBus::publish("role_action","created", ["name"  => $viewName]);
-        }else{
-            Connection::exeQuery("REFRESH MATERIALIZED VIEW $viewName");
-            MessageBus::publish("role_action","update",["name"  => $viewName]);
+    public static function refresh($controllerObj = null)
+    {
+        $server = $GLOBALS['env']['db']['postgresql']['host'];
+        $server = explode(",", $server);
+        for ($i = 0; $i < count($server); $i++) {
+            $GLOBALS['env']['db']['postgresql']['host'] = $server[$i];
+            $viewName = self::getTableName();
+            if (!self::checkViewExist($viewName)) {
+                self::createView();
+                MessageBus::publish("role_action", "created", ["name"  => $viewName]);
+            } else {
+                Connection::exeQuery("REFRESH MATERIALIZED VIEW $viewName");
+                MessageBus::publish("role_action", "update", ["name"  => $viewName]);
+            }
         }
     }
 
     public static function makeNewViewForTenant($tenantId = '')
     {
-        $viewName = self::getTableName($tenantId);
-        if(!self::checkViewExist($viewName)){
-            self::createView($tenantId);
+        $server = $GLOBALS['env']['db']['postgresql']['host'];
+        $server = explode(",", $server);
+        for ($i = 0; $i < count($server); $i++) {
+            $GLOBALS['env']['db']['postgresql']['host'] = $server[$i];
+            $viewName = self::getTableName($tenantId);
+            if (!self::checkViewExist($viewName)) {
+                self::createView($tenantId);
+            }
         }
     }
 
-    public static function createView($tenantId = ''){
+    public static function createView($tenantId = '')
+    {
         if ($tenantId == '') {
             $tenantId = Auth::getTenantId();
         }
@@ -146,7 +164,7 @@ class RoleAction extends SqlObject{
     
          JOIN permission_role pr ON (((app.permission_pack_id = pr.permission_pack_id) AND (pr.tenant_id_ = app.tenant_id_))))
     
-         LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id_ = filter.tenant_id_)))) WHERE o.tenant_id_ = $tenantId"; 
+         LEFT JOIN filter ON ((((op.filter)::text = (filter.id)::text) AND (op.tenant_id_ = filter.tenant_id_)))) WHERE o.tenant_id_ = $tenantId";
         return Connection::exeQuery($createViewQuery);
     }
 }
