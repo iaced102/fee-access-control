@@ -1,9 +1,11 @@
 <?php
+
 namespace Library;
 
 use Library\Request;
 
-class ObjectRelation {
+class ObjectRelation
+{
     /**
      * Lưu thông tin về các object và link giữa các object 
      * @param nodes có dạng 
@@ -47,12 +49,13 @@ class ObjectRelation {
      */
     public static function deleteNodesAndLinks($host, $deleteByCohost = false)
     {
-        $url = "https://".OBJECT_RELATION."/object-host/$host";
-        if($deleteByCohost){
-            $url = "https://".OBJECT_RELATION."/object-cohost/$host";
+        $url = OBJECT_RELATION . "/object-host/$host";
+        if ($deleteByCohost) {
+            $url = OBJECT_RELATION . "/object-cohost/$host";
         }
-        $token = "Bearer ".Auth::getBearerToken();
-        $res = Request::request($url, 
+        $token = "Bearer " . Auth::getBearerToken();
+        $res = Request::request(
+            $url,
             false,
             'DELETE',
             $token,
