@@ -13,6 +13,7 @@ use Library\Message;
 use Library\Auth;
 use Library\Request;
 use Controller\ObjectIdentifyService;
+use Exception;
 
 class ObjectTenantMigration extends Controller{
     function __construct()
@@ -91,7 +92,7 @@ class ObjectTenantMigration extends Controller{
         //clone filter
         $arrIdFilter = Filter::migrateObjectsByIds($source, $target, $ids);
         if($arrIdFilter===false){
-            throw New Exception('err when migrate filter');
+            throw new Exception('err when migrate filter');
         }
 
         //get id object identifier
@@ -108,7 +109,7 @@ class ObjectTenantMigration extends Controller{
         //clone object identifier
         $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
         if($rsl===false){
-            throw New Exception('err when migrate object identifier in filter');
+            throw new Exception('err when migrate object identifier in filter');
         }
         
         $rsl = self::saveObjectIdentify('filter',$arrIdFilter,$target,$source);
@@ -121,25 +122,25 @@ class ObjectTenantMigration extends Controller{
         //clone action pack
         $idActionPack = ActionPack::migrateObjectsByIds($source, $target, $ids);
         if($idActionPack===false){
-            throw New Exception('err when migrate action pack');
+            throw new Exception('err when migrate action pack');
         }
 
         //clone filter in action pack
         $rsl = FilterInActionPack::migrateObjectsByParents($source, $target,'action_pack_id', $idActionPack);
         if($rsl===false){
-            throw New Exception('err when migrate filter in action pack');
+            throw new Exception('err when migrate filter in action pack');
         }
 
         //clone filter in action pack
         $rsl = Filter::migrateObjectsByIds($source, $target, $rsl);
         if($rsl===false){
-            throw New Exception('err when migrate filter');
+            throw new Exception('err when migrate filter');
         }
 
         //clone operation in action pack
         $rsl = OperationInActionPack::migrateObjectsByParents($source, $target,'action_pack_id', $idActionPack);
         if($rsl===false){
-            throw New Exception('err when migrate operation in action pack');
+            throw new Exception('err when migrate operation in action pack');
         }
 
         //get id operation
@@ -156,7 +157,7 @@ class ObjectTenantMigration extends Controller{
         //clone operation
         $rsl = Operation::migrateObjectsByIds($source, $target, $idObj);
         if($rsl===false){
-            throw New Exception('err when migrate operation');
+            throw new Exception('err when migrate operation');
         }
 
         //get id object identifier
@@ -173,7 +174,7 @@ class ObjectTenantMigration extends Controller{
         //clone object identifier
         $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
         if($rsl===false){
-            throw New Exception('err when migrate object identifier');
+            throw new Exception('err when migrate object identifier');
         }
 
         $rsl = self::saveObjectIdentify('action_pack',$idActionPack,$target,$source);
@@ -184,26 +185,26 @@ class ObjectTenantMigration extends Controller{
 
     public function migratePermissionPack($source,$target,$ids){
          //clone permission
-         $permissionId = PermissionPack::migrateObjectsByIds($source, $target, $ids);
-         if($permissionId===false){
-            throw New Exception('err when migrate permission');
+        $permissionId = PermissionPack::migrateObjectsByIds($source, $target, $ids);
+        if($permissionId===false){
+            throw new Exception('err when migrate permission');
         }
-         //clone action pack in permission
-         $rsl = ActionInPermissionPack::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
-         if($rsl===false){
-            throw New Exception('err when migrate action pack in permission');
-        }
-
-         //clone permission role
-         $rsl = PermissionRole::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
-         if($rsl===false){
-            throw New Exception('err when migrate permission role');
+        //clone action pack in permission
+        $rsl = ActionInPermissionPack::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
+        if($rsl===false){
+            throw new Exception('err when migrate action pack in permission');
         }
 
-         $rsl = self::saveObjectIdentify('permission_pack',$permissionId,$target,$source);
-         $this->output['message_migrate_object_identify'] = $rsl;
-         $this->output["message"]=Message::getStatusResponse(STATUS_OK);
-         $this->output["status"]=STATUS_OK;
-     }
+        //clone permission role
+        $rsl = PermissionRole::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
+        if($rsl===false){
+            throw new Exception('err when migrate permission role');
+        }
+
+        $rsl = self::saveObjectIdentify('permission_pack',$permissionId,$target,$source);
+        $this->output['message_migrate_object_identify'] = $rsl;
+        $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+        $this->output["status"]=STATUS_OK;
+    }
     
 }
