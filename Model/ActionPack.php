@@ -208,17 +208,19 @@ class ActionPack extends SqlObject
         $usedActions = "'".implode("','", array_keys($usedOperations['action']))."'";
 
         $operationObjs = Operation::getByTop('', " object_identifier IN ($usedObjectIdens) AND action IN ($usedActions)");
-        $mapObjIdenAndction = [];
+        $mapObjIdenAndAction = [];
         foreach ($operationObjs as $obj) {
-            $mapObjIdenAndction[$obj->objectIdentifier.'_'.$obj->action] = $obj;
+            $mapObjIdenAndAction[$obj->objectIdentifier.'_'.$obj->action] = $obj;
         }
         $rsl = [];
         foreach ($operationAndFilter as &$item) {
-            $operationObj = $mapObjIdenAndction[$item['objectIdentify'].'_'.$item['action']];
-            $rsl[$operationObj->id]  = [
-                'formulaValue' => $item['formulaValue'],
-                'formulaStruct' => $item['formulaStruct']
-            ];
+            if(isset($mapObjIdenAndAction[$item['objectIdentify'].'_'.$item['action']])){
+                $operationObj = $mapObjIdenAndAction[$item['objectIdentify'].'_'.$item['action']];
+                $rsl[$operationObj->id]  = [
+                    'formulaValue' => $item['formulaValue'],
+                    'formulaStruct' => $item['formulaStruct']
+                ];
+            }
         }
 
         if(count($usedFilterIds) > 0){
