@@ -71,109 +71,139 @@ class ObjectTenantMigration extends Controller{
         $ids = $this->parameters['ids'];
         $ids = explode(',', $ids);
 
-        if($objectType == 'filter'){
-            //clone filter
-            $arrIdFilter = Filter::migrateObjectsByIds($source, $target, $ids);
-            self::checkRsl($arrIdFilter);
-
-            //get id object identifier
-            $idsFilter = "'".implode("','", $arrIdFilter)."'";
-            $idObj = [];
-            $listFilter = Filter::getByTop('',"id  IN (".$idsFilter.")");
-            if (count($listFilter) > 0){
-                foreach($listFilter as $key => $value){
-                    $arr = explode(',', $value->objectIdentifier);
-                    $idObj = array_merge($idObj,$arr);
-                }
+        try {
+            if($objectType == 'filter'){
+                $this->migrateFilter($source,$target,$ids);
+            }else if ($objectType == 'action_pack') {
+                $this->migrateActionPack($source,$target,$ids);
+            } else if ($objectType == 'permission_pack') {
+                $this->migratePermissionPack($source,$target,$ids);
             }
-            $idObj = array_unique($idObj);
-            //clone object identifier
-            $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
-            self::checkRsl($rsl);
-            
-            $rsl = self::saveObjectIdentify('filter',$arrIdFilter,$target,$source);
-            $this->output['message_migrate_object_identify'] = $rsl;
-            $this->output["message"]=Message::getStatusResponse(STATUS_OK);
-            $this->output["status"]=STATUS_OK;
-        }else if ($objectType == 'action_pack') {
-
-            //clone action pack
-            $idActionPack = ActionPack::migrateObjectsByIds($source, $target, $ids);
-            self::checkRsl($idActionPack);
-
-            //clone filter in action pack
-            $rsl = FilterInActionPack::migrateObjectsByParents($source, $target,'action_pack_id', $idActionPack);
-            self::checkRsl($rsl);
-
-            //clone filter in action pack
-            $rsl = Filter::migrateObjectsByIds($source, $target, $rsl);
-            self::checkRsl($rsl);
-
-            //clone operation in action pack
-            $rsl = OperationInActionPack::migrateObjectsByParents($source, $target,'action_pack_id', $idActionPack);
-            self::checkRsl($rsl);
-
-            //get id operation
-            $ids = implode("','",$rsl);
-            $idObj = [];
-            $listOperation = OperationInActionPack::getByTop('',"id  IN ('".$ids."')");
-            if (count($listOperation) > 0){
-                foreach($listOperation as $key => $value){
-                    array_push($idObj,$value->operationId);
-                }
-            }
-            $idObj = array_unique($idObj);
-
-            //clone operation
-            $rsl = Operation::migrateObjectsByIds($source, $target, $idObj);
-            self::checkRsl($rsl);
-
-            //get id object identifier
-            $ids = implode("','",$rsl);
-            $idObj = [];
-            $listObj = Operation::getByTop('',"id  IN ('$ids')");
-            if (count($listObj) > 0){
-                foreach($listObj as $key => $value){
-                    array_push($idObj,$value->objectIdentifier);
-                }
-            }
-            $idObj = array_unique($idObj);
-
-            //clone object identifier
-            $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
-            self::checkRsl($rsl);
-
-
-            $rsl = self::saveObjectIdentify('action_pack',$idActionPack,$target,$source);
-            $this->output['message_migrate_object_identify'] = $rsl;
-            $this->output["message"]=Message::getStatusResponse(STATUS_OK);
-            $this->output["status"]=STATUS_OK;
-        } else if ($objectType == 'permission_pack') {
-
-            //clone permission
-            $permissionId = PermissionPack::migrateObjectsByIds($source, $target, $ids);
-            self::checkRsl($permissionId);
-
-            //clone action pack in permission
-            $rsl = ActionInPermissionPack::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
-            self::checkRsl($rsl);
-
-            //clone permission role
-            $rsl = PermissionRole::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
-            self::checkRsl($rsl);
-
-            $rsl = self::saveObjectIdentify('permission_pack',$permissionId,$target,$source);
-            $this->output['message_migrate_object_identify'] = $rsl;
-            $this->output["message"]=Message::getStatusResponse(STATUS_OK);
-            $this->output["status"]=STATUS_OK;
-        }
-    }
-    public function checkRsl($rsl){
-        if ($rsl === false){
-            $this->output = [
-                'status'    => STATUS_SERVER_ERROR,
-                'message'   => Message::getStatusResponse(STATUS_SERVER_ERROR),
+               
+        } catch (\Throwable $th) {
+            $this->ouput=[
+                'status' => STATUS_BAD_REQUEST,
+                'message' => $th->getMessage()
             ];
         }
     }
+    public function migrateFilter($source,$target,$ids){
+        //clone filter
+        $arrIdFilter = Filter::migrateObjectsByIds($source, $target, $ids);
+        if($arrIdFilter===false){
+            throw New Exception('err when migrate filter');
+        }
+
+        //get id object identifier
+        $idsFilter = "'".implode("','", $arrIdFilter)."'";
+        $idObj = [];
+        $listFilter = Filter::getByTop('',"id  IN (".$idsFilter.")");
+        if (count($listFilter) > 0){
+            foreach($listFilter as $key => $value){
+                $arr = explode(',', $value->objectIdentifier);
+                $idObj = array_merge($idObj,$arr);
+            }
+        }
+        $idObj = array_unique($idObj);
+        //clone object identifier
+        $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
+        if($rsl===false){
+            throw New Exception('err when migrate object identifier in filter');
+        }
+        
+        $rsl = self::saveObjectIdentify('filter',$arrIdFilter,$target,$source);
+        $this->output['message_migrate_object_identify'] = $rsl;
+        $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+        $this->output["status"]=STATUS_OK;
+    }
+
+    public function migrateActionPack($source,$target,$ids){
+        //clone action pack
+        $idActionPack = ActionPack::migrateObjectsByIds($source, $target, $ids);
+        if($idActionPack===false){
+            throw New Exception('err when migrate action pack');
+        }
+
+        //clone filter in action pack
+        $rsl = FilterInActionPack::migrateObjectsByParents($source, $target,'action_pack_id', $idActionPack);
+        if($rsl===false){
+            throw New Exception('err when migrate filter in action pack');
+        }
+
+        //clone filter in action pack
+        $rsl = Filter::migrateObjectsByIds($source, $target, $rsl);
+        if($rsl===false){
+            throw New Exception('err when migrate filter');
+        }
+
+        //clone operation in action pack
+        $rsl = OperationInActionPack::migrateObjectsByParents($source, $target,'action_pack_id', $idActionPack);
+        if($rsl===false){
+            throw New Exception('err when migrate operation in action pack');
+        }
+
+        //get id operation
+        $ids = implode("','",$rsl);
+        $idObj = [];
+        $listOperation = OperationInActionPack::getByTop('',"id  IN ('".$ids."')");
+        if (count($listOperation) > 0){
+            foreach($listOperation as $key => $value){
+                array_push($idObj,$value->operationId);
+            }
+        }
+        $idObj = array_unique($idObj);
+
+        //clone operation
+        $rsl = Operation::migrateObjectsByIds($source, $target, $idObj);
+        if($rsl===false){
+            throw New Exception('err when migrate operation');
+        }
+
+        //get id object identifier
+        $ids = implode("','",$rsl);
+        $idObj = [];
+        $listObj = Operation::getByTop('',"id  IN ('$ids')");
+        if (count($listObj) > 0){
+            foreach($listObj as $key => $value){
+                array_push($idObj,$value->objectIdentifier);
+            }
+        }
+        $idObj = array_unique($idObj);
+
+        //clone object identifier
+        $rsl = ObjectIdentifier::migrateObjectsByParents($source, $target,'object_identifier', $idObj);
+        if($rsl===false){
+            throw New Exception('err when migrate object identifier');
+        }
+
+        $rsl = self::saveObjectIdentify('action_pack',$idActionPack,$target,$source);
+        $this->output['message_migrate_object_identify'] = $rsl;
+        $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+        $this->output["status"]=STATUS_OK;
+    }
+
+    public function migratePermissionPack($source,$target,$ids){
+         //clone permission
+         $permissionId = PermissionPack::migrateObjectsByIds($source, $target, $ids);
+         if($permissionId===false){
+            throw New Exception('err when migrate permission');
+        }
+         //clone action pack in permission
+         $rsl = ActionInPermissionPack::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
+         if($rsl===false){
+            throw New Exception('err when migrate action pack in permission');
+        }
+
+         //clone permission role
+         $rsl = PermissionRole::migrateObjectsByParents($source, $target,'permission_pack_id', $permissionId);
+         if($rsl===false){
+            throw New Exception('err when migrate permission role');
+        }
+
+         $rsl = self::saveObjectIdentify('permission_pack',$permissionId,$target,$source);
+         $this->output['message_migrate_object_identify'] = $rsl;
+         $this->output["message"]=Message::getStatusResponse(STATUS_OK);
+         $this->output["status"]=STATUS_OK;
+     }
+    
 }
