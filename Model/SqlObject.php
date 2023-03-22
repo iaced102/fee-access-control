@@ -108,7 +108,7 @@ class SqlObject extends Model
      */
     public static function migrateObjectsByIds(int $sourceTenant, int $targetTenant, array $ids, $backup = true, $returnClonedId = true)
     {
-        $parentStr = "'".implode("','", $ids)."'";
+        $parentStr = "'" . implode("','", $ids) . "'";
         $primaryCol = static::getColumnNameInDataBase(static::getPrimaryKey());
         return static::migrateObjectsByCondition($sourceTenant, $targetTenant, "$primaryCol IN ($parentStr)", $backup, $returnClonedId);
     }
@@ -174,7 +174,11 @@ class SqlObject extends Model
             "DELETE FROM $tableName WHERE tenant_id_ = '$oppositeTenant' AND ($condition)",
 
             // Backup các bản ghi của tenant đích
-            "UPDATE $tableName SET tenant_id_ = '$oppositeTenant' WHERE tenant_id_ = '$targetTenant' AND ($condition)",
+            // "UPDATE $tableName SET tenant_id_ = '$oppositeTenant' WHERE tenant_id_ = '$targetTenant' AND ($condition)",
+            "INSERT INTO $tableName($columns, tenant_id_) SELECT $columns, $oppositeTenant as tenant_id_ FROM $tableName WHERE ($condition) AND tenant_id_ = '$targetTenant'",
+
+            // Xoá dữ liệu của tenant đích
+            "DELETE FROM $tableName WHERE tenant_id_ = '$targetTenant' AND ($condition)",
 
             // Thêm các bản ghi từ tenant nguồn vào tenant đích
             "INSERT INTO $tableName($columns, tenant_id_)
@@ -215,7 +219,7 @@ class SqlObject extends Model
         $result = [];
         if ($returnClonedId) {
             $rsl = pg_fetch_all($runQueryResult);
-            if(is_array($rsl)){
+            if (is_array($rsl)) {
                 foreach ($rsl as $row) {
                     $result[] = $row['id'];
                 }
