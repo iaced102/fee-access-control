@@ -113,7 +113,7 @@ class ActionPackService extends Controller
                     if($type == 'nodes'){
                         $data = ['name' => $name,'id' => $name,'title' => $name,'type' => $typeObj,'host' =>$name];
                     } else {
-                        $data = ['start' => "action_pack:$id",'end'=> $name,'type' => 'NEED','host' =>"action_pack:$id"];
+                        $data = ['start' => "action_pack:$id",'end'=> $name,'type' => 'USE','host' =>"action_pack:$id"];
                     }
                     if(!in_array($data,$arr)){
                         array_push($arr,$data);
