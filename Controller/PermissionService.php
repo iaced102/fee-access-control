@@ -31,7 +31,18 @@ class PermissionService extends Controller
         if(!isset($this->parameters['sort'])){
             $this->parameters['sort'] = [["column"=>"createAt","type"=>'DESC']];            
         }
-        $listObj = PermissionPack::getByFilter($this->parameters);
+        $filter = [
+            [
+                'column'    => 'status',
+                'conditions'=> [
+                    [
+                        'name'  =>'greater_than',
+                        'value' => 0
+                    ]
+                ]
+            ]
+        ];
+        $listObj = PermissionPack::getByFilter($this->parameters,$filter);
         $data = [
             'listObject'  => $listObj['list'],
             'columns'     => $this->getListColumns(),
@@ -167,6 +178,7 @@ class PermissionService extends Controller
             $ids = $this->parameters['id'];
             $idsArr = explode(',',$ids);
             $ids =implode("','",$idsArr);
+            
             PermissionPack::updateMulti(" status = 0"," id IN ('$ids')");
             $this->output['status'] = STATUS_OK;
             $hostsId=[];
