@@ -171,11 +171,12 @@ class Model{
         return self::getByStatements($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
     }
 
-    public static function deleteMulti($where){
+    public static function deleteMulti($where,$dataBindings = [])
+    {
         $tableName          = static::getTableName();
         $where              = self::mergeCondWithTenantFilter($where);
         $command            = "DELETE FROM $tableName WHERE $where";
-        return connection::exeQuery($command);
+        return Connection::prepareExeQuery($command, $dataBindings);
     }
     public static function count($where, $dataBindings = []){
         $where              = self::mergeCondWithTenantFilter($where);
