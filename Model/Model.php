@@ -80,9 +80,9 @@ class Model{
     *   description: dinh update function get thành private, không được phép sử dụng hàm get trực tiếp từ bên ngoài,
     *   bắt buộc filter theo tanentid trước khi query.
     */
-    public static function get($command,$returnObject=true,$returnArrayKeyAsField=false){
+    public static function get($command, $returnObject = true, $returnArrayKeyAsField = false, $dataBindings = []){
         $className = get_called_class();
-        $resultData  = Connection::getDataQuerySelect($command);
+        $resultData  = Connection::getDataQuerySelect($command, $dataBindings);
         if($returnObject){
             $arrayResult = [];
             if(!empty($resultData)){
@@ -113,10 +113,11 @@ class Model{
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
         $primaryColumnName  = $primaryColumnData['name']; 
-        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$id);
-        $where              = self::mergeCondWithTenantFilter($primaryColumnName. " = ".$primaryValue);
+        // $primaryValue       = self::getValueForSqlCommand($primaryColumnData, $id);
+        $idCondition = $primaryColumnName . " = $1";
+        $where              = self::mergeCondWithTenantFilter($idCondition);
         $command            = "SELECT * FROM $tableName WHERE $where";
-        $listObject         = self::get($command);
+        $listObject         = self::get($command, true, false, [$id]);
         if(isset($listObject[0])){
             return $listObject[0];
         }
@@ -144,8 +145,28 @@ class Model{
         $command            .= $top!=''?' LIMIT '.$top:'';
         return self::get($command,true,$returnArrayKeyAsField);
     }
+    public static function getByStatements($top = '', $where = ["conditions" => "", "dataBindings" => []], $order = '', $fields = false, $otherTable = false, $hasDistinct = false, $returnArrayKeyAsField = false)
+    {
+        if ($top != "" && !is_numeric($top)) {
+            $top = 1;
+        }
+        $dataBindings = [];
+        $whereConditions = $where["conditions"];
+        $dataBindings = $where["dataBindings"];
+        $tableName          = static::getTableName();
+        $whereConditions    = self::mergeCondWithTenantFilter($whereConditions, $tableName, $otherTable);
+        $command            = "SELECT ";
+        $command            .= $hasDistinct ? "  DISTINCT " : ' ';
+        $command            .= $fields == false ? "$tableName.*" : $fields;
+        $command            .= " FROM $tableName";
+        $command            .= $otherTable != false ? ', ' . $otherTable : '';
+        $command            .= $whereConditions != '' ? ' WHERE ' . $whereConditions : '';
+        $command            .= $order != '' ? " ORDER BY " . $order : '';
+        $command            .= $top != '' ? ' LIMIT ' . $top : '';
+        return self::get($command, true, $returnArrayKeyAsField, $dataBindings);
+    }
 
-    public static function getByPaging($currentPage, $pageSize,$order,$where,$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
+    public static function getByPaging($currentPage, $pageSize, $order, $where = ["conditions" => "", "dataBindings" => []], $fields = false, $otherTable = false, $hasDistinct = false, $returnArrayKeyAsField = false){
         $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
         return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
     }
@@ -156,7 +177,7 @@ class Model{
         $command            = "DELETE FROM $tableName WHERE $where";
         return connection::exeQuery($command);
     }
-    public static function count($where){
+    public static function count($where, $dataBindings = []){
         $where              = self::mergeCondWithTenantFilter($where);
         $tableName          = static::getTableName();
         $primaryKey = static::getPrimaryKey();
@@ -164,11 +185,11 @@ class Model{
         $primaryColumnName  = $primaryColumnData['name'];
         $command            = "SELECT COUNT( DISTINCT $tableName.$primaryColumnName) AS count FROM $tableName";
         $command            .= ($where!='')?' WHERE '.$where:'';
-        return self::countByQuery($command);
+        return self::countByQuery($command, $dataBindings);
     }
-    public static function countByQuery($command){
+    public static function countByQuery($command, $dataBindings = []){
         $result = 0;        
-        $resultData =Connection::getDataQuerySelect($command);
+        $resultData = Connection::getDataQuerySelect($command, $dataBindings);
         if(isset($resultData[0]['count'])){
             $result = $resultData[0]['count'];
         }
@@ -304,11 +325,11 @@ class Model{
         return connection::exeQuery($command);
     }
 
-    public static function updateMulti($set, $condition){
+    public static function updateMulti($set, $condition, $dataBindings = []){
         $tableName = static::getTableName();
         $condition          = self::mergeCondWithTenantFilter($condition);
         $command            = "UPDATE ".$tableName." SET $set WHERE $condition";
-        return connection::exeQuery($command);
+        return connection::prepareExeQuery($command, $dataBindings);
     }
     public function delete()
     {
