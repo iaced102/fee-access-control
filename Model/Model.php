@@ -168,7 +168,7 @@ class Model{
 
     public static function getByPaging($currentPage, $pageSize, $order, $where = ["conditions" => "", "dataBindings" => []], $fields = false, $otherTable = false, $hasDistinct = false, $returnArrayKeyAsField = false){
         $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
-        return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
+        return self::getByStatements($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
     }
 
     public static function deleteMulti($where){
