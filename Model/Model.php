@@ -148,7 +148,10 @@ class Model{
     public static function getByStatements($top = '', $where = ["conditions" => "", "dataBindings" => []], $order = '', $fields = false, $otherTable = false, $hasDistinct = false, $returnArrayKeyAsField = false)
     {
         if ($top != "" && !is_numeric($top)) {
-            $top = 1;
+            preg_match('/^[0-9]*\s+offset\s+[0-9]*$/i', trim($top), $output);
+            if(count($output) == 0){
+                $top = 1;
+            }
         }
         $dataBindings = [];
         $whereConditions = $where["conditions"];
