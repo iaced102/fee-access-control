@@ -96,7 +96,7 @@ class FilterService extends Controller
             if($type == 'nodes'){
                 array_push($arr,['name' => $objectIdentifier,'id' => $objectIdentifier,'title' => $objectIdentifier,'type' => $objType,'host' => $objectIdentifier]);
             } else {
-                array_push($arr,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'USE','host' =>"filter:$id"]);
+                array_push($arr,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'NEED','host' =>"filter:$id"]);
             }
         } else if (strpos($objectIdentifier,'control')!==false){
             $array=explode(',',$objectIdentifier);
@@ -105,7 +105,7 @@ class FilterService extends Controller
                 if($type == 'nodes'){
                     $data = ['name' => $obj,'id' => $obj,'title' => $obj,'type' => 'document_definition','host' =>$obj];
                 } else {
-                    $data = ['start' => "filter:$id",'end'=> $obj,'type' => 'USE','host' =>"filter:$id"];
+                    $data = ['start' => "filter:$id",'end'=> $obj,'type' => 'NEED','host' =>"filter:$id"];
                 }
                 if(!in_array($data,$arr)){
                     array_push($arr,$data);
