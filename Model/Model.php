@@ -552,11 +552,11 @@ class Model{
             $linkTable = [];
             for ($i=0; $i < count($filter['linkTable']); $i++) { 
                 $item = $filter['linkTable'][$i];
-                $col1 = $item["column1"];
-                $col2 = $item["column2"];
-                $operator = $item["operator"];
-                $mask = $item["mask"];
-                $table = $item["table"];
+                $col1 = trim($item["column1"]);
+                $col2 = trim($item["column2"]);
+                $operator = trim($item["operator"]);
+                $mask = trim($item["mask"]);
+                $table = trim($item["table"]);
                 $s = $col1.$col2.$mask.$table;
                 preg_match('/(?![a-zA-Z0-9_]).+/', $s, $o);
                 if(count($o) == 0 && $operator == "="){
