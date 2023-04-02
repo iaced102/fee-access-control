@@ -16,6 +16,8 @@ class ModelFilterHelper
         'not_contain'   => true,
     ];
 
+    private static $aggregateFuncsAllowed = ['avg','min','max','count','sum','round','string_agg','array_agg'];
+
 
     public static function getAllRelatedColumns($filter)
     {
@@ -76,7 +78,6 @@ class ModelFilterHelper
         foreach ($relatedColumns as $colName => $flag) {
             $items[$colName] = "tb1.$colName";
         }
-
         $map = [];
         foreach ($joinInfo as $item) {
             $map[$item['column1']] = $item;
@@ -87,7 +88,7 @@ class ModelFilterHelper
                 $name = $col['name'];
                 if (array_key_exists($name, $map)) {
                     $mask = $map[$name]['mask'];
-                    $tempTb = $map[$name]['table2TmpName'];            
+                    $tempTb = $map[$name]['table2TmpName'];
                     $items[$col['name']] = "$tempTb." . $mask . " AS $name";
                 } else {
                     $items[$col['name']] = "tb1." . $name;
@@ -95,6 +96,7 @@ class ModelFilterHelper
             } else {
                 if (array_key_exists($col, $map)) {
                     $mask = $map[$col]['mask'];
+                    
                     $tempTb = $map[$col]['table2TmpName'];            
                     $items[$col] = "$tempTb." . $mask . " AS $col";
                 } else {
@@ -129,7 +131,7 @@ class ModelFilterHelper
         $limit = $filter['pageSize'] . " OFFSET " . (($filter['page'] - 1) * $filter['pageSize']);
         $sort = self::getSort($filter, $columns, $relatedColumns);
 
-        $groupBy = self::getGroupBy($filter, $relatedColumns);
+        $groupBy = self::getGroupBy($filter, $columns, $relatedColumns);
         $distnct = '';
         if (array_key_exists('distinct', $filter) && ($filter['distinct'] === true || $filter['distinct'] === 'true')) {
             $distnct = 'DISTINCT';
@@ -144,7 +146,7 @@ class ModelFilterHelper
         }
         
         if(array_key_exists('aggregate', $filter)){
-            $columns = self::getSelectItemsWhenHasAgg($filter['aggregate'], $groupBy);
+            $columns = self::getSelectItemsWhenHasAgg($filter['aggregate'], $columns, $groupBy);
         }else{
             $columns = implode("\" , \"", $columns);
             $columns = "\"$columns\"";
@@ -156,31 +158,43 @@ class ModelFilterHelper
         ];
     }
     
-    public static function getSelectItemsWhenHasAgg($aggCols, $groupBy)
+    public static function getSelectItemsWhenHasAgg($aggCols, $columns, $groupBy)
     {
-        $columns = [];
+        $newColumns = [];
         if($groupBy != ''){
             $groupByCol = str_replace('GROUP BY ', '', $groupBy);
-            $columns[] = $groupByCol;
+            $newColumns[] = $groupByCol;
         }
         foreach ($aggCols as $item) {
             $func = $item['func'];
             $col = $item['column'];
-            $columns[] = "$func($col) AS $col";
+            if(in_array($func,self::$aggregateFuncsAllowed) && in_array($col, $columns)){
+                $newColumns[] = "$func($col) AS $col";
+            }
         }
-        $columns = implode(' , ', $columns);
-        return $columns;
+        $newColumns = implode(' , ', $newColumns);
+        return $newColumns;
     }
 
-    private static function getGroupBy($filter, &$relatedColumns)
+    private static function getGroupBy($filter, $columns, &$relatedColumns)
     {
         $groupBy = "";
         if (array_key_exists('groupBy', $filter) && count($filter['groupBy']) > 0) {
-            $groupByColumns = implode("\" , \"", $filter['groupBy']);
-            $groupByColumns = "\"$groupByColumns\"";
-            $groupBy = "GROUP BY " . $groupByColumns;
-            foreach ($filter['groupBy'] as $colName) {
-                $relatedColumns[$colName] = true;
+            $groupByColArr = [];
+            for ($i=0; $i < count($filter['groupBy']); $i++) { 
+                $groupByItem = $filter['groupBy'][$i];
+                if(in_array($groupByItem, $columns)){
+                    $groupByColArr[] = $groupByItem;
+
+                }
+            }
+            if(count($groupByColArr) > 0){
+                $groupByColumns = implode("\" , \"", $groupByColArr);
+                $groupByColumns = "\"$groupByColumns\"";
+                $groupBy = "GROUP BY " . $groupByColumns;
+                foreach ($groupByColArr as $colName) {
+                    $relatedColumns[$colName] = true;
+                }    
             }
         }
         return $groupBy;
@@ -193,8 +207,11 @@ class ModelFilterHelper
             $sort = [];
             foreach ($filter['sort'] as $item) {
                 if (array_search($item['column'], $columns) !== false) {
-                    $sort[] = '"' . $item['column'] . '" ' . $item['type'];
-                    $relatedColumns[$item['column']] = true;
+                    $type = $item['type'];
+                    if(in_array(strtolower($type),["desc","asc"])){
+                        $sort[] = '"' . $item['column'] . '" ' . $item['type'];
+                        $relatedColumns[$item['column']] = true;
+                    }
                 }
             }
 
@@ -260,7 +277,7 @@ class ModelFilterHelper
         // get search query
         $searchKey = $filter['search'];
         if (trim($searchKey) != '') {
-            $searchKey = pg_escape_string("$searchKey");
+            $searchKey = pg_escape_string($searchKey);
             $searchConditions = [];
             $searchColumns = $columns;
             if($filter['searchColumns'] != '*'){
@@ -328,7 +345,7 @@ class ModelFilterHelper
             $colType = $mapColumns[$colName];
             $values = '';
             foreach ($conditionItem['valueFilter']['values'] as $key => $vl) {
-                $conditionItem['valueFilter']['values'][$key] = pg_escape_string("$vl");
+                $conditionItem['valueFilter']['values'][$key] = pg_escape_string($vl);
             }
             if ($colType == 'number') {
                 $values = implode(' , ', $conditionItem['valueFilter']['values']);
@@ -353,7 +370,7 @@ class ModelFilterHelper
 
         $COLUMN = 'SYMPER_COLUMN_PLACE_HOLDER';
         $VALUE = 'SYMPER_VALUE_PLACE_HOLDER';
-
+        $isEscaped = false;
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
             if ($op == 'in' || $op == 'not_in') {
@@ -362,8 +379,9 @@ class ModelFilterHelper
                 }
                 $colType = $colDef['type'];
                 if(is_array($value)){
+                    $isEscaped = true;
                     foreach ($value as $key => $vl) {
-                        $value[$key] = pg_escape_string("$vl");
+                        $value[$key] = pg_escape_string($vl);
                     }
                 }
                 if ($colType == 'number') {
@@ -375,7 +393,6 @@ class ModelFilterHelper
                 }
             }
         }
-
         $mapOpertationToSQL = [
             'empty'                 => "($COLUMN IS NULL OR $COLUMN = '' ) ",
             'not_empty'             => "($COLUMN IS NOT NULL AND $COLUMN != '' ) ",
@@ -401,7 +418,6 @@ class ModelFilterHelper
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
             if (!array_key_exists($op, self::$notCheckType)) {
-                $value = pg_escape_string("$value");
                 if ($colDef['type'] != 'number') {
                     $value = "'$value'";
                 }
@@ -410,7 +426,9 @@ class ModelFilterHelper
                 $colName = "CAST(\"$colName\" AS VARCHAR)";
             }
         }
-
+        if(!$isEscaped){
+            $value = pg_escape_string($value);
+        }
         $str = str_replace($COLUMN, $colName, $str);
         $str = str_replace($VALUE, $value, $str);
         return $str;
@@ -421,9 +439,13 @@ class ModelFilterHelper
         $result = $filter;
         if (!array_key_exists('page', $filter)) {
             $result['page'] = 1;
+        }else if (!is_numeric($result['page'])){
+            $result['page'] = 1;
         }
 
         if (!array_key_exists('pageSize', $filter)) {
+            $result['pageSize'] = 50;
+        }else if (!is_numeric($result['pageSize'])){
             $result['pageSize'] = 50;
         }
 
