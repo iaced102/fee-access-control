@@ -482,53 +482,88 @@ class Model{
     public static function standardlizeFilterData($filter, $moreConditions = [], $callFromModel = true)
     {
         $columns = [];
-        if(array_key_exists('columns', $filter)){
+        if (array_key_exists('columns', $filter)) {
             foreach ($filter['columns'] as $columnName) {
-                $columns[] = self::getProperColumnName($columnName, $callFromModel);
+                $c = self::getProperColumnName($columnName, $callFromModel);
+                if($c != ""){
+                    $columns[] = $c;
+                }
             }
         }
         $filter['columns'] = $columns;
 
-        if(array_key_exists('groupBy', $filter)){
+        if (array_key_exists('groupBy', $filter)) {
             $groupByColumns = [];
             foreach ($filter['groupBy'] as $columnName) {
-                $groupByColumns[] = self::getProperColumnName($columnName, $callFromModel);
+                $c = self::getProperColumnName($columnName, $callFromModel);
+                if($c != ""){
+                    $groupByColumns[] = $c;
+                }
             }
             $filter['groupBy'] = $groupByColumns;
         }
 
-        
-        if(array_key_exists('aggregate', $filter)){
+        if (array_key_exists('aggregate', $filter)) {
+            $aggreates = [];
             foreach ($filter['aggregate'] as &$item) {
-                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
+                $c = self::getProperColumnName($item['column'], $callFromModel);
+                if($c != ""){
+                    $aggreates[] = ["func"=>$item['func'],"column"=>$c];
+                }
             }
+            $filter['aggregate'] = $aggreates;
         }
-        
-        if(array_key_exists('filter', $filter)){
+        if (array_key_exists('filter', $filter)) {
+            $filters = [];
             foreach ($filter['filter'] as $index  => &$item) {
-                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
+                $c = self::getProperColumnName($item['column'], $callFromModel);
+                if($c != ""){
+                    $item['column'] = $c;
+                    $filters[] = $item;
+                }
             }
+            $filter['filter'] = $filters;
         }
-
-        if(count($moreConditions) > 0 ){
-            if(!array_key_exists('filter', $filter)){
+        if (count($moreConditions) > 0) {
+            if (!array_key_exists('filter', $filter)) {
                 $filter['filter'] = [];
             }
             $filter['filter']  = array_merge($filter['filter'], $moreConditions);
         }
 
-        if(array_key_exists('sort', $filter)){
+        if (array_key_exists('sort', $filter)) {
+            $sorts = [];
             foreach ($filter['sort'] as $index => $sortItem) {
-                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
+                $c = self::getProperColumnName($sortItem['column'], $callFromModel);
+                if($c != ""){
+                    $sorts[] = ["column"=>$c,"type"=>$sortItem["type"]];
+                }
             }
+            $filter['sort'] = $sorts;
         }
 
-        if(!array_key_exists('stringCondition', $filter)){
+        if (!array_key_exists('stringCondition', $filter)) {
             $filter['stringCondition'] = '';
         }
 
-        if(!array_key_exists('linkTable', $filter)){
+        if (!array_key_exists('linkTable', $filter)) {
             $filter['linkTable'] = [];
+        }else{
+            $linkTable = [];
+            for ($i=0; $i < count($filter['linkTable']); $i++) { 
+                $item = $filter['linkTable'][$i];
+                $col1 = trim($item["column1"]);
+                $col2 = trim($item["column2"]);
+                $operator = trim($item["operator"]);
+                $mask = trim($item["mask"]);
+                $table = trim($item["table"]);
+                $s = $col1.$col2.$mask.$table;
+                preg_match('/(?![a-zA-Z0-9_]).+/', $s, $o);
+                if(count($o) == 0 && $operator == "="){
+                    $linkTable[] = $item;
+                }
+            }
+            $filter['linkTable'] = $linkTable;
         }
 
         return $filter;
