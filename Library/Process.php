@@ -14,7 +14,7 @@ class Process{
     public static function respondAndContinue($data){
         // Buffer all upcoming output...
            ob_start();
-           header('Content-Type: application/json');
+        //    header('Content-Type: application/json');
    
            // Send your response.
            $data = is_string($data) ? $data : json_encode($data, JSON_UNESCAPED_UNICODE);

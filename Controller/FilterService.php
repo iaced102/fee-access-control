@@ -180,8 +180,8 @@ class FilterService extends Controller
         if($this->checkParameter(['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
             if(count($ids)>0){
-                $ids = "'".implode("','", $ids)."'";
-                Filter::deleteMulti("id in ($ids)"); 
+                $ids = "{".implode(",", $ids)."}";
+                Filter::deleteMulti("id = ANY($1)",[$ids]); 
                 $this->output['status']  = STATUS_OK;
                 RoleAction::closeConnectionAndRefresh($this);
                 $hostsId=[];

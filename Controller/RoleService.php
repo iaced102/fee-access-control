@@ -78,14 +78,15 @@ class RoleService extends Controller
             } 
             return '';
         },$permissions));
-        $cond = "role_identifier in ('".implode("','",$listRoleIdentifier)."')";
-        $backupItem = PermissionRole::getByTop('', $cond);
-        PermissionRole::deleteMulti($cond);
+        $listRoleIdentifier = '{'.implode(",",$listRoleIdentifier).'}';
+        $where = ["conditions" => "role_identifier = ANY($1)", "dataBindings" => [$listRoleIdentifier]];
+        $backupItem = PermissionRole::getByStatements('', $where);
+        PermissionRole::deleteMulti($where['conditions'],$where['dataBindings']);
         return $backupItem;
     }
     private function setPermissionItem($roleIdentifier,$permissionId,$roleType= Role::TYPE_ORGCHART){
-        if(PermissionPack::count("id='".$permissionId."'")>0){
-            if(PermissionRole::count("role_identifier='$roleIdentifier' and permission_pack_id='$permissionId'")==0){
+        if(PermissionPack::count("id=$1",[$permissionId])>0){
+            if(PermissionRole::count("role_identifier=$1 and permission_pack_id=$2",[$roleIdentifier,$permissionId])==0){
                 $obj = new PermissionRole();
                 $obj->permissionPackId = $permissionId;
                 $obj->roleType = $roleType;
@@ -108,10 +109,12 @@ class RoleService extends Controller
             $roleIdentifier = trim($this->parameters['role_identifier']);
             $listPermission = [];
             if(isset($this->parameters['detail'])&&intval($this->parameters['detail'])==1){
-                $listPermission = PermissionPack::getByTop('',"permission_role.permission_pack_id=permission_pack.id AND permission_role.role_identifier='$roleIdentifier'",'',false,'permission_role');
+                $where = ["conditions" => "permission_role.permission_pack_id=permission_pack.id AND permission_role.role_identifier=$1", "dataBindings" => [$roleIdentifier]];
+                $listPermission = PermissionPack::getByStatements('',$where,'',false,'permission_role');
             }
             else{
-                 $listPermission = PermissionRole::getByTop('',"role_identifier='$roleIdentifier'");
+                $where = ["conditions" => "role_identifier = $1", "dataBindings" => [$roleIdentifier]];
+                $listPermission = PermissionRole::getByStatements('',$where);
             }
            
             $this->output = [
@@ -129,8 +132,9 @@ class RoleService extends Controller
                 $user = Auth::getDataToken();
                 $allRoles = $user['allRoles'];
                 if(count($allRoles) > 0){
-                    $allRoles = "'".implode("','", $allRoles)."'";
-                    $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles) AND object_identifier='$objectIdentifier'");
+                    $allRoles = "{".implode(",", $allRoles)."}";
+                    $where = ["conditions" => "role_identifier = ANY($1) AND object_identifier=$2", "dataBindings" => [$allRoles,$objectIdentifier]];
+                    $listAccessControl = RoleAction::getByStatements("",$where);
                     self::standardRoleActionFilterValue($listAccessControl);
                     foreach ($listAccessControl as &$item) {
                         $item->originRoleIdentifier = $item->roleIdentifier;
@@ -138,7 +142,8 @@ class RoleService extends Controller
                     }
                 }
             }else{
-                $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier'");
+                $where = ["conditions" => "role_identifier=$1 AND object_identifier=$2", "dataBindings" => [$roleIdentifier,$objectIdentifier]];
+                $listAccessControl = RoleAction::getByStatements("",$where);
                 self::standardRoleActionFilterValue($listAccessControl);
             }
             $this->output = [
@@ -155,8 +160,9 @@ class RoleService extends Controller
                 $user = Auth::getDataToken();
                 $allRoles = isset($user['allRoles']) ? $user['allRoles'] : [];
                 if(count($allRoles) > 0){
-                    $allRoles = "'".implode("','", $allRoles)."'";
-                    $listAccessControl = RoleAction::getByTop("","role_identifier IN ($allRoles)");
+                    $allRoles = "{".implode(",", $allRoles)."}";
+                    $where = ["conditions" => "role_identifier = ANY($1)", "dataBindings" => [$allRoles]];
+                    $listAccessControl = RoleAction::getByStatements("",$where);
                     self::standardRoleActionFilterValue($listAccessControl);
                     foreach ($listAccessControl as &$item) {
                         $item->originRoleIdentifier = $item->roleIdentifier;
@@ -164,7 +170,8 @@ class RoleService extends Controller
                     }
                 }
             }else{
-                $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier'");
+                $where = ["conditions" => "role_identifier = $1", "dataBindings" => [$roleIdentifier]];
+                $listAccessControl = RoleAction::getByStatements("",$where);
                 self::standardRoleActionFilterValue($listAccessControl);
             }
             $this->output = [
@@ -178,8 +185,9 @@ class RoleService extends Controller
             $listAccessControl=[];
             $roleIdentifiers = Str::getArrayFromUnclearData($this->parameters['role_identifiers']);
             if(is_array($roleIdentifiers) && count($roleIdentifiers)>0){
-                $roleIdentifiersStr = implode("','",$roleIdentifiers);
-                $listAccessControl = RoleAction::getByTop("","role_identifier IN ('$roleIdentifiersStr')");
+                $roleIdentifiersStr = '{'.implode(",",$roleIdentifiers).'}';
+                $where = ["conditions" => "role_identifier = ANY($1)", "dataBindings" => [$roleIdentifiersStr]];
+                $listAccessControl = RoleAction::getByStatements("",$where);
                 self::standardRoleActionFilterValue($listAccessControl);
             }
            
@@ -192,8 +200,9 @@ class RoleService extends Controller
     public function getAccessControlMultiObject(){
         if($this->checkParameter(['role_identifier','object_identifiers'])){
             $roleIdentifier = trim($this->parameters['role_identifier']);
-            $objectIdentifiers = implode("','",Str::getArrayFromUnclearData($this->parameters['object_identifiers']));
-            $listAccessControl = RoleAction::getByTop("","role_identifier='$roleIdentifier' AND object_identifier in ('$objectIdentifiers')","",false,false,true);
+            $objectIdentifiers = '{'.implode(",",Str::getArrayFromUnclearData($this->parameters['object_identifiers'])).'}';
+            $where = ["conditions" => "role_identifier=$1 AND object_identifier = ANY($2)", "dataBindings" => [$roleIdentifier,$objectIdentifiers]];
+            $listAccessControl = RoleAction::getByStatements("",$where,"",false,false,true);
             self::standardRoleActionFilterValue($listAccessControl);
             $this->output = [
                 'status'=>STATUS_OK,
