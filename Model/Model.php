@@ -242,10 +242,10 @@ class Model{
     }
     public function save(){
         $primaryKey = static::getPrimaryKey();
-        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey, true);
         $primaryColumnName  = $primaryColumnData['name'];
-        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        if($this->$primaryKey=='' || static::count("$primaryColumnName=$primaryValue")==0){
+        // $primaryValue       = self::getValueForSqlCommand($primaryColumnData, $this->$primaryKey);
+        if ($this->$primaryKey == '' || static::count("$primaryColumnName = $1",[$this->$primaryKey]) == 0) {
             $this->insert();
         }
         else{
