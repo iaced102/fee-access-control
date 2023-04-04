@@ -45,7 +45,7 @@ class ObjectTenantMigration extends Controller{
                 'target'=>$target,
                 'source'=>$source
             ];
-            $token = "Bearer ".Auth::getBearerToken().'new_symper_authen_!';
+            $token = "Bearer ".Auth::getBearerToken();
             $response =Request::request(ACCESS_CONTROL_SERVICE.'/object-identify',$dataPost,'POST',$token, 'application/json', false);
             return $response;
         }
