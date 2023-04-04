@@ -147,12 +147,14 @@ class Controller
             if(strlen($dataJsonStr) >  400000){
                 $dataJsonStr = "";
             }
+            $userId = Auth::getCurrentUserId();
+            $tenantId = Auth::getTenantId();
             $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
             $this->logData["output"] = $dataJsonStr;
             $lastErr = error_get_last();
             $this->logData["error"] = !empty($lastErr) ? json_encode($lastErr,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
-            $this->logData["tenantId"] = Auth::getTenantId();
-            $this->logData["userId"] = Auth::getCurrentUserId();
+            $this->logData["tenantId"] = "$tenantId";
+            $this->logData["userId"] = ($userId != false) ? "$userId" : "";
             $this->logData["userRole"] = Auth::getCurrentRole();
             $this->logData["statusCode"] = !is_array($this->output) ? 200 : $this->output['status'];
             file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", json_encode($this->logData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL, FILE_APPEND);
