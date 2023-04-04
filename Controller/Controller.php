@@ -10,14 +10,9 @@
 namespace Controller;
 
 use Library\Auth;
-use Library\Environment;
 use Library\Redirect;
 use Library\Message;
-use Library\MessageBus;
-use Library\Request;
 use Library\Str;
-use SqlObject;
-
 class Controller
 {
     public $defaultAction;
@@ -36,7 +31,7 @@ class Controller
         $action = $this->currentAction != '' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
             $this->logData = [
-                'parameters'    => $this->parameters,
+                'parameters'    => json_encode($this->parameters, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
                 'requestTime'   => microtime(true),
@@ -145,11 +140,20 @@ class Controller
             print json_encode($this->output);
         }
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
+            $dataJsonStr = json_encode($this->output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            // Nếu kích thước 400 Kbs thì bỏ qua
+            if(strlen($dataJsonStr) >  400000){
+                $dataJsonStr = "";
+            }
             $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
-            $this->logData["output"] = json_encode($this->output, JSON_UNESCAPED_UNICODE);
-            $this->logData["error"] = error_get_last();
+            $this->logData["output"] = $dataJsonStr;
+            $lastErr = error_get_last();
+            $this->logData["error"] = !empty($lastErr) ? json_encode($lastErr,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+            $this->logData["tenantId"] = Auth::getTenantId();
+            $this->logData["userId"] = Auth::getCurrentUserId();
+            $this->logData["userRole"] = Auth::getCurrentRole();
             $this->logData["statusCode"] = !is_array($this->output) ? 200 : $this->output['status'];
-            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", "\r\n" . json_encode($this->logData, JSON_UNESCAPED_UNICODE), FILE_APPEND);
+            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", "\r\n" . json_encode($this->logData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), FILE_APPEND);
         }
     }
 }
