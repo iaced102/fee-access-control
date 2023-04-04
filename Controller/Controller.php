@@ -19,6 +19,8 @@ class Controller
     public $currentAction;
     public $output = array();
     public $requireLogin = true;
+    public $ignoreLogParameters = false;
+    public $ignoreLogOuput = false;
     public $parameters = [];
     private $logData;
     public function __construct()
@@ -31,7 +33,7 @@ class Controller
         $action = $this->currentAction != '' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
             $this->logData = [
-                'parameters'    => json_encode($this->parameters, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'parameters'    => ($this->ignoreLogParameters) ? "" : json_encode($this->parameters, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
                 'requestTime'   => microtime(true),
@@ -140,7 +142,7 @@ class Controller
             print json_encode($this->output);
         }
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
-            $dataJsonStr = json_encode($this->output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $dataJsonStr = ($this->ignoreLogOuput) ? "" : json_encode($this->output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             // Nếu kích thước 400 Kbs thì bỏ qua
             if(strlen($dataJsonStr) >  400000){
                 $dataJsonStr = "";
@@ -153,7 +155,7 @@ class Controller
             $this->logData["userId"] = Auth::getCurrentUserId();
             $this->logData["userRole"] = Auth::getCurrentRole();
             $this->logData["statusCode"] = !is_array($this->output) ? 200 : $this->output['status'];
-            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", "\r\n" . json_encode($this->logData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), FILE_APPEND);
+            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", json_encode($this->logData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL, FILE_APPEND);
         }
     }
 }
