@@ -19,7 +19,7 @@ class AccessControl{
     public static function getRoleActionLocal($roleIdentifier,$objectIdentifier,$action){
         $key = json_encode(['role'=>$roleIdentifier,'object'=>$objectIdentifier,'action'=>$action]);
         if(CacheService::getMemoryCache($key)==false){
-            $roleAction = RoleAction::getByTop(1,"role_identifier='$roleIdentifier' AND object_identifier='$objectIdentifier' AND action='$action'");
+            $roleAction = RoleAction::getByStatements(1, ["conditions" => "role_identifier = $1 AND object_identifier = $2 AND action = $3", "dataBindings" => [$roleIdentifier, $objectIdentifier, $action]]);
             if(count($roleAction)>0){
                 if($roleAction[0]->status==1){
                     CacheService::setMemoryCache($key,true);

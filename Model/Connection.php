@@ -3,6 +3,7 @@
 namespace Model;
 
 use library\CacheService;
+use Library\Str;
 use Library\Test;
 
 class Connection
@@ -46,6 +47,16 @@ class Connection
         $result = pg_query($connection, $command);
         return $result;
     }
+    public static  function prepareExeQuery($command, $dataBindings, $server = false, $userName = false, $password = false, $database = false)
+    {
+        $command = trim($command);
+        $command = self::checkJoinTableForTenant($command);
+        $connection = self::connectSql($server, $database, $userName, $password);
+        $randomStr = Str::generateRandomString(5);
+        $result = pg_prepare($connection, $randomStr, $command);
+        $result = pg_execute($connection, $randomStr, $dataBindings);
+        return $result;
+    }
     public static function exeQueryAndFetchData($command)
     {
         $resultTest = Test::callFunction(Test::FUNC_QUERY_DB, $command);
@@ -59,17 +70,30 @@ class Connection
         }
         return $arrayResult;
     }
-    public static function getDataQuerySelect($command)
+    private static function prepareAndExecuteQueryAndFetchData($command, $dataBindings)
     {
-        $cacheCommandResult = CacheService::get($command);
-        if ($cacheCommandResult) {
-            return $cacheCommandResult;
+        $arrayResult    = [];
+        $connection = self::connectSql();
+        $randomStr = Str::generateRandomString(5);
+        $result = pg_prepare($connection, $randomStr, $command);
+        $result = pg_execute($connection, $randomStr, $dataBindings);
+        if ($result != false) {
+            $arrayResult = pg_fetch_all($result);
         }
+        return $arrayResult;
+    }
+
+    public static function getDataQuerySelect($command, $dataBindings = [])
+    {
         $command = self::checkJoinTableForTenant($command);
-        $resultData  = self::exeQueryAndFetchData($command);
-        CacheService::set($command, $resultData);
+        if (count($dataBindings) > 0) {
+            $resultData = self::prepareAndExecuteQueryAndFetchData($command, $dataBindings);
+        } else {
+            $resultData = self::exeQueryAndFetchData($command);
+        }
         return $resultData;
     }
+
     public static function getLastError()
     {
         $lastError = pg_last_error(self::connectSql());

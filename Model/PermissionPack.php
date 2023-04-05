@@ -43,7 +43,7 @@ class PermissionPack extends SqlObject
         if($this->id!=''){
             $this->removeAllActionPack();
             foreach($listActionPack as $actionPackId){
-                if(ActionPack::count("id='".$actionPackId."'")>0){
+                if(ActionPack::count("id=$1",[$actionPackId])>0){
                     $actionInPermissionPackObj =  new ActionInPermissionPack();
                     $actionInPermissionPackObj->permissionPackId = $this->id;
                     $actionInPermissionPackObj->actionPackId = $actionPackId;
@@ -55,6 +55,6 @@ class PermissionPack extends SqlObject
     }
     function removeAllActionPack(){
         $id = $this->id;
-        ActionInPermissionPack::deleteMulti("permission_pack_id='$id'");
+        ActionInPermissionPack::deleteMulti("permission_pack_id=$1",[$id]);
     }
 }

@@ -23,7 +23,7 @@ class OperationService extends Controller
     function list(){
         $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
         $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
-        $listObj = Operation::getByPaging($page,$pageSize,'id ASC','');
+        $listObj = Operation::getByPaging($page,$pageSize,'id ASC');
         $this->output = [
             'status'=>STATUS_OK,
             'data' => $listObj
@@ -90,9 +90,10 @@ class OperationService extends Controller
             $actions = array_keys($actions);
 
             if(count($actions) > 0 && count($objIdens) > 0){
-                $objIdens = "'".implode("','", $objIdens)."'";
-                $actions = "'".implode("','", $actions)."'";
-                $savedOperations = Operation::getByTop('', " object_identifier IN ($objIdens) AND action IN ($actions)");
+                $objIdens = "{".implode(",", $objIdens)."}";
+                $actions = "{".implode(",", $actions)."}";
+                $where = ["conditions" => "object_identifier =ANY($1) AND action =ANY($2)", "dataBindings" => [$objIdens,$actions]];
+                $savedOperations = Operation::getByStatements('', $where);
                 if(is_array($savedOperations)){
                     foreach ($savedOperations as $opr) {
                         if(isset($mapOperations[$opr->objectIdentifier.$opr->action])){
@@ -162,7 +163,7 @@ class OperationService extends Controller
             $obj = Operation::getById($id);
             if($obj!=false){
                 if($obj->delete()){
-                    OperationInActionPack::deleteMulti("operation_id =$id ");
+                    OperationInActionPack::deleteMulti("operation_id =$1 ",[$id]);
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
                 }
@@ -184,9 +185,9 @@ class OperationService extends Controller
                 $ids = array_map(function($item){
                     return $item;
                 },$ids);
-                $ids = "'".implode("','", $ids)."'";
-                Operation::deleteMulti("id in ($ids)");
-                OperationInActionPack::deleteMulti("operation_id in ($ids)");
+                $ids = "{".implode(",", $ids)."}";
+                Operation::deleteMulti("id = ANY($1)",[$ids]);
+                OperationInActionPack::deleteMulti("operation_id = ANY($1)",[$ids]);
                 $this->output['status']  = STATUS_OK;
                 RoleAction::closeConnectionAndRefresh($this);
             }
@@ -223,22 +224,31 @@ class OperationService extends Controller
         $page = isset($this->parameters['page']) ? intval($this->parameters['page']) : 1;
         $pageSize = isset($this->parameters['pageSize']) ? intval($this->parameters['pageSize']) : 50;
         $condition = [];
+        $dataBindings=[];
         if(isset($this->parameters['type'])&&$this->parameters['type']!=''){
             $type = pg_escape_string($this->parameters['type']);
-            $condition[]="type='$type'";
+            $condition[]="type=$1";
+            $dataBindings[]=$type;
         }
         if(isset($this->parameters['keyword'])&&$this->parameters['keyword']!=''){
             $keyword = pg_escape_string($this->parameters['keyword']);
-            $condition[] = "(name ilike '%$keyword%' OR object_identifier ilike '%$keyword%' OR title ilike '%$keyword%')";
+            $condition[] =count($dataBindings) >0 ? "(name ilike $2 OR object_identifier ilike $2 OR title ilike $2)" 
+                                                  : "(name ilike $1 OR object_identifier ilike $1 OR title ilike $1)" ;
+            $dataBindings[]="%$keyword%";
         }
         if(isset($this->parameters['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
             if(count($ids)>0){
-                $condition[] = "object_identifier in ('". implode("','",$ids)."')";
+                $strIds = '{'.implode(",",$ids).'}';
+                $condition[] = count($dataBindings) ==0 ? "object_identifier = ANY($1)" 
+                                :( count($dataBindings) ==1 ? "object_identifier = ANY($2)"
+                                : "object_identifier = ANY($3)");
+                $dataBindings[]=$strIds;
             }
         }
         $conditionStr = implode(' AND ',$condition);
-        $data = ObjectIdentifier::getByPaging($page,$pageSize,'',$conditionStr,false, false, true);
+        $where = ["conditions" => $conditionStr, "dataBindings" => $dataBindings];
+        $data = ObjectIdentifier::getByPaging($page,$pageSize,'',$where,false, false, true);
         $this->output['data'] = $data;
         $this->output['status'] = STATUS_OK;
     }
@@ -257,7 +267,8 @@ class OperationService extends Controller
         if($this->checkParameter(['objectType','role'])){
             $objectType = $this->parameters['objectType'];
             $role = $this->parameters['role'];
-            $operations = RoleAction::getByTop('',"role_identifier = '$role' AND object_type = '$objectType'");
+            $where = ["conditions" => "role_identifier = $1 AND object_type = $2", "dataBindings" => [$role,$objectType]];
+            $operations = RoleAction::getByStatements('',$where);
             $this->output=[
                 'status'=>STATUS_OK,
                 'message'=>'OK',

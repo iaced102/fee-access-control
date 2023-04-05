@@ -96,9 +96,11 @@ class ObjectTenantMigration extends Controller{
         }
 
         //get id object identifier
-        $idsFilter = "'".implode("','", $arrIdFilter)."'";
         $idObj = [];
-        $listFilter = Filter::getByTop('',"id  IN (".$idsFilter.")");
+        $idsFilter = "{".implode(",", $arrIdFilter)."}";
+        $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$idsFilter]];
+        $listFilter = Filter::getByStatements('',$where);
+
         if (count($listFilter) > 0){
             foreach($listFilter as $key => $value){
                 $arr = explode(',', $value->objectIdentifier);
@@ -144,9 +146,10 @@ class ObjectTenantMigration extends Controller{
         }
 
         //get id operation
-        $ids = implode("','",$rsl);
         $idObj = [];
-        $listOperation = OperationInActionPack::getByTop('',"id  IN ('".$ids."')");
+        $ids="{".implode(",",$rsl)."}";
+        $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$ids]];
+        $listOperation = OperationInActionPack::getByStatements('',$where);
         if (count($listOperation) > 0){
             foreach($listOperation as $key => $value){
                 array_push($idObj,$value->operationId);
@@ -161,9 +164,10 @@ class ObjectTenantMigration extends Controller{
         }
 
         //get id object identifier
-        $ids = implode("','",$rsl);
         $idObj = [];
-        $listObj = Operation::getByTop('',"id  IN ('$ids')");
+        $ids="{".implode(",",$rsl)."}";
+        $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$ids]];
+        $listObj = Operation::getByStatements('',$where);
         if (count($listObj) > 0){
             foreach($listObj as $key => $value){
                 array_push($idObj,$value->objectIdentifier);
