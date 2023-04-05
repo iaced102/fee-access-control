@@ -275,8 +275,8 @@ class PermissionService extends Controller
         }
     }
     function saveUserUpdate($id){
-        $id = '{'.$id.'}';
-        PermissionPack::updateMulti("user_update=$1,update_at=$2","id=ANY($3)",[Auth::getCurrentUserId(),date(DATETIME_FORMAT),$id]);
+        $id = $id;
+        PermissionPack::updateMulti("user_update=$1,update_at=$2","id=$3",[Auth::getCurrentUserId(),date(DATETIME_FORMAT),$id]);
     }
     
 }
