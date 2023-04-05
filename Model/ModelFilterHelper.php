@@ -415,6 +415,9 @@ class ModelFilterHelper
             $mapOpertationToSQL['not_empty'] = "($COLUMN IS NOT NULL)";
         }
 
+        if(!$isEscaped){
+            $value = pg_escape_string($value);
+        }
         $str = $mapOpertationToSQL[$op];
         if (array_key_exists($colName, $mapColumns)) {
             $colDef = $mapColumns[$colName];
@@ -426,9 +429,6 @@ class ModelFilterHelper
             } else if ($colDef['type'] != 'string') {
                 $colName = "CAST(\"$colName\" AS VARCHAR)";
             }
-        }
-        if(!$isEscaped){
-            $value = pg_escape_string($value);
         }
         $str = str_replace($COLUMN, $colName, $str);
         $str = str_replace($VALUE, $value, $str);

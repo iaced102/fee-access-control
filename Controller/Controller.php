@@ -13,13 +13,14 @@ use Library\Auth;
 use Library\Redirect;
 use Library\Message;
 use Library\Str;
-
 class Controller
 {
     public $defaultAction;
     public $currentAction;
     public $output = array();
     public $requireLogin = true;
+    public $ignoreLogParameters = false;
+    public $ignoreLogOuput = false;
     public $parameters = [];
     private $logData;
     public function __construct()
@@ -32,7 +33,7 @@ class Controller
         $action = $this->currentAction != '' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
             $this->logData = [
-                'parameters'    => json_encode($this->parameters, JSON_UNESCAPED_UNICODE),
+                'parameters'    => ($this->ignoreLogParameters) ? "" : json_encode($this->parameters, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
                 'requestTime'   => microtime(true),
@@ -141,11 +142,22 @@ class Controller
             print json_encode($this->output);
         }
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
+            $dataJsonStr = ($this->ignoreLogOuput) ? "" : json_encode($this->output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            // Nếu kích thước 400 Kbs thì bỏ qua
+            if(strlen($dataJsonStr) >  400000){
+                $dataJsonStr = "";
+            }
+            $userId = Auth::getCurrentUserId();
+            $tenantId = Auth::getTenantId();
             $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
-            $this->logData["output"] = json_encode($this->output, JSON_UNESCAPED_UNICODE);
-            $this->logData["error"] = error_get_last();
+            $this->logData["output"] = $dataJsonStr;
+            $lastErr = error_get_last();
+            $this->logData["error"] = !empty($lastErr) ? json_encode($lastErr,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+            $this->logData["tenantId"] = "$tenantId";
+            $this->logData["userId"] = ($userId != false) ? "$userId" : "";
+            $this->logData["userRole"] = Auth::getCurrentRole();
             $this->logData["statusCode"] = !is_array($this->output) ? 200 : $this->output['status'];
-            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", "\r\n" . json_encode($this->logData, JSON_UNESCAPED_UNICODE), FILE_APPEND);
+            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", json_encode($this->logData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL, FILE_APPEND);
         }
     }
 }
