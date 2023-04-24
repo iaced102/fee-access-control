@@ -183,29 +183,27 @@ class ActionPack extends SqlObject
             'objectIden'    => []
         ];
         $usedFilterIds = [];
-
         foreach ($filterObjs as $obj) {
             $objectIdentifier = self::standardObjIden($obj->objectIdentifier);
-            if(!isset($usedObjIden[$objectIdentifier])){
-                $filterStruct = $mapFilterIdToFilterStruct[$obj->id];
-                $filterStruct = json_decode($filterStruct['filterStruct'], true);
-                $usedObjIden[$objectIdentifier] = true;
-                foreach ($filterStruct as $item) {
-                    foreach ($item['actions'] as $actionItem) {
-                        $newItem = [
-                            'objectIdentify'    => $objectIdentifier,
-                            'action'            => $actionItem['field'],
-                            'formulaValue'      => self::getConditionFromTree($item['conditions'][0], $usedFilterIds),
-                            'formulaStruct'     => json_encode($item['conditions'], JSON_UNESCAPED_UNICODE),
-                            'actionPackId'      => $apId
-                        ];
-                        $usedOperations[$newItem['objectIdentify'].'_'.$newItem['action']] = '';
-                        $operationAndFilter[] = $newItem;
-                        $usedOperations['action'][$newItem['action']] = true; 
-                    }
+            $filterStruct = $mapFilterIdToFilterStruct[$obj->id];
+            $filterStruct = json_decode($filterStruct['filterStruct'], true);
+            $usedObjIden[$objectIdentifier] = true;
+
+            foreach ($filterStruct as $item) {
+                foreach ($item['actions'] as $actionItem) {
+                    $newItem = [
+                        'objectIdentify'    => $objectIdentifier,
+                        'action'            => $actionItem['field'],
+                        'formulaValue'      => self::getConditionFromTree($item['conditions'][0], $usedFilterIds),
+                        'formulaStruct'     => json_encode($item['conditions'], JSON_UNESCAPED_UNICODE),
+                        'actionPackId'      => $apId
+                    ];
+                    $usedOperations[$newItem['objectIdentify'].'_'.$newItem['action']] = '';
+                    $operationAndFilter[] = $newItem;
+                    $usedOperations['action'][$newItem['action']] = true; 
                 }
-                $usedOperations['objectIden'][$objectIdentifier] = true;
             }
+            $usedOperations['objectIden'][$objectIdentifier] = true;
         }
         $usedObjectIdens = "{".implode(",", array_keys($usedOperations['objectIden']))."}";
         $usedActions = "{".implode(",", array_keys($usedOperations['action']))."}";
