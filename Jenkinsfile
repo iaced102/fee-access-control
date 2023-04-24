@@ -63,7 +63,7 @@ pipeline{
                             ansiblePlaybook (
                                 installation: 'Ansible',
                                 inventory: 'ansible/inventories/staging/hosts',
-                                playbook: 'ansible/playbooks/symper-k8s-objects.yaml',
+                                playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
                                 credentialsId: "ssh_qc_key",
                                 vaultCredentialsId: "ansible_vault_file",
                                 disableHostKeyChecking: true,
