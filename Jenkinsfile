@@ -68,7 +68,7 @@ pipeline{
                                 vaultCredentialsId: "ansible_vault_file",
                                 disableHostKeyChecking: true,
                                 extraVars: [
-                                    SERVICE_ENV: "$SERVICE_ENV"
+                                    SERVICE_ENV: "$SERVICE_ENV",
                                     SERVICE_NAME: "$SERVICE_NAME",
                                     APP_NAME: "$APP_NAME",
                                     BUILD_VERSION: "$BUILD_VERSION",
@@ -79,8 +79,6 @@ pipeline{
                                     CACHE_HOST: "$CACHE_HOST",
                                     CACHE_PASSWORD: "$CACHE_PASSWORD",
                                     KAFKA_PREFIX: "$KAFKA_PREFIX",
-                                    ACCESS_KEY: "$ACCESS_KEY",
-                                    SECRET_KEY: "$SECRET_KEY"
                                 ]
                             )
                         }
