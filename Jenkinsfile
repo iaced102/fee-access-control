@@ -36,26 +36,14 @@ pipeline{
                         }
                     }
                 }
-                stage("checkin deployment state") {
-                    steps{
-                        withCredentials([
-                            usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME')
-                        ]) {
-                            script {
-                                sshagent(['ssh_qc_key']) {
-                                    try{
-                                        env.CURRENT_ROLE=sh (returnStdout: true, 
-                                                            script: "ssh -o StrictHostKeyChecking=no $USER_NAME@$SSH_HOST 'echo -e \'$USER_PASS\' | sudo -S kubectl get services --field-selector metadata.name=\"$APP_NAME\" -o jsonpath={.items[0].spec.selector.role}'").trim()
-                                    } catch (Exception e) {
-                                        echo "$e" }
-                                }
-                                sh "echo role ${env.CURRENT_ROLE}"
-                                if("$env.CURRENT_ROLE" == "" || "$env.CURRENT_ROLE" == "green") {
-                                    env.CURRENT_ROLE = "green"
-                                    env.TARGET_ROLE = "blue"
-                                } else {
-                                    env.TARGET_ROLE = "green"
-                                }
+                stage("clone ansible") {
+                    steps {
+                    
+                        script {
+                            dir('ansible') {
+                                git branch: 'main',
+                                credentialsId: 'github-persional-token',
+                                url: 'https://github.com/quannt-symper/ansible-manage-users.git'
                             }
                         }
                     }
@@ -72,14 +60,29 @@ pipeline{
                             usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
                             usernamePassword(credentialsId: 'cache', passwordVariable: 'CACHE_PASSWORD', usernameVariable: 'CACHE_USER_NAME')
                         ]) {
-                            sh "chmod +x shellscripts/*"
-                            sshagent(['ssh_qc_key']) {
-                                sh '''
-                                    echo $TARGET_ROLE
-                                '''
-                                sh "./shellscripts/updateManifests.sh"
-                                sh "./shellscripts/deployService.sh"
-                            }
+                            ansiblePlaybook (
+                                installation: 'Ansible',
+                                inventory: 'ansible/inventories/staging/hosts',
+                                playbook: 'ansible/playbooks/symper-k8s-objects.yaml',
+                                credentialsId: "ssh_qc_key",
+                                vaultCredentialsId: "ansible_vault_file",
+                                disableHostKeyChecking: true,
+                                extraVars: [
+                                    SERVICE_ENV: "$SERVICE_ENV"
+                                    SERVICE_NAME: "$SERVICE_NAME",
+                                    APP_NAME: "$APP_NAME",
+                                    BUILD_VERSION: "$BUILD_VERSION",
+                                    POSTGRES_USER: "$POSTGRES_USER",
+                                    POSTGRES_PASS: "$POSTGRES_PASS",
+                                    POSTGRES_DB: "$POSTGRES_DB",
+                                    POSTGRES_HOST: "$POSTGRES_HOST",
+                                    CACHE_HOST: "$CACHE_HOST",
+                                    CACHE_PASSWORD: "$CACHE_PASSWORD",
+                                    KAFKA_PREFIX: "$KAFKA_PREFIX",
+                                    ACCESS_KEY: "$ACCESS_KEY",
+                                    SECRET_KEY: "$SECRET_KEY"
+                                ]
+                            )
                         }
                     }
                 }
