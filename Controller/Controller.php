@@ -47,12 +47,21 @@ class Controller
                 'date'          => date("d-m-Y")
             ];
         }
-        if (method_exists($this, $action)) {
-            $this->$action();
-        } else {
-            Redirect::redirect404();
+        try {
+            if (method_exists($this, $action)) {
+                $this->$action();
+            } else {
+                Redirect::redirect404();
+            }
+        } catch (\Throwable $th) {
+            $this->output = [
+                'status'    => 500,
+                'message'   => $th->getMessage(),
+                'trace'     => $th->getTraceAsString()
+            ];
+        } finally {
+            $this->returnOutput();
         }
-        $this->returnOutput();
     }
 
     private function checkRequireLogin()
