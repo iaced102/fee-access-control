@@ -42,6 +42,7 @@ class Controller
                 'queryString'   => $_SERVER['QUERY_STRING'],
                 'userAgent'     => $_SERVER['HTTP_USER_AGENT'],
                 'clientIp'      => $_SERVER['REMOTE_ADDR'],
+                'clientId'      => isset($_SERVER['HTTP_CLIENTID']) ? $_SERVER['HTTP_CLIENTID'] : "0",
                 'serverIp'      => $_SERVER['SERVER_ADDR'],
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y")
