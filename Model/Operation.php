@@ -27,7 +27,7 @@ class Operation extends SqlObject
     ];
     public static $listAction = [
         'document_definition'   => ['name'=>'loại văn bản',         'ownerDomain' => 'document-management.symper.vn',   'action'=>['list','edit','submit','import','drop','restore','list_trash','submit_by_workflow','share_cross_tenant']],
-        'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','delete_multi','restore','detail','list_instance','print','print_multi','list_trash','update_by_workflow','clone','share_tree_config','share_filter','share_conditonal_format',]],
+        'document_instance'     => ['name'=>'văn bản',              'ownerDomain' => 'document-management.symper.vn',   'action'=>['update','delete','delete_multi','restore','detail','list_instance','print','print_multi','list_trash','update_by_workflow','clone','share_tree_config','share_filter','share_conditonal_format','invoice_issueInvoice', 'invoice_issueInvoiceInProcess', 'invoice_adjustInvoice', 'invoice_adjustInvoiceInProcess', 'invoice_replaceInvoice', 'invoice_replaceInvoiceInProcess', 'invoice_cancelInvoice', 'invoice_cancelInvoiceInProcess']],
         'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>[ 'list','deploy','drop','update','list_instance','start_instance','list_process','view','view_instance', 'run_instance', 'stop_instance', 'complete_instance', 'delete_instance', 'delete_related_doc']],
         'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['create','update','detail','change_pass', "delete",'list','set_role',"import", "export"]],
         'report'                => ['name'=>'báo cáo',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop']],
@@ -37,7 +37,6 @@ class Operation extends SqlObject
         'department'            => ['name'=>'phòng ban',            'ownerDomain' => 'orgchart.symper.vn',              'action'=>['set_manager','view_all','view_only_owner','view_only_sub']],
         'operation'             => ['name'=>'hành động',            'ownerDomain' => 'accesscontrol.symper.vn',         'action'=>['create','update','remove','list']],
         'application_definition'=> ['name'=>'Ứng dụng',             'ownerDomain' => 'core.symper.vn',                  'action'=>['view','create','update','remove']],
-        'invoice'               => ['name'=>'Hóa đơn',              'ownerDomain' => 'e-invoice.symper.vn',              'action'=>['issueInvoice', 'issueInvoiceInProcess', 'adjustInvoice', 'adjustInvoiceInProcess', 'replaceInvoice', 'replaceInvoiceInProcess', 'cancelInvoice', 'cancelInvoiceInProcess']],
         "dashboard_tab" => [
             "name" => "Tab trong dashboard",
             "ownerDomain" => "bi-service.symper.vn",
