@@ -37,7 +37,7 @@ class Operation extends SqlObject
         'department'            => ['name'=>'phòng ban',            'ownerDomain' => 'orgchart.symper.vn',              'action'=>['set_manager','view_all','view_only_owner','view_only_sub']],
         'operation'             => ['name'=>'hành động',            'ownerDomain' => 'accesscontrol.symper.vn',         'action'=>['create','update','remove','list']],
         'application_definition'=> ['name'=>'Ứng dụng',             'ownerDomain' => 'core.symper.vn',                  'action'=>['view','create','update','remove']],
-        'invoice'               => ['name'=>'Hóa đơn',              'ownerDomain' => 'core.symper.vn',                  'action'=>['invoice', 'invoice_in_process', 'adjust', 'adjust_in_process', 'instead', 'instead_in_process', 'cancel', 'cancel_in_process']],
+        'invoice'               => ['name'=>'Hóa đơn',              'ownerDomain' => 'e-invoice.symper.vn',              'action'=>['issueInvoice', 'issueInvoiceInProcess', 'adjustInvoice', 'adjustInvoiceInProcess', 'replaceInvoice', 'replaceInvoiceInProcess', 'cancelInvoice', 'cancelInvoiceInProcess']],
         "dashboard_tab" => [
             "name" => "Tab trong dashboard",
             "ownerDomain" => "bi-service.symper.vn",
