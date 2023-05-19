@@ -10,6 +10,9 @@ then
     envDomain=$SERVICE_ENV"-"
 fi
 
+replaceWith="-forward.symper.vn"
+search=".symper.vn"
+host=${SERVICE_NAME//$search/$replaceWith}
 sed -i -e "s/{ENVIRONMENT}/$originEnv/g" \
        -e "s/{ENVIRONMENT_}/$env/g" \
        -e "s/{SERVICE_ENV}/$SERVICE_ENV/g" \

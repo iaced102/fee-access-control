@@ -88,7 +88,7 @@ pipeline{
                     steps {
                         script {
                             if ("${KAFKA_SUBCRIBE}".toBoolean() == true) {
-                                sh 'curl -s -I -X GET https://${SERVICE_ENV}-${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
+                                sh 'curl --connect-timeout 1 -s -I -X GET https://${SERVICE_ENV}-${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
                             } else{
                                 echo 'None Kafka subscriber'
                             }
@@ -185,7 +185,7 @@ pipeline{
                     steps {
                         script {
                             if ("${KAFKA_SUBCRIBE}".toBoolean() == true) {
-                                sh 'curl -s -I -X GET https://${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
+                                sh 'curl --connect-timeout 1 -s -I -X GET https://${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
                             } else{
                                 echo 'None Kafka subscriber'
                             }
