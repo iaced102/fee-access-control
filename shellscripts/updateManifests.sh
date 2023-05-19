@@ -35,4 +35,4 @@ sed -i -e "s/{SYMPER_IMAGE}/${SERVICE_NAME}:${BUILD_VERSION}/g" \
 
 sed -i -e "s/{APP_NAME}/$APP_NAME/g" \
        -e "s/{CURRENT_ROLE}/$CURRENT_ROLE/g" \
-       -e "s/{HOST_DOMAIN}/${envDomain}${SERVICE_NAME}/g" k8s/service_ingress.yaml
+       -e "s/{HOST_DOMAIN}/${envDomain}${host}/g" k8s/service_ingress.yaml
