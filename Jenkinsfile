@@ -41,9 +41,9 @@ pipeline{
                     
                         script {
                             dir('ansible') {
-                                git branch: 'main',
-                                credentialsId: 'github-persional-token',
-                                url: 'https://github.com/quannt-symper/ansible-manage-users.git'
+                                git branch: 'master',
+                                credentialsId: 'symper_git',
+                                url: 'https://github.com/devsymper/ci-cd-ansible-script.git'
                             }
                         }
                     }
