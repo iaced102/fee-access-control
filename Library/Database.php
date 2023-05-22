@@ -78,8 +78,8 @@ class Database{
     private  function checkTableExist(){
         $modelClass = 
         $tableName = $this->modelClass::getTableName();
-        $command = "SELECT EXISTS (SELECT table_name FROM information_schema.tables WHERE table_name = '$tableName');";
-        $result = Connection::getDataQuerySelect($command);{
+        $command = "SELECT EXISTS (SELECT table_name FROM information_schema.tables WHERE table_name = $1);";
+        $result = Connection::getDataQuerySelect($command,[$tableName]);{
             if(isset($result[0]['exists'])&&$result[0]['exists']=='t'){
                 return true;
             }

@@ -12,7 +12,7 @@ class FilterInActionPack extends SqlObject
         $filterValues,
         $tenantId;
     public static $mappingFromDatabase = [
-        'filterId'            =>  [ 'name' => 'filter_id',              'type' => 'string'],
+        'filterId'            =>  [ 'name' => 'filter_id',              'type' => 'string','primary'=>true],
         'actionPackId'        =>  [ 'name' => 'action_pack_id',         'type' => 'string'],
         'action'              =>  [ 'name' => 'action',                 'type' => 'string'],
         'filterStruct'        =>  [ 'name' => 'filter_struct',                 'type' => 'string'],
@@ -44,10 +44,10 @@ class FilterInActionPack extends SqlObject
         $tenantId = Auth::getTenantId();
         // $sql = "select * from filter_in_action_pack fa left join filter f on fa.filter_id = f.id where fa.action_pack_id ='".$actionPackId."'";
         $sql = "SELECT * FROM (
-                SELECT * FROM filter_in_action_pack WHERE tenant_id_ = $tenantId AND action_pack_id ='$actionPackId'
-            ) fa LEFT JOIN (
-                SELECT * FROM filter WHERE tenant_id_ = $tenantId
-            ) f on fa.filter_id = f.id";
-        return Connection::getDataQuerySelect($sql);
+            SELECT * FROM filter_in_action_pack WHERE tenant_id_ = $1 AND action_pack_id =$2
+        ) fa LEFT JOIN (
+            SELECT * FROM filter WHERE tenant_id_ = $1
+        ) f on fa.filter_id = f.id";
+        return Connection::getDataQuerySelect($sql,[$tenantId,$actionPackId]);
     }
 }

@@ -80,9 +80,9 @@ class Model{
     *   description: dinh update function get thành private, không được phép sử dụng hàm get trực tiếp từ bên ngoài,
     *   bắt buộc filter theo tanentid trước khi query.
     */
-    private static function get($command,$returnObject=true,$returnArrayKeyAsField=false){
+    public static function get($command, $returnObject = true, $returnArrayKeyAsField = false, $dataBindings = []){
         $className = get_called_class();
-        $resultData  = Connection::getDataQuerySelect($command);
+        $resultData  = Connection::getDataQuerySelect($command, $dataBindings);
         if($returnObject){
             $arrayResult = [];
             if(!empty($resultData)){
@@ -113,10 +113,11 @@ class Model{
         $primaryKey = static::getPrimaryKey();
         $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
         $primaryColumnName  = $primaryColumnData['name']; 
-        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$id);
-        $where              = self::mergeCondWithTenantFilter($primaryColumnName. " = ".$primaryValue);
+        // $primaryValue       = self::getValueForSqlCommand($primaryColumnData, $id);
+        $idCondition = $primaryColumnName . " = $1";
+        $where              = self::mergeCondWithTenantFilter($idCondition);
         $command            = "SELECT * FROM $tableName WHERE $where";
-        $listObject         = self::get($command);
+        $listObject         = self::get($command, true, false, [$id]);
         if(isset($listObject[0])){
             return $listObject[0];
         }
@@ -144,19 +145,43 @@ class Model{
         $command            .= $top!=''?' LIMIT '.$top:'';
         return self::get($command,true,$returnArrayKeyAsField);
     }
-
-    public static function getByPaging($currentPage, $pageSize,$order,$where,$fields=false,$otherTable=false,$hasDistinct=false,$returnArrayKeyAsField=false){
-        $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
-        return self::getByTop($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
+    public static function getByStatements($top = '', $where = ["conditions" => "", "dataBindings" => []], $order = '', $fields = false, $otherTable = false, $hasDistinct = false, $returnArrayKeyAsField = false)
+    {
+        if ($top != "" && !is_numeric($top)) {
+            preg_match('/^[0-9]*\s+offset\s+[0-9]*$/i', trim($top), $output);
+            if(count($output) == 0){
+                $top = 1;
+            }
+        }
+        $dataBindings = [];
+        $whereConditions = $where["conditions"];
+        $dataBindings = $where["dataBindings"];
+        $tableName          = static::getTableName();
+        $whereConditions    = self::mergeCondWithTenantFilter($whereConditions, $tableName, $otherTable);
+        $command            = "SELECT ";
+        $command            .= $hasDistinct ? "  DISTINCT " : ' ';
+        $command            .= $fields == false ? "$tableName.*" : $fields;
+        $command            .= " FROM $tableName";
+        $command            .= $otherTable != false ? ', ' . $otherTable : '';
+        $command            .= $whereConditions != '' ? ' WHERE ' . $whereConditions : '';
+        $command            .= $order != '' ? " ORDER BY " . $order : '';
+        $command            .= $top != '' ? ' LIMIT ' . $top : '';
+        return self::get($command, true, $returnArrayKeyAsField, $dataBindings);
     }
 
-    public static function deleteMulti($where){
+    public static function getByPaging($currentPage, $pageSize, $order, $where = ["conditions" => "", "dataBindings" => []], $fields = false, $otherTable = false, $hasDistinct = false, $returnArrayKeyAsField = false){
+        $top = $pageSize." OFFSET ".(($currentPage-1)*$pageSize);
+        return self::getByStatements($top,$where,$order,$fields,$otherTable,$hasDistinct,$returnArrayKeyAsField);
+    }
+
+    public static function deleteMulti($where,$dataBindings = [])
+    {
         $tableName          = static::getTableName();
         $where              = self::mergeCondWithTenantFilter($where);
         $command            = "DELETE FROM $tableName WHERE $where";
-        return connection::exeQuery($command);
+        return Connection::prepareExeQuery($command, $dataBindings);
     }
-    public static function count($where){
+    public static function count($where, $dataBindings = []){
         $where              = self::mergeCondWithTenantFilter($where);
         $tableName          = static::getTableName();
         $primaryKey = static::getPrimaryKey();
@@ -164,11 +189,11 @@ class Model{
         $primaryColumnName  = $primaryColumnData['name'];
         $command            = "SELECT COUNT( DISTINCT $tableName.$primaryColumnName) AS count FROM $tableName";
         $command            .= ($where!='')?' WHERE '.$where:'';
-        return self::countByQuery($command);
+        return self::countByQuery($command, $dataBindings);
     }
-    public static function countByQuery($command){
+    public static function countByQuery($command, $dataBindings = []){
         $result = 0;        
-        $resultData =Connection::getDataQuerySelect($command);
+        $resultData = Connection::getDataQuerySelect($command, $dataBindings);
         if(isset($resultData[0]['count'])){
             $result = $resultData[0]['count'];
         }
@@ -217,10 +242,10 @@ class Model{
     }
     public function save(){
         $primaryKey = static::getPrimaryKey();
-        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey,true);
+        $primaryColumnData  = static::getColumnNameInDataBase($primaryKey, true);
         $primaryColumnName  = $primaryColumnData['name'];
-        $primaryValue       = self::getValueForSqlCommand($primaryColumnData,$this->$primaryKey);
-        if($this->$primaryKey=='' || static::count("$primaryColumnName=$primaryValue")==0){
+        // $primaryValue       = self::getValueForSqlCommand($primaryColumnData, $this->$primaryKey);
+        if ($this->$primaryKey == '' || static::count("$primaryColumnName = $1",[$this->$primaryKey]) == 0) {
             $this->insert();
         }
         else{
@@ -304,11 +329,11 @@ class Model{
         return connection::exeQuery($command);
     }
 
-    public static function updateMulti($set, $condition){
+    public static function updateMulti($set, $condition, $dataBindings = []){
         $tableName = static::getTableName();
         $condition          = self::mergeCondWithTenantFilter($condition);
         $command            = "UPDATE ".$tableName." SET $set WHERE $condition";
-        return connection::exeQuery($command);
+        return connection::prepareExeQuery($command, $dataBindings);
     }
     public function delete()
     {
@@ -457,53 +482,88 @@ class Model{
     public static function standardlizeFilterData($filter, $moreConditions = [], $callFromModel = true)
     {
         $columns = [];
-        if(array_key_exists('columns', $filter)){
+        if (array_key_exists('columns', $filter)) {
             foreach ($filter['columns'] as $columnName) {
-                $columns[] = self::getProperColumnName($columnName, $callFromModel);
+                $c = self::getProperColumnName($columnName, $callFromModel);
+                if($c != ""){
+                    $columns[] = $c;
+                }
             }
         }
         $filter['columns'] = $columns;
 
-        if(array_key_exists('groupBy', $filter)){
+        if (array_key_exists('groupBy', $filter)) {
             $groupByColumns = [];
             foreach ($filter['groupBy'] as $columnName) {
-                $groupByColumns[] = self::getProperColumnName($columnName, $callFromModel);
+                $c = self::getProperColumnName($columnName, $callFromModel);
+                if($c != ""){
+                    $groupByColumns[] = $c;
+                }
             }
             $filter['groupBy'] = $groupByColumns;
         }
 
-        
-        if(array_key_exists('aggregate', $filter)){
+        if (array_key_exists('aggregate', $filter)) {
+            $aggreates = [];
             foreach ($filter['aggregate'] as &$item) {
-                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
+                $c = self::getProperColumnName($item['column'], $callFromModel);
+                if($c != ""){
+                    $aggreates[] = ["func"=>$item['func'],"column"=>$c];
+                }
             }
+            $filter['aggregate'] = $aggreates;
         }
-        
-        if(array_key_exists('filter', $filter)){
+        if (array_key_exists('filter', $filter)) {
+            $filters = [];
             foreach ($filter['filter'] as $index  => &$item) {
-                $item['column'] = self::getProperColumnName($item['column'], $callFromModel);
+                $c = self::getProperColumnName($item['column'], $callFromModel);
+                if($c != ""){
+                    $item['column'] = $c;
+                    $filters[] = $item;
+                }
             }
+            $filter['filter'] = $filters;
         }
-
-        if(count($moreConditions) > 0 ){
-            if(!array_key_exists('filter', $filter)){
+        if (count($moreConditions) > 0) {
+            if (!array_key_exists('filter', $filter)) {
                 $filter['filter'] = [];
             }
             $filter['filter']  = array_merge($filter['filter'], $moreConditions);
         }
 
-        if(array_key_exists('sort', $filter)){
+        if (array_key_exists('sort', $filter)) {
+            $sorts = [];
             foreach ($filter['sort'] as $index => $sortItem) {
-                $filter['sort'][$index]['column'] = self::getProperColumnName($sortItem['column'], $callFromModel);
+                $c = self::getProperColumnName($sortItem['column'], $callFromModel);
+                if($c != ""){
+                    $sorts[] = ["column"=>$c,"type"=>$sortItem["type"]];
+                }
             }
+            $filter['sort'] = $sorts;
         }
 
-        if(!array_key_exists('stringCondition', $filter)){
+        if (!array_key_exists('stringCondition', $filter)) {
             $filter['stringCondition'] = '';
         }
 
-        if(!array_key_exists('linkTable', $filter)){
+        if (!array_key_exists('linkTable', $filter)) {
             $filter['linkTable'] = [];
+        }else{
+            $linkTable = [];
+            for ($i=0; $i < count($filter['linkTable']); $i++) { 
+                $item = $filter['linkTable'][$i];
+                $col1 = trim($item["column1"]);
+                $col2 = trim($item["column2"]);
+                $operator = trim($item["operator"]);
+                $mask = trim($item["mask"]);
+                $table = trim($item["table"]);
+                $s = $col1.$col2.$mask.$table;
+                preg_match('/(?![a-zA-Z0-9_]).+/', $s, $o);
+                if(count($o) == 0 && $operator == "="){
+                    $linkTable[] = $item;
+                }
+            }
+            $filter['linkTable'] = $linkTable;
         }
 
         return $filter;

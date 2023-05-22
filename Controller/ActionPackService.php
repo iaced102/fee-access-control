@@ -10,6 +10,7 @@ use Model\ActionPack;
 use Model\Operation;
 use Model\OperationInActionPack;
 use Library\ObjectRelation;
+use Library\MessageBus;
 use Model\PermissionRole;
 use Model\RoleAction;
 use Model\Users;
@@ -59,8 +60,7 @@ class ActionPackService extends Controller
         ];
     }
     function create(){
-        $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(ActionPack::getTopicName(),"create",json_encode($this->parameters));
         if($this->checkParameter(['name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -128,8 +128,9 @@ class ActionPackService extends Controller
         foreach($listOperation as $key=>$value){
             array_push($listOperationId,$key);
         }
-        $listOperationId="'".implode("','",$listOperationId)."'";
-        $operation = Operation::getByTop('',"id IN ($listOperationId)");
+        $listOperationId="{".implode(",",$listOperationId)."}";
+        $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$listOperationId]];
+        $operation = Operation::getByStatements('',$where);
         $listObject=[];
         foreach($operation as $key => $value) {
             if($value->objectType=='stateflow_flow'){
@@ -144,10 +145,7 @@ class ActionPackService extends Controller
         ObjectRelation::save($nodes,$links,"action_pack:$id");
     }
     function update(){
-        TimeLog::start('publish-data-to-kafka');
-        $messageBusData = ['topic'=>ActionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'publish', $messageBusData, 'POST');
-        TimeLog::end('publish-data-to-kafka', MESSAGE_BUS_SERVICE.'publish');
+        // MessageBus::publish(ActionPack::getTopicName(),"update",json_encode($this->parameters));
         
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){
@@ -166,6 +164,7 @@ class ActionPackService extends Controller
                         $obj->status = isset($this->parameters['status'])?trim($this->parameters['status']):ActionPack::STATUS_ENABLE;
                         $obj->userUpdate = Auth::getCurrentBaEmail();
                         $obj->updateAt = date(DATETIME_FORMAT);
+                        
                         if($obj->update()){
                             $filterAttachToOperation = [];
                             if(isset($this->parameters['listFilter'])){
@@ -178,7 +177,7 @@ class ActionPackService extends Controller
                                 $obj->saveFilter($listFilter);
                                 TimeLog::end('saveFilter');
                             }
-
+                            
                             if(isset($this->parameters['listOperations'])){
                                 $listOperations = Str::getArrayFromUnclearData($this->parameters['listOperations']);
                                 TimeLog::start('saveOperation');                                
@@ -189,10 +188,8 @@ class ActionPackService extends Controller
                             $this->output['status'] = STATUS_OK;
                         }
                         self::saveObjectRleation(json_decode($this->parameters['listOperations']),json_decode($this->parameters['listFilter']),$this->parameters['id'],trim($this->parameters['name']));
-                        
                         $this->output['status'] = STATUS_OK;
                         $this->output['data'] = TimeLog::getAll();
-
                         TimeLog::start('RoleAction::refresh 2st');                                
                         RoleAction::closeConnectionAndRefresh($this);
                         TimeLog::end('RoleAction::refresh 2st');
@@ -244,7 +241,8 @@ class ActionPackService extends Controller
         if($this->checkParameter(['id'])){
             $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
-                $listObj = Operation::getByTop('',"operation_in_action_pack.action_pack_id='".$obj->id."' and operation_in_action_pack.operation_id=operation.id","","operation.*","operation_in_action_pack");
+                $where = ["conditions" => "operation_in_action_pack.action_pack_id=$1 and operation_in_action_pack.operation_id=operation.id", "dataBindings" => [$obj->id]];
+                $listObj = Operation::getByStatements('',$where,"","operation.*","operation_in_action_pack");
                 $this->output['data']   = $listObj;
                 $this->output['status'] = STATUS_OK;
             }
@@ -258,8 +256,8 @@ class ActionPackService extends Controller
         if($this->checkParameter(['id','operationId'])){
             $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
-                if(Operation::count("id='".$this->parameters['operationId']."'")>0){
-                    if(OperationInActionPack::count("action_pack_id='".$this->parameters['id']."' and operation_id='".$this->parameters['operationId']."'")==0){
+                if(Operation::count("id=$1",[$this->parameters['operationId']])>0){
+                    if(OperationInActionPack::count("action_pack_id=$1 and operation_id=$2",[$this->parameters['id'],$this->parameters['operationId']])==0){
                         $operationInActionPackObj =  new OperationInActionPack();
                         $operationInActionPackObj->actionPackId = $obj->id;
                         $operationInActionPackObj->operationId = $this->parameters['operationId'];
@@ -283,8 +281,9 @@ class ActionPackService extends Controller
         if($this->checkParameter(['id','operationId'])){
             $obj = ActionPack::getById($this->parameters['id']);
             if($obj!=false){
-                if(OperationInActionPack::count("action_pack_id='".$this->parameters['id']."' and operation_id='".$this->parameters['operationId']."'")>0){
-                    OperationInActionPack::deleteMulti("action_pack_id='".$this->parameters['id']."' and operation_id='".$this->parameters['operationId']."'");
+                if(OperationInActionPack::count("action_pack_id=$1 and operation_id=$2",[$this->parameters['id'],$this->parameters['operationId']])>0){
+                    $dataBindings=[$this->parameters['id'],$this->parameters['operationId']];
+                    OperationInActionPack::deleteMulti("action_pack_id=$1 and operation_id=$2",$dataBindings);
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
                 }

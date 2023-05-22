@@ -10,37 +10,33 @@
 namespace Controller;
 
 use Library\Auth;
-use Library\Environment;
 use Library\Redirect;
 use Library\Message;
-use Library\Request;
 use Library\Str;
-use SqlObject;
-
 class Controller
 {
     public $defaultAction;
     public $currentAction;
     public $output = array();
     public $requireLogin = true;
+    public $ignoreLogParameters = false;
+    public $ignoreLogOuput = false;
     public $parameters = [];
-    private $processUuid;
-    private $requestTime;
+    private $logData;
     public function __construct()
     {
-        $this->processUuid = SqlObject::createUUID();
+        $this->logData = [];
     }
     public function run()
     {
-        $this->requestTime = microtime(true);
         $this->checkRequireLogin();
         $action = $this->currentAction != '' ? $this->currentAction : $this->defaultAction;
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
-            $dataKafka = [
-                'parameters'    => $this->parameters,
+            $this->logData = [
+                'parameters'    => ($this->ignoreLogParameters) ? "" : json_encode($this->parameters, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'method'        => $_SERVER['REQUEST_METHOD'],
                 'action'        => $action,
-                'processUuid'   => $this->processUuid,
+                'requestTime'   => microtime(true),
                 'uri'           => $_SERVER['REQUEST_URI'],
                 'host'          => $_SERVER['HTTP_HOST'],
                 'queryString'   => $_SERVER['QUERY_STRING'],
@@ -50,8 +46,6 @@ class Controller
                 'timeStamp'     => Str::currentTimeString(),
                 'date'          => date("d-m-Y")
             ];
-            $messageBusData = ['topic' => 'request-input', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
-            Request::request(MESSAGE_BUS_SERVICE . '/publish', $messageBusData, 'POST');
         }
         if (method_exists($this, $action)) {
             $this->$action();
@@ -136,30 +130,34 @@ class Controller
     private function returnOutput()
     {
         header('Content-Type: application/json');
-        if (!isset($this->output['status'])) {
-            $this->output['status'] = STATUS_OK;
+        if (!is_array($this->output)) {
+            print $this->output;
+        } else {
+            if (!isset($this->output['status'])) {
+                $this->output['status'] = STATUS_OK;
+            }
+            if ((!isset($this->output['message'])) || $this->output['message'] == '') {
+                $this->output['message'] = Message::getStatusResponse($this->output['status']);
+            }
+            print json_encode($this->output);
         }
-        if ((!isset($this->output['message'])) || $this->output['message'] == '') {
-            $this->output['message'] = Message::getStatusResponse($this->output['status']);
-        }
-        print json_encode($this->output);
         if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'])) {
-            $endTime = microtime(true);
-            $dataKafka = [
-                'output'        => $this->output,
-                'processUuid'   => $this->processUuid,
-                'error'         => error_get_last(),
-                'timeStamp'     => Str::currentTimeString(),
-                'date'          => date("d-m-Y"),
-                'requestTime'   => $endTime - $this->requestTime,
-                'clientIp'      => $_SERVER['REMOTE_ADDR'],
-                'serverIp'      => $_SERVER['SERVER_ADDR'],
-                'uri'           => $_SERVER['REQUEST_URI'],
-                'host'          => $_SERVER['HTTP_HOST'],
-                'method'        => $_SERVER['REQUEST_METHOD'],
-            ];
-            $messageBusData = ['topic' => 'request-output', 'event' => 'log', 'resource' => json_encode($dataKafka, JSON_UNESCAPED_UNICODE), 'env' => Environment::getEnvironment()];
-            Request::request(MESSAGE_BUS_SERVICE . '/publish', $messageBusData, 'POST');
+            $dataJsonStr = ($this->ignoreLogOuput) ? "" : json_encode($this->output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            // Nếu kích thước 400 Kbs thì bỏ qua
+            if(strlen($dataJsonStr) >  400000){
+                $dataJsonStr = "";
+            }
+            $userId = Auth::getCurrentUserId();
+            $tenantId = Auth::getTenantId();
+            $this->logData["requestTime"] = microtime(true) - $this->logData["requestTime"];
+            $this->logData["output"] = $dataJsonStr;
+            $lastErr = error_get_last();
+            $this->logData["error"] = !empty($lastErr) ? json_encode($lastErr,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+            $this->logData["tenantId"] = "$tenantId";
+            $this->logData["userId"] = ($userId != false) ? "$userId" : "";
+            $this->logData["userRole"] = Auth::getCurrentRole();
+            $this->logData["statusCode"] = !is_array($this->output) ? 200 : $this->output['status'];
+            file_put_contents(__DIR__ . "/../log/request-" . date("d-m-Y") . ".log", json_encode($this->logData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL, FILE_APPEND);
         }
     }
 }

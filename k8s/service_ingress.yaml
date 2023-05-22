@@ -1,12 +1,12 @@
-
 apiVersion: v1
 kind: Service
 metadata:
-    name: nginx-accesscontrol
+    name: {APP_NAME}
 spec:
     selector:
-      app: nginx-accesscontrol
+      app: {APP_NAME}
       tier: backend
+      role: {CURRENT_ROLE}
     ports:
     - name: http
       protocol: TCP
@@ -16,23 +16,23 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-accesscontrol
+  name: {APP_NAME}
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   tls:
   - hosts:
-    - {ENVIRONMENT_DOMAIN}accesscontrol.symper.vn
+    - {HOST_DOMAIN}
     secretName: symper-tls
   rules:
-  - host: {ENVIRONMENT_DOMAIN}accesscontrol.symper.vn
+  - host: {HOST_DOMAIN}
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-             name: nginx-accesscontrol
+             name: {APP_NAME}
              port:
                 number: 80

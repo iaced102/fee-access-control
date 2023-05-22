@@ -60,8 +60,9 @@ class ActionPack extends SqlObject
         if($this->id!=''){
             $this->removeAllOperation();
             $operationInActionpacks = [];
-            $operationIds = "'".implode("','", array_keys($listOperation))."'";
-            $listExistOperations = Operation::getByTop('', "id IN ($operationIds)");
+            $operationIds = "{".implode(",", array_keys($listOperation))."}";
+            $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$operationIds]];
+            $listExistOperations = Operation::getByStatements('', $where);
             
             foreach($listExistOperations as $op){
                 $operationId = $op->id;
@@ -140,8 +141,9 @@ class ActionPack extends SqlObject
     public static function replaceRealFilterValue($rsl, $usedFilterIds)
     {
         $ids = array_keys($usedFilterIds);
-        $ids = "'".implode("','", $ids)."'";
-        $filters = Filter::getByTop('', " id IN ($ids) ");
+        $ids = "{".implode(",", $ids)."}";
+        $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$ids]];
+        $filters = Filter::getByStatements('',$where);
         foreach ($filters as $item) {
             $usedFilterIds[$item->id] = $item->formula;
         }
@@ -163,9 +165,10 @@ class ActionPack extends SqlObject
             $mapFilterIdToFilterStruct[$item['id']] = $item;
         }
         $filterIds = array_keys($mapFilterIdToFilterStruct);
-        $filterIds = "'".implode("','", $filterIds)."'";
+        $filterIds = "{".implode(",", $filterIds)."}";
 
-        $filterObjs = Filter::getByTop('',"id IN ($filterIds)");
+        $where = ["conditions" => "id = ANY($1)", "dataBindings" => [$filterIds]];
+        $filterObjs = Filter::getByStatements('',$where);
         // Lấy danh sách filter
         // $mapFilterById = [];
         // foreach ($filterObjs as $obj) {
@@ -180,45 +183,45 @@ class ActionPack extends SqlObject
             'objectIden'    => []
         ];
         $usedFilterIds = [];
-
         foreach ($filterObjs as $obj) {
             $objectIdentifier = self::standardObjIden($obj->objectIdentifier);
-            if(!isset($usedObjIden[$objectIdentifier])){
-                $filterStruct = $mapFilterIdToFilterStruct[$obj->id];
-                $filterStruct = json_decode($filterStruct['filterStruct'], true);
-                $usedObjIden[$objectIdentifier] = true;
-                foreach ($filterStruct as $item) {
-                    foreach ($item['actions'] as $actionItem) {
-                        $newItem = [
-                            'objectIdentify'    => $objectIdentifier,
-                            'action'            => $actionItem['field'],
-                            'formulaValue'      => self::getConditionFromTree($item['conditions'][0], $usedFilterIds),
-                            'formulaStruct'     => json_encode($item['conditions'], JSON_UNESCAPED_UNICODE),
-                            'actionPackId'      => $apId
-                        ];
-                        $usedOperations[$newItem['objectIdentify'].'_'.$newItem['action']] = '';
-                        $operationAndFilter[] = $newItem;
-                        $usedOperations['action'][$newItem['action']] = true; 
-                    }
-                }
-                $usedOperations['objectIden'][$objectIdentifier] = true;
-            }
-        }
-        $usedObjectIdens = "'".implode("','", array_keys($usedOperations['objectIden']))."'";
-        $usedActions = "'".implode("','", array_keys($usedOperations['action']))."'";
+            $filterStruct = $mapFilterIdToFilterStruct[$obj->id];
+            $filterStruct = json_decode($filterStruct['filterStruct'], true);
+            $usedObjIden[$objectIdentifier] = true;
 
-        $operationObjs = Operation::getByTop('', " object_identifier IN ($usedObjectIdens) AND action IN ($usedActions)");
-        $mapObjIdenAndction = [];
+            foreach ($filterStruct as $item) {
+                foreach ($item['actions'] as $actionItem) {
+                    $newItem = [
+                        'objectIdentify'    => $objectIdentifier,
+                        'action'            => $actionItem['field'],
+                        'formulaValue'      => self::getConditionFromTree($item['conditions'][0], $usedFilterIds),
+                        'formulaStruct'     => json_encode($item['conditions'], JSON_UNESCAPED_UNICODE),
+                        'actionPackId'      => $apId
+                    ];
+                    $usedOperations[$newItem['objectIdentify'].'_'.$newItem['action']] = '';
+                    $operationAndFilter[] = $newItem;
+                    $usedOperations['action'][$newItem['action']] = true; 
+                }
+            }
+            $usedOperations['objectIden'][$objectIdentifier] = true;
+        }
+        $usedObjectIdens = "{".implode(",", array_keys($usedOperations['objectIden']))."}";
+        $usedActions = "{".implode(",", array_keys($usedOperations['action']))."}";
+        $where = ["conditions" => "object_identifier = ANY($1) AND action = ANY($2)", "dataBindings" => [$usedObjectIdens,$usedActions]];
+        $operationObjs = Operation::getByStatements('', $where);
+        $mapObjIdenAndAction = [];
         foreach ($operationObjs as $obj) {
-            $mapObjIdenAndction[$obj->objectIdentifier.'_'.$obj->action] = $obj;
+            $mapObjIdenAndAction[$obj->objectIdentifier.'_'.$obj->action] = $obj;
         }
         $rsl = [];
         foreach ($operationAndFilter as &$item) {
-            $operationObj = $mapObjIdenAndction[$item['objectIdentify'].'_'.$item['action']];
-            $rsl[$operationObj->id]  = [
-                'formulaValue' => $item['formulaValue'],
-                'formulaStruct' => $item['formulaStruct']
-            ];
+            if(isset($mapObjIdenAndAction[$item['objectIdentify'].'_'.$item['action']])){
+                $operationObj = $mapObjIdenAndAction[$item['objectIdentify'].'_'.$item['action']];
+                $rsl[$operationObj->id]  = [
+                    'formulaValue' => $item['formulaValue'],
+                    'formulaStruct' => $item['formulaStruct']
+                ];
+            }
         }
 
         if(count($usedFilterIds) > 0){
@@ -244,7 +247,7 @@ class ActionPack extends SqlObject
         
     }
     private function insertActionPack($operationId, $formulaStruct,$formulaValue){
-        if(Operation::count("id='".$operationId."'")>0){
+        if(Operation::count("id=$1",[$operationId])>0){
             $operationInActionPackObj =  new OperationInActionPack();
             $operationInActionPackObj->actionPackId = $this->id;
             $operationInActionPackObj->operationId = $operationId;
@@ -256,17 +259,19 @@ class ActionPack extends SqlObject
     }
     function removeAllOperation(){
         $id = $this->id;
-        OperationInActionPack::deleteMulti("action_pack_id='$id'");
+        OperationInActionPack::deleteMulti("action_pack_id=$1",[$id]);
     }
     function removeAllFilter(){
         $id = $this->id;
-        FilterInActionPack::deleteMulti("action_pack_id='$id'");
+        FilterInActionPack::deleteMulti("action_pack_id=$1",[$id]);
     }
     public static function checkNameExist($name, $id = false){
         if($id == false){
-            $listObject = self::getByTop('',"name = '$name'");
+            $where = ["conditions" => "name = $1", "dataBindings" => [$name]];
+            $listObject = self::getByStatements('',$where);
         }else{
-            $listObject = self::getByTop('',"name = '$name' and id !='". $id."'");
+            $where = ["conditions" => "name = $1 and id !=$2", "dataBindings" => [$name,$id]];
+            $listObject = self::getByStatements('',$where);
         }
         if(count($listObject) > 0){
             return true;

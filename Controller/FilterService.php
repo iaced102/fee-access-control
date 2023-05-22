@@ -14,6 +14,7 @@ use Model\FilterInActionPack;
 use Model\PermissionRole;
 use Model\Users;
 use Model\SqlObject;
+use Library\MessageBus;
 
 class FilterService extends Controller
 {
@@ -57,8 +58,7 @@ class FilterService extends Controller
     }
     
     function create(){
-        $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(Filter::getTopicName(),"update",json_encode($this->parameters));
         if($this->checkParameter(['name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -96,7 +96,7 @@ class FilterService extends Controller
             if($type == 'nodes'){
                 array_push($arr,['name' => $objectIdentifier,'id' => $objectIdentifier,'title' => $objectIdentifier,'type' => $objType,'host' => $objectIdentifier]);
             } else {
-                array_push($arr,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'USE','host' =>"filter:$id"]);
+                array_push($arr,['start' => "filter:$id",'end'=> $objectIdentifier,'type' => 'NEED','host' =>"filter:$id"]);
             }
         } else if (strpos($objectIdentifier,'control')!==false){
             $array=explode(',',$objectIdentifier);
@@ -105,7 +105,7 @@ class FilterService extends Controller
                 if($type == 'nodes'){
                     $data = ['name' => $obj,'id' => $obj,'title' => $obj,'type' => 'document_definition','host' =>$obj];
                 } else {
-                    $data = ['start' => "filter:$id",'end'=> $obj,'type' => 'USE','host' =>"filter:$id"];
+                    $data = ['start' => "filter:$id",'end'=> $obj,'type' => 'NEED','host' =>"filter:$id"];
                 }
                 if(!in_array($data,$arr)){
                     array_push($arr,$data);
@@ -121,8 +121,7 @@ class FilterService extends Controller
         ObjectRelation::save($nodes,$links,"filter:$id");
     }
     function update(){
-        $messageBusData = ['topic'=>Filter::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(Filter::getTopicName(),"update",json_encode($this->parameters));
         if($this->checkParameter(['id','name','formula'])){
             if(trim($this->parameters['name'])==''||trim($this->parameters['formula'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -181,8 +180,8 @@ class FilterService extends Controller
         if($this->checkParameter(['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
             if(count($ids)>0){
-                $ids = "'".implode("','", $ids)."'";
-                Filter::deleteMulti("id in ($ids)"); 
+                $ids = "{".implode(",", $ids)."}";
+                Filter::deleteMulti("id = ANY($1)",[$ids]); 
                 $this->output['status']  = STATUS_OK;
                 RoleAction::closeConnectionAndRefresh($this);
                 $hostsId=[];

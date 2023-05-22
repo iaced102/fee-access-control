@@ -11,10 +11,11 @@ class CacheService
         if (is_null(self::$cacheInstance)) {
             if (CACHE_ENGINE == 'memcache') {
                 $cache = new \Memcached();
-                $cache->addServer('14.225.36.39', 11211);
+                $cache->addServer($GLOBALS['env']['db']['cache']['host'], 11211);
             } else {
                 $cache = new \Redis();
-                $cache->connect('14.225.36.39', 6379);
+                $cache->connect($GLOBALS['env']['db']['cache']['host'], 6379);
+                $cache->auth($GLOBALS['env']['db']['cache']['password']);
             }
             self::$cacheInstance = $cache;
         } else {

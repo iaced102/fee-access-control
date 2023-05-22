@@ -10,14 +10,6 @@ Route::get('permission_packs','PermissionService','list');
 Route::put('permission_packs/{id}','PermissionService','update');
 Route::delete('permission_packs/{id}','PermissionService','delete');
 Route::get('permission_packs/{id}','PermissionService','detail');
-Route::post('permission_packs/delete-many','PermissionService','deleteMany');
-
-Route::post('server_keys','ServerKeyService','create');
-Route::get('server_keys','ServerKeyService','list');
-Route::put('server_keys/{id}','ServerKeyService','update');
-Route::delete('server_keys/{id}','ServerKeyService','delete');
-Route::get('server_keys/{id}','ServerKeyService','detail');
-
 
 Route::post('roles/{role_identifier}/permissions','RoleService','setPermission');
 Route::get('roles/{role_identifier}/permissions','RoleService','listPermission');
@@ -35,27 +27,16 @@ Route::post('action_packs','ActionPackService','create');
 Route::put('action_packs/{id}','ActionPackService','update');
 Route::delete('action_packs/{id}','ActionPackService','delete');
 Route::get('action_packs/{id}','ActionPackService','detail');
-Route::post('action_packs/delete-many','ActionPackService','deleteMany');
 
 Route::get('operations','OperationService','list');
+Route::get('operations/all-objects','OperationService','getListObjectIdentifierMultiTenant');
 Route::post('operations','OperationService','create');
 Route::post('operations/save-batch','OperationService','saveBatch');
 Route::post('operations/delete-many','OperationService','deleteMany');
 Route::get('operations/actions','OperationService','getListType');
 Route::post('operations/objects','OperationService','getListObjectIdentifier');
 Route::get('operations/{type}/actions','OperationService','getActionByObjectType');
-
-Route::get('env/object-types','Env','listObjectType',[],false,false,true);
-Route::get('test','Api','testGet');
-
-Route::get('env/action_packs','Env','listActionPack',[],false,false,true);
-Route::post('env/action_packs/ids','Env','getActionPackByIds',[],false,false,true);
-Route::post('env/action_packs/save','Env','saveActionPackByIds',[],false,false,true);
-
-
-Route::get('env/permission_packs','Env','listPermission',[],false,false,true);
-Route::post('env/permission_packs/ids','Env','getPermissionByIds',[],false,false,true);
-Route::post('env/permission_packs/save','Env','savePermissionByIds',[],false,false,true);
+Route::get('operations/{objectType}/{role}','OperationService','getOperationByObjectAndRole');
 
 Route::get('filters','FilterService','list');
 Route::get('filters-in-action-pack/{actionPackId}','FilterService','getFilterInActionPack');
@@ -67,3 +48,5 @@ Route::post('filters/delete-many','FilterService','deleteMany');
 Route::post('demotoken', 'Api', 'getDemoToken');
 Route::post('test', 'Api', 'testFunction');
 Route::post('objects/tenant-migrate', 'ObjectTenantMigration', 'migrate');
+Route::post('object-identify', 'ObjectIdentifyService', 'save');
+Route::post('role-action/make-new-view', 'RoleActionService', 'makeNewViewForTenant');

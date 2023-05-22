@@ -13,6 +13,7 @@ use Model\RoleAction;
 use Model\PermissionPack;
 use Model\PermissionRole;
 use Model\Users;
+use Library\MessageBus;
 
 class PermissionService extends Controller
 {
@@ -30,7 +31,18 @@ class PermissionService extends Controller
         if(!isset($this->parameters['sort'])){
             $this->parameters['sort'] = [["column"=>"createAt","type"=>'DESC']];            
         }
-        $listObj = PermissionPack::getByFilter($this->parameters);
+        $filter = [
+            [
+                'column'    => 'status',
+                'conditions'=> [
+                    [
+                        'name'  =>'greater_than',
+                        'value' => 0
+                    ]
+                ]
+            ]
+        ];
+        $listObj = PermissionPack::getByFilter($this->parameters,$filter);
         $data = [
             'listObject'  => $listObj['list'],
             'columns'     => $this->getListColumns(),
@@ -90,8 +102,7 @@ class PermissionService extends Controller
         ObjectRelation::save($nodes,$links,"permission_pack:$id");
     }
     function create(){
-        $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(PermissionPack::getTopicName(),"create",json_encode($this->parameters));
         if($this->checkParameter(['name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -125,8 +136,7 @@ class PermissionService extends Controller
     }
    
     function update(){
-        $messageBusData = ['topic'=>PermissionPack::getTopicName(), 'event' => 'update','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(PermissionPack::getTopicName(),"update",json_encode($this->parameters));
         if($this->checkParameter(['id','name'])){
             if(trim($this->parameters['name'])==''){
                 $this->output['status'] = STATUS_BAD_REQUEST;
@@ -165,23 +175,18 @@ class PermissionService extends Controller
     }
     function delete(){
         if($this->checkParameter(['id'])){
-            $obj = PermissionPack::getById($this->parameters['id']);
-            if($obj!=false){
-                if($obj->delete()){
-                    $this->output['status'] = STATUS_OK;
-                    RoleAction::closeConnectionAndRefresh($this);
-                    $hostsId=['permission_pack:'.$this->parameters['id']];
-                    ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
-                }
-                else{
-                    $this->output['status'] = STATUS_SERVER_ERROR;
-                }
-                
+            $ids = $this->parameters['id'];
+            $idsArr = explode(',',$ids);
+            $ids ='{'.implode(",",$idsArr).'}';
+            
+            PermissionPack::updateMulti(" status = $1"," id = ANY($2)",['0',$ids]);
+            $this->output['status'] = STATUS_OK;
+            $hostsId=[];
+            foreach($idsArr as $k => $v){
+                array_push($hostsId,'permission_pack:'.$v);
             }
-            else{
-                $this->output['status']     = STATUS_NOT_FOUND;
-                $this->output['message']    = 'operation not found';
-            }
+            ObjectRelation::deleteNodesAndLinks(implode(",",$hostsId));
+            RoleAction::closeConnectionAndRefresh($this);
         }
     }
     function detail(){
@@ -203,10 +208,12 @@ class PermissionService extends Controller
             $listObj = [];
             if($obj!=false){
                 if(isset($this->parameters['detail'])&&intval($this->parameters['detail'])==1){
-                    $listObj = ActionPack::getByTop('',"action_in_permission_pack.action_pack_id=action_pack.id AND action_in_permission_pack.permission_pack_id='".$obj->id."'",'',false,'action_in_permission_pack');
+                    $where = ["conditions" => "action_in_permission_pack.action_pack_id=action_pack.id AND action_in_permission_pack.permission_pack_id=$1", "dataBindings" => [$obj->id]];
+                    $listObj = ActionPack::getByStatements('',$where,'',false,'action_in_permission_pack');
                 }
                 else{
-                    $listObj = ActionInPermissionPack::getByTop('',"permission_pack_id='".$obj->id."'");
+                    $where = ["conditions" => "permission_pack_id=$1", "dataBindings" => [$obj->id]];
+                    $listObj = ActionInPermissionPack::getByStatements('',$where);
                 }
                 $this->output['data']   = $listObj;
                 $this->output['status'] = STATUS_OK;
@@ -218,13 +225,12 @@ class PermissionService extends Controller
         }
     }
     function addActionPack(){
-        $messageBusData = ['topic'=>ActionInPermissionPack::getTopicName(), 'event' => 'create','resource' => json_encode($this->parameters),'env' => Environment::getEnvironment()];
-        Request::request(MESSAGE_BUS_SERVICE.'/publish', $messageBusData, 'POST');
+        MessageBus::publish(ActionInPermissionPack::getTopicName(),"create",json_encode($this->parameters));
         if($this->checkParameter(['id','actionPackId'])){
             $obj = PermissionPack::getById($this->parameters['id']);
             if($obj!=false){
-                if(ActionPack::count("id='".$this->parameters['actionPackId']."'")>0){
-                    if(ActionInPermissionPack::count("permission_pack_id='".$this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'")==0){
+                if(ActionPack::count("id=$1",[$this->parameters['actionPackId']])>0){
+                    if(ActionInPermissionPack::count("permission_pack_id=$1 and action_pack_id=$2",[$this->parameters['id'],$this->parameters['actionPackId']])==0){
                         $actionInPermissionPackObj =  new ActionInPermissionPack();
                         $actionInPermissionPackObj->permissionPackId = $obj->id;
                         $actionInPermissionPackObj->actionPackId = $this->parameters['actionPackId'];
@@ -250,8 +256,8 @@ class PermissionService extends Controller
         if($this->checkParameter(['id','actionPackId'])){
             $obj = ActionPack::getById($this->parameters['actionPackId']);
             if($obj!=false){
-                if(ActionInPermissionPack::count("permission_pack_id='".($this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'"))>0){
-                    ActionInPermissionPack::deleteMulti("permission_pack_id='".$this->parameters['id']."' and action_pack_id='".$this->parameters['actionPackId']."'");
+                if(ActionInPermissionPack::count("permission_pack_id=$1 and action_pack_id=$2",[$this->parameters['id'],$this->parameters['actionPackId']])>0){
+                    ActionInPermissionPack::deleteMulti("permission_pack_id=$1 and action_pack_id=$2",[$this->parameters['id'],$this->parameters['actionPackId']]);
                     $this->saveUserUpdate($this->parameters['id']);
                     $this->output['status'] = STATUS_OK;
                     RoleAction::closeConnectionAndRefresh($this);
@@ -270,7 +276,7 @@ class PermissionService extends Controller
     }
     function saveUserUpdate($id){
         $id = $id;
-        PermissionPack::updateMulti("user_update=".Auth::getCurrentUserId().",update_at='".date(DATETIME_FORMAT)."'","id='".$id."'");
+        PermissionPack::updateMulti("user_update=$1,update_at=$2","id=$3",[Auth::getCurrentUserId(),date(DATETIME_FORMAT),$id]);
     }
     
 }
