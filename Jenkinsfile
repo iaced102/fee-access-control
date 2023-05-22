@@ -6,6 +6,7 @@ pipeline{
         APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
         Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
         BRANCH_NAME = "${GIT_BRANCH.split('/').size() > 1 ? GIT_BRANCH.split('/')[1..-1].join('/') : GIT_BRANCH}"
+        MSTEAMS_WEBHOOK=credentials('ms_teams_webhook')
     }
     stages{
         stage ("quality control") {
@@ -197,14 +198,18 @@ pipeline{
     }
     post{
         always{
-            emailext body: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS: \nCheck console output at $BUILD_URL to view the results.',
-            subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!',
-            to: "${env.Author_Name}"
+            echo "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - ${env.BUILD_STATUS}: \nCheck console output at ${env.BUILD_URL} to view the results."
         }
         success{
+            office365ConnectorSend webhookUrl: MSTEAMS_WEBHOOK,
+                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:green\">${currentBuild.currentResult}</span>: <br> Check console output at ${env.BUILD_URL} to view the results.",
+                status: 'Success'  
             echo "========pipeline executed successfully ========"
         }
         failure{
+            office365ConnectorSend webhookUrl: MSTEAMS_WEBHOOK,
+                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:red\">${currentBuild.currentResult}</span>: <br> Check console output at ${env.BUILD_URL} to view the results.",
+                status: 'Failed'   
             echo "========pipeline execution failed========"
         }
     }
