@@ -249,6 +249,10 @@ class ModelFilterHelper
                 $relatedColumns[$item['column']] = true;
                 $columns[] = $item['column'];
             }
+            foreach ($filter['groupBy'] as $item) {
+                $relatedColumns[$item] = true;
+                $columns[] = $item;
+            }
         } else if (array_key_exists('columns', $filter) && count($filter['columns']) > 0) {
             $columns = $filter['columns'];
         } else {

@@ -33,7 +33,7 @@ class Users extends SqlObject
         'avatar'        =>  [ 'name' => 'avatar',          'type' => 'string'],
         'createAt'      =>  [ 'name' => 'create_at',       'type' => 'datetime'],
         'updateAt'      =>  [ 'name' => 'update_at',       'type' => 'datetime'],
-        'tenantId'      => [ 'name' => 'tenant_id_',       'type' => 'number']
+        'tenantId'      =>  [ 'name' => 'tenant_id_',      'type' => 'number'],
     ];
     public function __construct($data=[]){
         parent::__construct($data,false);
