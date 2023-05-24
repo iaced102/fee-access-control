@@ -59,7 +59,7 @@ pipeline{
                     // }
                     steps{
                         script {
-                            sh echo '$Author_Name'
+                            echo '$Author_Name'
                         }
                         withCredentials([
                             usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
