@@ -11,15 +11,10 @@ pipeline{
         MSTEAMS_WEBHOOK=credentials('ms_teams_webhook')
     }
     stages{
-        when {
-            
-        }
         stage ("quality control") {
             when {
-                allOf{
-                    expression {
-                        return AUTHOR_NAME == "devsymper" && BRANCH_NAME == "dev"
-                    }
+                expression {
+                    return AUTHOR_NAME == "devsymper" && BRANCH_NAME == "dev"
                 }
             }
             environment {
