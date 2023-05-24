@@ -2,10 +2,12 @@ pipeline{
     agent any
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
+        HOST_DOMAIN = "accesscontrol-forward.symper.vn"
         KAFKA_SUBCRIBE = true
         APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
         Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
         BRANCH_NAME = "${GIT_BRANCH.split('/').size() > 1 ? GIT_BRANCH.split('/')[1..-1].join('/') : GIT_BRANCH}"
+        COMMIT_MESSAGE = sh(script: "git log --format=%B -n 1", returnStdout: true).trim()
         MSTEAMS_WEBHOOK=credentials('ms_teams_webhook')
     }
     stages{
@@ -56,6 +58,9 @@ pipeline{
                     //     }
                     // }
                     steps{
+                        script {
+                            sh echo '$Author_Name'
+                        }
                         withCredentials([
                             usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
                         ]) {
@@ -75,6 +80,7 @@ pipeline{
                                     POSTGRES_HOST: "$POSTGRES_HOST",
                                     CACHE_HOST: "$CACHE_HOST",
                                     KAFKA_PREFIX: "$KAFKA_PREFIX",
+                                    HOST_DOMAIN: "$HOST_DOMAIN",
                                 ]
                             )
                         }
@@ -195,13 +201,13 @@ pipeline{
         }
         success{
             office365ConnectorSend webhookUrl: MSTEAMS_WEBHOOK,
-                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:green\">${currentBuild.currentResult}</span>: <br> Check console output at ${env.BUILD_URL} to view the results.",
+                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:green\">${currentBuild.currentResult}</span>: <br> <strong style=\"color: deeppink;\">${env.COMMIT_MESSAGE}</strong>  <br> Check console output at ${env.BUILD_URL} to view the results.",
                 status: 'Success'  
             echo "========pipeline executed successfully ========"
         }
         failure{
             office365ConnectorSend webhookUrl: MSTEAMS_WEBHOOK,
-                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:red\">${currentBuild.currentResult}</span>: <br> Check console output at ${env.BUILD_URL} to view the results.",
+                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:red\">${currentBuild.currentResult}</span>: <br> <strong style=\"color: deeppink;\">${env.COMMIT_MESSAGE}</strong> <br> Check console output at ${env.BUILD_URL} to view the results.",
                 status: 'Failed'   
             echo "========pipeline execution failed========"
         }

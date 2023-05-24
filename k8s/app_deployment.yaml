@@ -21,7 +21,7 @@ spec:
         vault.hashicorp.com/agent-inject: 'true'
         vault.hashicorp.com/agent-pre-populate-only: 'true'
         vault.hashicorp.com/agent-requests-cpu: '10m'
-        vault.hashicorp.com/agent-requests-mem: '64Mi'
+        vault.hashicorp.com/agent-requests-mem: '32Mi'
         vault.hashicorp.com/role: 'backend'
         vault.hashicorp.com/agent-inject-secret-config-postgres: 'symper/backend/{SERVICE_ENV}/postgresql'
         # Environment variable export template
@@ -64,8 +64,8 @@ spec:
             memory: "10Mi"
             cpu: "10m"
           limits:
-            memory: "500Mi"
-            cpu: "500m"
+            memory: "300Mi"
+            cpu: "300m"
       - name: nginx-{APP_NAME}
         image: registry.symper.vn/nginx:1.4
         ports:
@@ -78,8 +78,8 @@ spec:
             memory: "10Mi"
             cpu: "10m"
           limits:
-            memory: "500Mi"
-            cpu: "500m"
+            memory: "200Mi"
+            cpu: "200m"
       volumes:
       - name: config-env
         configMap:
