@@ -50,7 +50,7 @@ spec:
         lifecycle:
             postStart:
               exec:
-                command: [ "/bin/sh","-c","cp /src/replace_vars.sh /var/www/app && chmod u+x /var/www/app/replace_vars.sh && /var/www/app/replace_vars.sh"]
+                command: [ "/bin/sh","-c","cp -f /src/replace_vars.sh /var/www/app && chmod u+x /var/www/app/replace_vars.sh && /var/www/app/replace_vars.sh"]
         volumeMounts:
         - name: config-env
           mountPath: /src
