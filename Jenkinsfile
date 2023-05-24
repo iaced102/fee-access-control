@@ -57,9 +57,7 @@ pipeline{
                     // }
                     steps{
                         withCredentials([
-                            usernamePassword(credentialsId: 'dev_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER'),
                             usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
-                            usernamePassword(credentialsId: 'cache', passwordVariable: 'CACHE_PASSWORD', usernameVariable: 'CACHE_USER_NAME')
                         ]) {
                             ansiblePlaybook (
                                 installation: 'Ansible',
@@ -73,12 +71,9 @@ pipeline{
                                     SERVICE_NAME: "$SERVICE_NAME",
                                     APP_NAME: "$APP_NAME",
                                     BUILD_VERSION: "$BUILD_VERSION",
-                                    POSTGRES_USER: "$POSTGRES_USER",
-                                    POSTGRES_PASS: "$POSTGRES_PASS",
                                     POSTGRES_DB: "$POSTGRES_DB",
                                     POSTGRES_HOST: "$POSTGRES_HOST",
                                     CACHE_HOST: "$CACHE_HOST",
-                                    CACHE_PASSWORD: "$CACHE_PASSWORD",
                                     KAFKA_PREFIX: "$KAFKA_PREFIX",
                                 ]
                             )
@@ -166,9 +161,7 @@ pipeline{
                     // }
                     steps{
                         withCredentials([
-                            usernamePassword(credentialsId: 'accesscontrol_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER'),
                             usernamePassword(credentialsId: 'ssh_prod_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
-                            usernamePassword(credentialsId: 'cache', passwordVariable: 'CACHE_PASSWORD', usernameVariable: 'CACHE_USER_NAME')
                         ]) {
                             sh "chmod +x shellscripts/*"
                             sshagent(['prod_ssh_key']) {

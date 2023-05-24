@@ -17,6 +17,24 @@ spec:
         app: {APP_NAME}
         tier: backend
         role: {TARGET_ROLE}
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/agent-requests-cpu: '10m'
+        vault.hashicorp.com/agent-requests-mem: '64Mi'
+        vault.hashicorp.com/role: 'backend'
+        vault.hashicorp.com/agent-inject-secret-config-postgres: 'symper/backend/{SERVICE_ENV}/postgresql'
+        # Environment variable export template
+        vault.hashicorp.com/agent-inject-template-config-postgres: |
+          {{- with secret "symper/backend/{SERVICE_ENV}/postgresql" -}}
+            export POSTGRES_USER="{{ .Data.data.username }}"
+            export POSTGRES_PASS="{{ .Data.data.password }}"
+          {{- end }}
+        vault.hashicorp.com/agent-inject-secret-config-cache: 'symper/backend/{SERVICE_ENV}/cache'
+        vault.hashicorp.com/agent-inject-template-config-cache: |
+          {{- with secret "symper/backend/{SERVICE_ENV}/cache" -}}
+            export CACHE_PASS="{{ .Data.data.password }}"
+          {{- end }}
     spec:
       imagePullSecrets:
       - name: regcred
@@ -32,7 +50,7 @@ spec:
         lifecycle:
             postStart:
               exec:
-                command: [ "/bin/sh","-c","cp /src/env.json /var/www/app" ]
+                command: [ "/bin/sh","-c","cp /src/replace_vars.sh /var/www/app && chmod u+x /var/www/app/replace_vars.sh && /var/www/app/replace_vars.sh"]
         volumeMounts:
         - name: config-env
           mountPath: /src
