@@ -54,30 +54,26 @@ pipeline{
                 }
                 stage("deploy to k8s") {
                     steps{
-                        withCredentials([
-                            usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
-                        ]) {
-                            ansiblePlaybook (
-                                installation: 'Ansible',
-                                inventory: 'ansible/inventories/staging/hosts',
-                                playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
-                                credentialsId: "ssh_qc_key",
-                                vaultCredentialsId: "ansible_vault_file",
-                                disableHostKeyChecking: true,
-                                extraVars: [
-                                    SERVICE_ENV: "$SERVICE_ENV",
-                                    SERVICE_NAME: "$SERVICE_NAME",
-                                    APP_NAME: "$APP_NAME",
-                                    BUILD_VERSION: "$BUILD_VERSION",
-                                    POSTGRES_DB: "$POSTGRES_DB",
-                                    POSTGRES_HOST: "$POSTGRES_HOST",
-                                    CACHE_HOST: "$CACHE_HOST",
-                                    KAFKA_PREFIX: "$KAFKA_PREFIX",
-                                    HOST_DOMAIN: "$HOST_DOMAIN",
-                                    TARGET_HOST: "appservers"
-                                ]
-                            )
-                        }
+                        ansiblePlaybook (
+                            installation: 'Ansible',
+                            inventory: 'ansible/inventories/staging/hosts',
+                            playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
+                            credentialsId: "ssh_qc_key",
+                            vaultCredentialsId: "ansible_vault_file",
+                            disableHostKeyChecking: true,
+                            extraVars: [
+                                SERVICE_ENV: "$SERVICE_ENV",
+                                SERVICE_NAME: "$SERVICE_NAME",
+                                APP_NAME: "$APP_NAME",
+                                BUILD_VERSION: "$BUILD_VERSION",
+                                POSTGRES_DB: "$POSTGRES_DB",
+                                POSTGRES_HOST: "$POSTGRES_HOST",
+                                CACHE_HOST: "$CACHE_HOST",
+                                KAFKA_PREFIX: "$KAFKA_PREFIX",
+                                HOST_DOMAIN: "$HOST_DOMAIN",
+                                TARGET_HOST: "appservers"
+                            ]
+                        )
                     }
                 }
                 stage("triggerkafka") {
