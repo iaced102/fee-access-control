@@ -50,8 +50,8 @@ data:
 
   replace_vars.sh: |
     #!/bin/bash
-    source /vault/secrets/config-postgres:
-    source /vault/secrets/config-cache:
+    source /vault/secrets/config-postgres
+    source /vault/secrets/config-cache
     cp -f /src/env.json /var/www/app/env.json
 
     sed -i -e "s/{POSTGRES_USER}/$POSTGRES_USER/g" \
