@@ -59,14 +59,14 @@ pipeline{
                     // }
                     steps{
                         script {
-                            echo '$Author_Name'
+                            sh 'echo $Author_Name'
                         }
                         withCredentials([
                             usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
                         ]) {
                             ansiblePlaybook (
                                 installation: 'Ansible',
-                                inventory: 'ansible/inventories/staging/hosts',
+                                inventory: 'ansible/inventories/develop/hosts',
                                 playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
                                 credentialsId: "ssh_qc_key",
                                 vaultCredentialsId: "ansible_vault_file",
@@ -81,6 +81,7 @@ pipeline{
                                     CACHE_HOST: "$CACHE_HOST",
                                     KAFKA_PREFIX: "$KAFKA_PREFIX",
                                     HOST_DOMAIN: "$HOST_DOMAIN",
+                                    TARGET_HOST: "qc-servers"
                                 ]
                             )
                         }
