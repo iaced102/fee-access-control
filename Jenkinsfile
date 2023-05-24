@@ -4,8 +4,8 @@ pipeline{
         SERVICE_NAME = "accesscontrol.symper.vn"
         HOST_DOMAIN = "accesscontrol-forward.symper.vn"
         KAFKA_SUBCRIBE = true
-        APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
-        Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+        APP_NAME = sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
+        AUTHOR_NAME = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
         BRANCH_NAME = "${GIT_BRANCH.split('/').size() > 1 ? GIT_BRANCH.split('/')[1..-1].join('/') : GIT_BRANCH}"
         COMMIT_MESSAGE = sh(script: "git log --format=%B -n 1", returnStdout: true).trim()
         MSTEAMS_WEBHOOK=credentials('ms_teams_webhook')
@@ -54,19 +54,19 @@ pipeline{
                 stage("deploy to k8s") {
                     // when {
                     //     expression {
-                    //         "${Author_Name}"?.startsWith("release")
+                    //         "${AUTHOR_NAME}"?.startsWith("release")
                     //     }
                     // }
                     steps{
                         script {
-                            sh 'echo $Author_Name'
+                            sh 'echo $AUTHOR_NAME'
                         }
                         withCredentials([
                             usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
                         ]) {
                             ansiblePlaybook (
                                 installation: 'Ansible',
-                                inventory: 'ansible/inventories/develop/hosts',
+                                inventory: 'ansible/inventories/staging/hosts',
                                 playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
                                 credentialsId: "ssh_qc_key",
                                 vaultCredentialsId: "ansible_vault_file",
@@ -81,7 +81,7 @@ pipeline{
                                     CACHE_HOST: "$CACHE_HOST",
                                     KAFKA_PREFIX: "$KAFKA_PREFIX",
                                     HOST_DOMAIN: "$HOST_DOMAIN",
-                                    TARGET_HOST: "qc-servers"
+                                    TARGET_HOST: "appservers"
                                 ]
                             )
                         }
@@ -163,7 +163,7 @@ pipeline{
                 stage("deploy to k8s"){
                     // when {
                     //     expression {
-                    //         "${Author_Name}"?.startsWith("release")
+                    //         "${AUTHOR_NAME}"?.startsWith("release")
                     //     }
                     // }
                     steps{
