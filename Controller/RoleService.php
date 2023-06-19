@@ -216,5 +216,22 @@ class RoleService extends Controller
         foreach ($roleActionArr as &$ra) {
             $ra->filter = ($ra->filterNew != '' && !is_null($ra->filterNew )) ? $ra->filterNew :$ra->filter;
         }
+        if (isset($authData['filter'])) {
+            $authData = Auth::getDataToken();
+            $f = $authData['filter'];
+            $roleActionArr[] = new RoleAction([
+                'objectIdentifier'  =>  $f['object'],
+                'action'            =>  $f['action'],
+                'objectType'        =>  $f['objectType'],
+                'name'              =>  'symper_filter_on_token',
+                'roleIdentifier'    =>  $authData['role'],
+                'filter'            =>  $f['plainFilter'],
+                'filterNew'         =>  $f['plainFilter'],
+                'status'            =>  1,
+                'actionPackId'      =>  'symper_filter_on_token',
+                'filterCombination' =>  $f['plainFilter'],
+                'tenantId'          =>  $authData['tenantId']
+            ]);
+        }
     }
 }
