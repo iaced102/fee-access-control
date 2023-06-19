@@ -17,7 +17,7 @@ data:
         },
         "cache": {
             "host": "{CACHE_HOST}",
-            "password": "{CACHE_PASS}"
+            "password": "{CACHE_PASSWORD}"
         }
       },
       "kafka":"{KAFKA_PREFIX}",
