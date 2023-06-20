@@ -5,6 +5,7 @@ use Library\AccessControl;
 use Library\Auth;
 use Library\Message;
 use Library\Str;
+use Model\Filter;
 use Model\PermissionPack;
 use Model\PermissionRole;
 use Model\Role;
@@ -216,22 +217,54 @@ class RoleService extends Controller
         foreach ($roleActionArr as &$ra) {
             $ra->filter = ($ra->filterNew != '' && !is_null($ra->filterNew )) ? $ra->filterNew :$ra->filter;
         }
+
+        $authData = Auth::getDataToken();
         if (isset($authData['filter'])) {
-            $authData = Auth::getDataToken();
             $f = $authData['filter'];
-            $roleActionArr[] = new RoleAction([
-                'objectIdentifier'  =>  $f['object'],
-                'action'            =>  $f['action'],
-                'objectType'        =>  $f['objectType'],
-                'name'              =>  'symper_filter_on_token',
-                'roleIdentifier'    =>  $authData['role'],
-                'filter'            =>  $f['plainFilter'],
-                'filterNew'         =>  $f['plainFilter'],
-                'status'            =>  1,
-                'actionPackId'      =>  'symper_filter_on_token',
-                'filterCombination' =>  $f['plainFilter'],
-                'tenantId'          =>  $authData['tenantId']
-            ]);
+            foreach ($roleActionArr as $ra) {
+                // user phải có quyền thực thi với object đó thì mới add thêm bộ filter từ token
+                if ($ra->objectIdentifier == $f['object'] && $ra->action == $f['action']) {
+                    $filterStr = self::translateFilterTreeToSql($f['plainFilter']);
+                    if ($filterStr == '') {
+                        return;
+                    }
+                    $roleActionArr[] = new RoleAction([
+                        'objectIdentifier'  =>  $f['object'],
+                        'action'            =>  $f['action'],
+                        'objectType'        =>  $f['objectType'],
+                        'name'              =>  'symper_filter_on_token',
+                        'roleIdentifier'    =>  $authData['role'],
+                        'filter'            =>  $filterStr,
+                        'filterNew'         =>  $filterStr,
+                        'status'            =>  1,
+                        'actionPackId'      =>  'symper_filter_on_token',
+                        'filterCombination' =>  $filterStr,
+                        'tenantId'          =>  $authData['tenantId']
+                    ]);
+                    break;
+                }
+            }
         }
+    }
+
+    public static function translateFilterTreeToSql($filterStr)
+    {
+        $matchedFilter = [];
+        preg_match_all('/__filter_id__([a-zA-Z0-9-]+)/i', $filterStr, $matchedFilter);
+        if (count($matchedFilter[1]) == 0) {
+            return '';
+        }
+        $matchedFilter[1] = array_unique($matchedFilter[1]);
+        $filterIds = '{'.implode(',', $matchedFilter[1]).'}';
+        $filters = Filter::getByStatements('', [
+            "conditions" => "id = ANY($1)", 
+            "dataBindings" => [$filterIds]
+        ]);
+        
+        foreach ($filters as $filterObj) {
+            $id = $filterObj->id;
+            $filterStr = str_replace("__filter_id__$id", $filterObj->formula, $filterStr);
+        }
+        return $filterStr;
     }
 }
