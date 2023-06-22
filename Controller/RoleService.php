@@ -219,7 +219,7 @@ class RoleService extends Controller
         }
 
         $authData = Auth::getDataToken();
-        if (isset($authData['filter'])) {
+        if (!empty($authData['filter'])) {
             $f = $authData['filter'];
             foreach ($roleActionArr as $ra) {
                 // user phải có quyền thực thi với object đó thì mới add thêm bộ filter từ token
