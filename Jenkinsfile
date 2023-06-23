@@ -2,15 +2,20 @@ pipeline{
     agent any
     environment{
         SERVICE_NAME = "accesscontrol.symper.vn"
+        HOST_DOMAIN = "accesscontrol-forward.symper.vn"
         KAFKA_SUBCRIBE = true
-        APP_NAME=sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
-        Author_Name=sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+        APP_NAME = sh (script: "echo $SERVICE_NAME | cut -d'.' -f1", returnStdout: true).trim()
+        AUTHOR_NAME = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
         BRANCH_NAME = "${GIT_BRANCH.split('/').size() > 1 ? GIT_BRANCH.split('/')[1..-1].join('/') : GIT_BRANCH}"
+        COMMIT_MESSAGE = sh(script: "git log --format=%B -n 1", returnStdout: true).trim()
+        MSTEAMS_WEBHOOK=credentials('ms_teams_webhook')
     }
     stages{
         stage ("quality control") {
             when {
-                branch "dev"    
+                expression {
+                    return AUTHOR_NAME == "devsymper" && BRANCH_NAME == "dev"
+                }
             }
             environment {
                 SERVICE_ENV = "test"
@@ -19,7 +24,7 @@ pipeline{
                 POSTGRES_HOST = "10.20.166.52"
                 POSTGRES_DB = "accesscontrol_symper_vn"
                 CLICKHOUSE_HOST = "10.20.166.52"
-                CACHE_HOST= "redis-server.redis-server.svc.cluster.local"
+                CACHE_HOST = "redis-server.redis-server.svc.cluster.local"
                 KAFKA_PREFIX = "10.20.166.6"
             }
             stages {
@@ -38,57 +43,44 @@ pipeline{
                 }
                 stage("clone ansible") {
                     steps {
-                    
                         script {
                             dir('ansible') {
-                                git branch: 'main',
-                                credentialsId: 'github-persional-token',
-                                url: 'https://github.com/quannt-symper/ansible-manage-users.git'
+                                git branch: 'master',
+                                credentialsId: 'symper_git',
+                                url: 'https://github.com/devsymper/ci-cd-ansible-script.git'
                             }
                         }
                     }
                 }
                 stage("deploy to k8s") {
-                    // when {
-                    //     expression {
-                    //         "${Author_Name}"?.startsWith("release")
-                    //     }
-                    // }
                     steps{
-                        withCredentials([
-                            usernamePassword(credentialsId: 'dev_database', passwordVariable: 'POSTGRES_PASS', usernameVariable: 'POSTGRES_USER'),
-                            usernamePassword(credentialsId: 'ssh_qc_vps', passwordVariable: 'USER_PASS', usernameVariable: 'USER_NAME'),
-                            usernamePassword(credentialsId: 'cache', passwordVariable: 'CACHE_PASSWORD', usernameVariable: 'CACHE_USER_NAME')
-                        ]) {
-                            ansiblePlaybook (
-                                installation: 'Ansible',
-                                inventory: 'ansible/inventories/staging/hosts',
-                                playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
-                                credentialsId: "ssh_qc_key",
-                                vaultCredentialsId: "ansible_vault_file",
-                                disableHostKeyChecking: true,
-                                extraVars: [
-                                    SERVICE_ENV: "$SERVICE_ENV",
-                                    SERVICE_NAME: "$SERVICE_NAME",
-                                    APP_NAME: "$APP_NAME",
-                                    BUILD_VERSION: "$BUILD_VERSION",
-                                    POSTGRES_USER: "$POSTGRES_USER",
-                                    POSTGRES_PASS: "$POSTGRES_PASS",
-                                    POSTGRES_DB: "$POSTGRES_DB",
-                                    POSTGRES_HOST: "$POSTGRES_HOST",
-                                    CACHE_HOST: "$CACHE_HOST",
-                                    CACHE_PASSWORD: "$CACHE_PASSWORD",
-                                    KAFKA_PREFIX: "$KAFKA_PREFIX",
-                                ]
-                            )
-                        }
+                        ansiblePlaybook (
+                            installation: 'Ansible',
+                            inventory: 'ansible/inventories/staging/hosts',
+                            playbook: 'ansible/playbooks/symper-k8s-deploy.yaml',
+                            credentialsId: "ssh_qc_key",
+                            vaultCredentialsId: "ansible_vault_file",
+                            disableHostKeyChecking: true,
+                            extraVars: [
+                                SERVICE_ENV: "$SERVICE_ENV",
+                                SERVICE_NAME: "$SERVICE_NAME",
+                                APP_NAME: "$APP_NAME",
+                                BUILD_VERSION: "$BUILD_VERSION",
+                                POSTGRES_DB: "$POSTGRES_DB",
+                                POSTGRES_HOST: "$POSTGRES_HOST",
+                                CACHE_HOST: "$CACHE_HOST",
+                                KAFKA_PREFIX: "$KAFKA_PREFIX",
+                                HOST_DOMAIN: "$HOST_DOMAIN",
+                                TARGET_HOST: "appservers"
+                            ]
+                        )
                     }
                 }
                 stage("triggerkafka") {
                     steps {
                         script {
                             if ("${KAFKA_SUBCRIBE}".toBoolean() == true) {
-                                sh 'curl -s -I -X GET https://${SERVICE_ENV}-${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
+                                sh 'curl --connect-timeout 1 -s -I -X GET https://${SERVICE_ENV}-${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
                             } else{
                                 echo 'None Kafka subscriber'
                             }
@@ -185,7 +177,7 @@ pipeline{
                     steps {
                         script {
                             if ("${KAFKA_SUBCRIBE}".toBoolean() == true) {
-                                sh 'curl -s -I -X GET https://${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
+                                sh 'curl --connect-timeout 1 -s -I -X GET https://${SERVICE_NAME}/KafkaService/subscribe | grep HTTP/ | awk \'{print "Code: "  $2}\''
                             } else{
                                 echo 'None Kafka subscriber'
                             }
@@ -197,14 +189,18 @@ pipeline{
     }
     post{
         always{
-            emailext body: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS: \nCheck console output at $BUILD_URL to view the results.',
-            subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!',
-            to: "${env.Author_Name}"
+            echo "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - ${env.BUILD_STATUS}: \nCheck console output at ${env.BUILD_URL} to view the results."
         }
         success{
+            office365ConnectorSend webhookUrl: MSTEAMS_WEBHOOK,
+                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:green\">${currentBuild.currentResult}</span>: <br> <strong style=\"color: deeppink;\">${env.COMMIT_MESSAGE}</strong>  <br> Check console output at ${env.BUILD_URL} to view the results.",
+                status: 'Success'  
             echo "========pipeline executed successfully ========"
         }
         failure{
+            office365ConnectorSend webhookUrl: MSTEAMS_WEBHOOK,
+                message: "${env.SERVICE_NAME} - Build # ${env.BUILD_NUMBER} - <span style=\"color:red\">${currentBuild.currentResult}</span>: <br> <strong style=\"color: deeppink;\">${env.COMMIT_MESSAGE}</strong> <br> Check console output at ${env.BUILD_URL} to view the results.",
+                status: 'Failed'   
             echo "========pipeline execution failed========"
         }
     }

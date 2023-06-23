@@ -10,6 +10,9 @@ then
     envDomain=$SERVICE_ENV"-"
 fi
 
+replaceWith="-forward.symper.vn"
+search=".symper.vn"
+host=${SERVICE_NAME//$search/$replaceWith}
 sed -i -e "s/{ENVIRONMENT}/$originEnv/g" \
        -e "s/{ENVIRONMENT_}/$env/g" \
        -e "s/{SERVICE_ENV}/$SERVICE_ENV/g" \
@@ -32,4 +35,4 @@ sed -i -e "s/{SYMPER_IMAGE}/${SERVICE_NAME}:${BUILD_VERSION}/g" \
 
 sed -i -e "s/{APP_NAME}/$APP_NAME/g" \
        -e "s/{CURRENT_ROLE}/$CURRENT_ROLE/g" \
-       -e "s/{HOST_DOMAIN}/${envDomain}${SERVICE_NAME}/g" k8s/service_ingress.yaml
+       -e "s/{HOST_DOMAIN}/${envDomain}${host}/g" k8s/service_ingress.yaml

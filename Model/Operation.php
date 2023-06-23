@@ -31,7 +31,7 @@ class Operation extends SqlObject
         'workflow_definition'   => ['name'=>'quy trình',            'ownerDomain' => 'workflow.symper.vn',              'action'=>[ 'list','deploy','drop','update','list_instance','start_instance','list_process','view','view_instance', 'run_instance', 'stop_instance', 'complete_instance', 'delete_instance', 'delete_related_doc']],
         'account'               => ['name'=>'người dùng',           'ownerDomain' => 'account.symper.vn',               'action'=>['create','update','detail','change_pass', "delete",'list','set_role',"import", "export"]],
         'report'                => ['name'=>'báo cáo',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','update','view','list','drop']],
-        'dashboard'              => ['name'=>'dashboard',           'ownerDomain' => 'bi.symper.vn',                    'action'=>['update','view','list','drop', 'export-data']],
+        'dashboard'             => ['name'=>'dashboard',           'ownerDomain' => 'bi.symper.vn',                    'action'=>['update','view','list','drop', 'export-data']],
         'dataflow'              => ['name'=>'dataset',              'ownerDomain' => 'bi.symper.vn',                    'action'=>['create','drop','list','update','detail']],
         'orgchart'              => ['name'=>'sơ đồ tổ chức',        'ownerDomain' => 'orgchart.symper.vn',              'action'=>['update','drop','list','detail']],
         'department'            => ['name'=>'phòng ban',            'ownerDomain' => 'orgchart.symper.vn',              'action'=>['set_manager','view_all','view_only_owner','view_only_sub']],
