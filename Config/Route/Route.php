@@ -14,6 +14,7 @@ Route::get('permission_packs/{id}','PermissionService','detail');
 Route::post('roles/{role_identifier}/permissions','RoleService','setPermission');
 Route::get('roles/{role_identifier}/permissions','RoleService','listPermission');
 Route::post('roles/set-permissions','RoleService','setPermissionBatch');
+Route::post('roles/update-permissions','RoleService','updatePermissionBatch');
 Route::get('roles/{role_identifier}/accesscontrol','RoleService','getAccessControlByRole');
 Route::post('roles/accesscontrol/query','RoleService','getAccessControlByRoles');
 Route::post('roles/{role_identifier}/accesscontrol/get-multi','RoleService','getAccessControlMultiObject');

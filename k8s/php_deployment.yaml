@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-accesscontrol
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-accesscontrol
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: php-accesscontrol
+        tier: backend
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      containers:
+      - name: php-accesscontrol
+        ports:
+        - containerPort: 9000
+        image: registry.symper.vn/{SYMPER_IMAGE}
+        resources:
+          requests:
+            memory: "200Mi"
+            cpu: "250m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+        lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh","-c","cp /src/env.json /var/www/accesscontrol.symper.vn" ]
+        volumeMounts:
+        - name: config-env
+          mountPath: /src
+      volumes:
+      - name: config-env
+        configMap:
+          name: php-env-config-accesscontrol

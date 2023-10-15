@@ -72,6 +72,39 @@ class RoleService extends Controller
             }
         }
     }
+
+    function updatePermissionBatch(){
+        if($this->checkParameter(['role_identifier','role_type','add_permission','delete_permission'])){
+            $addPermissions = $this->parameters['add_permission'];
+            $deletePermissions = $this->parameters['delete_permission'];
+            $roleIdentifier = $this->parameters['role_identifier'];
+            $roleType = $this->parameters['role_type'];
+            if(is_array($addPermissions) && is_array($deletePermissions)){
+                $addedPermission=[];
+                foreach($addPermissions as $permission){
+                    $isAdded=$this->setPermissionItem($roleIdentifier,$permission,$roleType);
+                    if($isAdded){
+                        array_push($addedPermission,$permission);
+                    }
+                }
+                $deletePermissionStr="{".implode(",", $deletePermissions)."}";
+                PermissionRole::deleteMulti("role_identifier=$1 and role_type = $2 and permission_pack_id = ANY($3)",[$roleIdentifier,$roleType,$deletePermissionStr]);
+                $this->output['status'] = STATUS_OK;
+                $this->output['data'] = [
+                    'addedPermission' => $addedPermission
+                ];
+                $this->output['message'] = "OK";
+                RoleAction::closeConnectionAndRefresh($this);
+            }else{
+                $this->output['status'] = STATUS_BAD_REQUEST;
+                $this->output['message'] = "PERMISSION_NOT_ARRAY";
+            }
+        }else{
+            $this->output['status'] = STATUS_BAD_REQUEST;
+            $this->output['message'] = "INVALID_PARAM";
+        }
+    }
+
     private function clearPermissionForRole($permissions){
         $listRoleIdentifier = array_unique(array_map(function($item){
             if(is_array($item)&&isset($item['role_identifier'])){
@@ -94,13 +127,11 @@ class RoleService extends Controller
                 $obj->roleIdentifier = $roleIdentifier;
                 if($obj->insert()){
                     return true;
-                }
-                else{
+                } else {
                     return false;
                 }
-            }
-            else{
-                return true;
+            } else {
+                return false;
             }
         }
         return false;

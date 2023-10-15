@@ -238,16 +238,15 @@ class OperationService extends Controller
         }
         if(isset($this->parameters['ids'])){
             $ids = Str::getArrayFromUnclearData($this->parameters['ids']);
-            if(count($ids)>0){
-                $strIds = '{'.implode(",",$ids).'}';
-                $condition[] = count($dataBindings) ==0 ? "object_identifier = ANY($1)" 
-                                :( count($dataBindings) ==1 ? "object_identifier = ANY($2)"
-                                : "object_identifier = ANY($3)");
-                $dataBindings[]=$strIds;
-            }
+            $strIds = '{'.implode(",",$ids).'}';
+            $condition[] = count($dataBindings) ==0 ? "object_identifier = ANY($1)" 
+                            :( count($dataBindings) ==1 ? "object_identifier = ANY($2)"
+                            : "object_identifier = ANY($3)");
+            $dataBindings[]=$strIds;
         }
         $conditionStr = implode(' AND ',$condition);
         $where = ["conditions" => $conditionStr, "dataBindings" => $dataBindings];
+        var_dump($where);
         $data = ObjectIdentifier::getByPaging($page,$pageSize,'',$where,false, false, true);
         $this->output['data'] = $data;
         $this->output['status'] = STATUS_OK;

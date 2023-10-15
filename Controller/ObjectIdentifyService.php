@@ -25,19 +25,28 @@ class ObjectIdentifyService extends Controller
             $listObj = $this->parameters['listObj'];
             $source = $this->parameters['source'];
             $target = $this->parameters['target'];
-            $rsl = ObjectIdentifier::migrateObjectsByIds($source, $target, $listObj);
-            if ($rsl === false){
-                $this->output = [
-                    'status'    => STATUS_SERVER_ERROR,
-                    'message'   => 'can not migrate object identify',
-                ];
-            } else {
-                $this->output = [
-                    'status'    => STATUS_OK,
-                    'message'   => 'migrate success: '.implode(",",$rsl),
-                ];
-            }
+            // $rsl = ObjectIdentifier::migrateObjectsByIds($source, $target, $listObj);
 
+            // if ($rsl === false){
+            //     $this->output = [
+            //         'status'    => STATUS_SERVER_ERROR,
+            //         'message'   => 'can not migrate object identify',
+            //     ];
+            // } else {
+            //     $this->output = [
+            //         'status'    => STATUS_OK,
+            //         'message'   => 'migrate success: '.implode(",",$rsl),
+            //     ];
+            // }
+
+            $dataPost = [
+                'source' => $source,
+                'target' => $target,
+                'ids'    => implode(",", $listObj)
+            ];
+            $response = Request::request("https://dev-object-relation.symper.vn/objects/tenant-migrate",$dataPost,'POST',false, 'application/json', false);
+            var_dump($response);
+            return $response;
         }
 
     }

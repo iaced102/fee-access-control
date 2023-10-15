@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-config-{APP_NAME}
+  name: nginx-config-accesscontrol
   labels:
     tier: backend
 data:
@@ -10,7 +10,7 @@ data:
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log;
-      root /var/www/app;
+      root /var/www/accesscontrol.symper.vn;
       
       location / {
          try_files $uri /index.php$is_args$args;
@@ -19,7 +19,7 @@ data:
       location ~ .php$ {
           proxy_set_header Host $http_host;
           fastcgi_split_path_info ^(.+.php)(/.+)$;
-          fastcgi_pass localhost:9000;
+          fastcgi_pass php-accesscontrol:9000;
           fastcgi_index index.php;
           include fastcgi_params;
           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;

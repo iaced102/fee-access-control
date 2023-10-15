@@ -17,6 +17,7 @@ class ObjectIdentifier extends SqlObject
         'type'              =>  [ 'name' => 'type',                 'type' => 'string'],
         'objectType'        =>  [ 'name' => 'object_type',          'type' => 'string'],
         'title'             =>  [ 'name' => 'title',                'type' => 'string'],
+        'forMobile'         =>  [ 'name' => 'forMobile',            'type' => 'number'],
         'tenantId'          =>  [ 'name' => 'tenant_id_',           'type' => 'number'],
     ];
     public function __construct($data=[]){
